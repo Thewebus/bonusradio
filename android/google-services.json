@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "649538803538",
+    "project_id": "mybonus-multimedia",
+    "storage_bucket": "mybonus-multimedia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:649538803538:android:213f2c2cbe0431129ecc8b",
+        "android_client_info": {
+          "package_name": "com.bonusmultimedia.mybonus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcspEFF6u9zS5YXh7o7jXPcqCsDKgar3c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

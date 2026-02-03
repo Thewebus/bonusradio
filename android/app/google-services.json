@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "649538803538",
+    "project_id": "mybonus-multimedia",
+    "storage_bucket": "mybonus-multimedia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:649538803538:android:213f2c2cbe0431129ecc8b",
+        "android_client_info": {
+          "package_name": "com.bonusmultimedia.mybonus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "649538803538-rsu8klgbl8ltsgcfcm8fhpgg4jec48pf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bonusmultimedia.mybonus",
+            "certificate_hash": "7e767f01f48d5e13e81ba6428984de844ac79ee5"
+          }
+        },
+        {
+          "client_id": "649538803538-shuqb5tbv3st9ustb1vbhlc44f6lc4mq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcspEFF6u9zS5YXh7o7jXPcqCsDKgar3c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "649538803538-shuqb5tbv3st9ustb1vbhlc44f6lc4mq.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "649538803538-2unps7rgm89rsr18r4bcvpr2hp9624nf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.bonusmultimedia.mybonus"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
