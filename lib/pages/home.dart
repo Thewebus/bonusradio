@@ -38,6 +38,7 @@ import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/music/floating_player.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mynetworkimg2.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -282,7 +283,7 @@ class _HomeState extends State<Home> {
                 ],
               ),
             ),
-            _buildMusicPanel(context),
+            const FloatingPlayer(),
           ],
         ),
       ),
@@ -307,11 +308,9 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildHomeContent() {
-    return Consumer<HomeProvider>(
-        builder: (context, homeprovider, child) {
+    return Consumer<HomeProvider>(builder: (context, homeprovider, child) {
       if ((homeprovider.bannerModel.result == null ||
-              (homeprovider.bannerModel.result?.length ?? 0) ==
-                  0) &&
+              (homeprovider.bannerModel.result?.length ?? 0) == 0) &&
           (homeprovider.sectionList?.length ?? 0) == 0 &&
           !homeprovider.bannerLoading &&
           !homeprovider.sectionLoading) {
@@ -341,8 +340,8 @@ class _HomeState extends State<Home> {
                 Utils.showBannerAd(context),
                 ValueListenableBuilder(
                   valueListenable: currentlyPlaying,
-                  builder: (BuildContext context,
-                      AudioPlayer? audioObject, Widget? child) {
+                  builder: (BuildContext context, AudioPlayer? audioObject,
+                      Widget? child) {
                     if (audioObject?.audioSource != null) {
                       return const SizedBox(height: 100);
                     } else {
