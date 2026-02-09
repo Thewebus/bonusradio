@@ -213,9 +213,7 @@ class RegisterState extends State<Register> {
         data: Theme.of(context).copyWith(
           dropdownMenuTheme: DropdownMenuThemeData(
             menuStyle: MenuStyle(
-              backgroundColor: MaterialStateProperty.all(
-                Theme.of(context).scaffoldBackgroundColor,
-              ),
+              backgroundColor: MaterialStateProperty.all(white),
               surfaceTintColor: MaterialStateProperty.all(transparent),
               elevation: MaterialStateProperty.all(8),
               shape: MaterialStateProperty.all(
@@ -243,7 +241,7 @@ class RegisterState extends State<Register> {
               fontSize: Dimens.textMedium,
               fontStyle: FontStyle.normal,
               letterSpacing: 1.0,
-              color: colorPrimary,
+              color: black,
               fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             prefixIcon: Icon(icon),

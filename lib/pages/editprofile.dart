@@ -330,9 +330,7 @@ class _EditProfileState extends State<EditProfile> {
         data: Theme.of(context).copyWith(
           dropdownMenuTheme: DropdownMenuThemeData(
             menuStyle: MenuStyle(
-              backgroundColor: MaterialStateProperty.all(
-                Theme.of(context).scaffoldBackgroundColor,
-              ),
+              backgroundColor: MaterialStateProperty.all(white),
               surfaceTintColor: MaterialStateProperty.all(transparent),
               elevation: MaterialStateProperty.all(8),
               shape: MaterialStateProperty.all(
@@ -360,7 +358,7 @@ class _EditProfileState extends State<EditProfile> {
                           .toString() ??
                       Constant.initialCountryCode,
           dropdownTextStyle: Utils.googleFontStyle(
-              1, 16, FontStyle.normal, colorPrimary, FontWeight.w600),
+              1, 16, FontStyle.normal, black, FontWeight.w600),
           keyboardType: TextInputType.number,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
