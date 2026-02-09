@@ -58,8 +58,8 @@ class _NormalLoginState extends State<NormalLogin> {
               MyImage(
                   imagePath: "appicon.png",
                   isAppIcon: true,
-                  height: 100,
-                  width: 100),
+                  height: 200,
+                  width: 200),
               const SizedBox(height: 30),
               // Welcome Back Text
               MyText(

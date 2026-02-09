@@ -3160,8 +3160,8 @@ class _HomeState extends State<Home> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 MyImage(
-                  width: 70,
-                  height: 70,
+                  width: 140,
+                  height: 140,
                   isAppIcon: true,
                   imagePath: "appicon.png",
                   fit: BoxFit.fill,
