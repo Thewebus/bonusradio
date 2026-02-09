@@ -326,73 +326,91 @@ class _EditProfileState extends State<EditProfile> {
         ),
       );
     } else {
-      return IntlPhoneField(
-        disableLengthCheck: true,
-        textAlignVertical: TextAlignVertical.center,
-        autovalidateMode: AutovalidateMode.disabled,
-        controller: numberController,
-        cursorColor: Theme.of(context).colorScheme.surface,
-        style: Utils.googleFontStyle(1, 16, FontStyle.normal,
-            Theme.of(context).colorScheme.surface, FontWeight.w500),
-        showCountryFlag: true,
-        showDropdownIcon: true,
-        initialCountryCode:
-            profileProvider.profileModel.result?[0].countryName == ""
-                ? Constant.initialCountryCode
-                : profileProvider.profileModel.result?[0].countryName
-                        .toString() ??
-                    Constant.initialCountryCode,
-        dropdownTextStyle: Utils.googleFontStyle(
-            1, 16, FontStyle.normal, colorPrimary, FontWeight.w600),
-        keyboardType: TextInputType.number,
-        textInputAction: TextInputAction.done,
-        decoration: InputDecoration(
-          prefixIcon: Container(
-            width: 15,
-            height: 15,
-            alignment: Alignment.center,
-            child: MyImage(
-              width: 23,
-              height: 23,
-              imagePath: icon,
-              color: gray,
+      return Theme(
+        data: Theme.of(context).copyWith(
+          dropdownMenuTheme: DropdownMenuThemeData(
+            menuStyle: MenuStyle(
+              backgroundColor: MaterialStateProperty.all(
+                Theme.of(context).scaffoldBackgroundColor,
+              ),
+              surfaceTintColor: MaterialStateProperty.all(transparent),
+              elevation: MaterialStateProperty.all(8),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
-          filled: true,
-          fillColor: Theme.of(context).secondaryHeaderColor,
-          contentPadding: const EdgeInsets.all(12.0),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(7)),
-            borderSide:
-                BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
-          ),
-          disabledBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(7)),
-            borderSide:
-                BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(7)),
-            borderSide:
-                BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
-          ),
-          border: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide: BorderSide(
-                  width: 1, color: lightgray.withValues(alpha: 0.80))),
-          hintText: hinttext,
-          hintStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
-              Theme.of(context).colorScheme.surface, FontWeight.w500),
         ),
-        onChanged: (phone) {
-          mobilenumber = phone.completeNumber;
-          countryname = phone.countryISOCode;
-          countrycode = phone.countryCode;
-        },
-        onCountryChanged: (country) {
-          countryname = country.code.replaceAll('+', '');
-          countrycode = "+${country.dialCode.toString()}";
-        },
+        child: IntlPhoneField(
+          disableLengthCheck: true,
+          textAlignVertical: TextAlignVertical.center,
+          autovalidateMode: AutovalidateMode.disabled,
+          controller: numberController,
+          cursorColor: Theme.of(context).colorScheme.surface,
+          style: Utils.googleFontStyle(1, 16, FontStyle.normal,
+              Theme.of(context).colorScheme.surface, FontWeight.w500),
+          showCountryFlag: true,
+          showDropdownIcon: true,
+          initialCountryCode:
+              profileProvider.profileModel.result?[0].countryName == ""
+                  ? Constant.initialCountryCode
+                  : profileProvider.profileModel.result?[0].countryName
+                          .toString() ??
+                      Constant.initialCountryCode,
+          dropdownTextStyle: Utils.googleFontStyle(
+              1, 16, FontStyle.normal, colorPrimary, FontWeight.w600),
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            prefixIcon: Container(
+              width: 15,
+              height: 15,
+              alignment: Alignment.center,
+              child: MyImage(
+                width: 23,
+                height: 23,
+                imagePath: icon,
+                color: gray,
+              ),
+            ),
+            filled: true,
+            fillColor: Theme.of(context).secondaryHeaderColor,
+            contentPadding: const EdgeInsets.all(12.0),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(7)),
+              borderSide:
+                  BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(7)),
+              borderSide:
+                  BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(7)),
+              borderSide:
+                  BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
+            ),
+            border: OutlineInputBorder(
+                borderRadius: const BorderRadius.all(Radius.circular(7)),
+                borderSide: BorderSide(
+                    width: 1, color: lightgray.withValues(alpha: 0.80))),
+            hintText: hinttext,
+            hintStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
+                Theme.of(context).colorScheme.surface, FontWeight.w500),
+          ),
+          onChanged: (phone) {
+            mobilenumber = phone.completeNumber;
+            countryname = phone.countryISOCode;
+            countrycode = phone.countryCode;
+          },
+          onCountryChanged: (country) {
+            countryname = country.code.replaceAll('+', '');
+            countrycode = "+${country.dialCode.toString()}";
+          },
+        ),
       );
     }
   }

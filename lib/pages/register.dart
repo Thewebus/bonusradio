@@ -209,82 +209,100 @@ class RegisterState extends State<Register> {
         ),
       );
     } else {
-      return IntlPhoneField(
-        disableLengthCheck: true,
-        obscureText: isPassword ? showHidePassword : false,
-        textAlignVertical: TextAlignVertical.center,
-        controller: controller,
-        cursorColor: Theme.of(context).colorScheme.surface,
-        style: Utils.googleFontStyle(1, Dimens.textMedium, FontStyle.normal,
-            Theme.of(context).colorScheme.surface, FontWeight.w500),
-        keyboardType: textInputType,
-        textInputAction: textInputAction,
-        showCountryFlag: true,
-        showDropdownIcon: true,
-        initialCountryCode: Constant.initialCountryCode,
-        dropdownTextStyle: GoogleFonts.inter(
-            fontSize: Dimens.textMedium,
-            fontStyle: FontStyle.normal,
-            letterSpacing: 1.0,
-            color: colorPrimary,
-            fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon),
-          suffixIcon: isPassword == true
-              ? InkWell(
-                  focusColor: transparent,
-                  splashColor: transparent,
-                  highlightColor: transparent,
-                  hoverColor: transparent,
-                  onTap: () {
-                    setState(() {
-                      showHidePassword = !showHidePassword;
-                    });
-                  },
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      size: 20,
-                      showHidePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: gray,
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-          filled: false,
-          labelStyle: Utils.googleFontStyle(
-              1, 14, FontStyle.normal, gray, FontWeight.w500),
-          labelText: Locales.string(context, title),
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: gray, width: 2),
-          ),
-          disabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: gray, width: 2),
-          ),
-          enabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: gray, width: 2),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: colorPrimary, width: 2),
+      return Theme(
+        data: Theme.of(context).copyWith(
+          dropdownMenuTheme: DropdownMenuThemeData(
+            menuStyle: MenuStyle(
+              backgroundColor: MaterialStateProperty.all(
+                Theme.of(context).scaffoldBackgroundColor,
+              ),
+              surfaceTintColor: MaterialStateProperty.all(transparent),
+              elevation: MaterialStateProperty.all(8),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
         ),
-        onChanged: (phone) {
-          mobilenumber = phone.completeNumber;
-          countryname = phone.countryISOCode;
-          countrycode = phone.countryCode;
-        },
-        onCountryChanged: (country) {
-          countryname = country.code.replaceAll('+', '');
-          countrycode = "+${country.dialCode.toString()}";
-        },
+        child: IntlPhoneField(
+          disableLengthCheck: true,
+          obscureText: isPassword ? showHidePassword : false,
+          textAlignVertical: TextAlignVertical.center,
+          controller: controller,
+          cursorColor: Theme.of(context).colorScheme.surface,
+          style: Utils.googleFontStyle(1, Dimens.textMedium, FontStyle.normal,
+              Theme.of(context).colorScheme.surface, FontWeight.w500),
+          keyboardType: textInputType,
+          textInputAction: textInputAction,
+          showCountryFlag: true,
+          showDropdownIcon: true,
+          initialCountryCode: Constant.initialCountryCode,
+          dropdownTextStyle: GoogleFonts.inter(
+              fontSize: Dimens.textMedium,
+              fontStyle: FontStyle.normal,
+              letterSpacing: 1.0,
+              color: colorPrimary,
+              fontWeight: FontWeight.w600),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon),
+            suffixIcon: isPassword == true
+                ? InkWell(
+                    focusColor: transparent,
+                    splashColor: transparent,
+                    highlightColor: transparent,
+                    hoverColor: transparent,
+                    onTap: () {
+                      setState(() {
+                        showHidePassword = !showHidePassword;
+                      });
+                    },
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        size: 20,
+                        showHidePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: gray,
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+            filled: false,
+            labelStyle: Utils.googleFontStyle(
+                1, 14, FontStyle.normal, gray, FontWeight.w500),
+            labelText: Locales.string(context, title),
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: gray, width: 2),
+            ),
+            disabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: gray, width: 2),
+            ),
+            enabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: gray, width: 2),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: colorPrimary, width: 2),
+            ),
+          ),
+          onChanged: (phone) {
+            mobilenumber = phone.completeNumber;
+            countryname = phone.countryISOCode;
+            countrycode = phone.countryCode;
+          },
+          onCountryChanged: (country) {
+            countryname = country.code.replaceAll('+', '');
+            countrycode = "+${country.dialCode.toString()}";
+          },
+        ),
       );
     }
   }

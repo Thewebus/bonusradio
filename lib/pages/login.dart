@@ -174,52 +174,70 @@ class _LoginState extends State<Login> {
   Widget phonetextfield() {
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.08,
-      child: IntlPhoneField(
-        disableLengthCheck: true,
-        textAlignVertical: TextAlignVertical.center,
-        autovalidateMode: AutovalidateMode.disabled,
-        controller: numberController,
-        cursorColor: Theme.of(context).colorScheme.surface,
-        style: Utils.googleFontStyle(1, 16, FontStyle.normal,
-            Theme.of(context).colorScheme.surface, FontWeight.w500),
-        showCountryFlag: true,
-        showDropdownIcon: true,
-        initialCountryCode: Constant.initialCountryCode,
-        dropdownTextStyle: Utils.googleFontStyle(
-            1, 16, FontStyle.normal, colorPrimary, FontWeight.w600),
-        keyboardType: TextInputType.number,
-        textInputAction: TextInputAction.done,
-        decoration: InputDecoration(
-          filled: false,
-          hintStyle: Utils.googleFontStyle(
-              1, 14, FontStyle.normal, gray, FontWeight.w500),
-          hintText: Locales.string(context, "enteryourmobilenumber"),
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: gray, width: 2),
-          ),
-          disabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: gray, width: 2),
-          ),
-          enabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: gray, width: 2),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12.0)),
-            borderSide: BorderSide(color: colorPrimary, width: 2),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dropdownMenuTheme: DropdownMenuThemeData(
+            menuStyle: MenuStyle(
+              backgroundColor: MaterialStateProperty.all(
+                Theme.of(context).scaffoldBackgroundColor,
+              ),
+              surfaceTintColor: MaterialStateProperty.all(transparent),
+              elevation: MaterialStateProperty.all(8),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
         ),
-        onChanged: (phone) {
-          mobilenumber = phone.completeNumber;
-          countryname = phone.countryISOCode;
-          countrycode = phone.countryCode;
-        },
-        onCountryChanged: (country) {
-          countryname = country.code.replaceAll('+', '');
-          countrycode = "+${country.dialCode.toString()}";
-        },
+        child: IntlPhoneField(
+          disableLengthCheck: true,
+          textAlignVertical: TextAlignVertical.center,
+          autovalidateMode: AutovalidateMode.disabled,
+          controller: numberController,
+          cursorColor: Theme.of(context).colorScheme.surface,
+          style: Utils.googleFontStyle(1, 16, FontStyle.normal,
+              Theme.of(context).colorScheme.surface, FontWeight.w500),
+          showCountryFlag: true,
+          showDropdownIcon: true,
+          initialCountryCode: Constant.initialCountryCode,
+          dropdownTextStyle: Utils.googleFontStyle(
+              1, 16, FontStyle.normal, colorPrimary, FontWeight.w600),
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            filled: false,
+            hintStyle: Utils.googleFontStyle(
+                1, 14, FontStyle.normal, gray, FontWeight.w500),
+            hintText: Locales.string(context, "enteryourmobilenumber"),
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: gray, width: 2),
+            ),
+            disabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: gray, width: 2),
+            ),
+            enabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: gray, width: 2),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+              borderSide: BorderSide(color: colorPrimary, width: 2),
+            ),
+          ),
+          onChanged: (phone) {
+            mobilenumber = phone.completeNumber;
+            countryname = phone.countryISOCode;
+            countrycode = phone.countryCode;
+          },
+          onCountryChanged: (country) {
+            countryname = country.code.replaceAll('+', '');
+            countrycode = "+${country.dialCode.toString()}";
+          },
+        ),
       ),
     );
   }
