@@ -269,19 +269,19 @@ class _HomeState extends State<Home> {
                   ),
                   BottomNavigationBarItem(
                     icon: _buildNavIcon(Icons.podcasts, 1),
-                    label: 'Podcast',
+                    label: 'Podcasts',
                   ),
                   BottomNavigationBarItem(
                     icon: _buildNavIcon(Icons.live_tv, 2),
-                    label: 'Live',
+                    label: 'Vidéos',
                   ),
                   BottomNavigationBarItem(
                     icon: _buildNavIcon(Icons.search, 3),
-                    label: 'Search',
+                    label: 'Recherche',
                   ),
                   BottomNavigationBarItem(
                     icon: _buildNavIcon(Icons.person, 4),
-                    label: 'Profile',
+                    label: 'Compte',
                   ),
                 ],
               ),
@@ -323,7 +323,11 @@ class _HomeState extends State<Home> {
           });
         });
       case 3:
-        return Search();
+        return Search(onBack: () {
+          setState(() {
+            _currentBottomNavIndex = 0;
+          });
+        });
       case 4:
         return Profile(onBack: () {
           setState(() {

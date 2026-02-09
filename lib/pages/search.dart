@@ -19,7 +19,8 @@ import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
 class Search extends StatefulWidget {
-  const Search({super.key});
+  final VoidCallback? onBack;
+  const Search({super.key, this.onBack});
 
   @override
   State<Search> createState() => _SearchState();
@@ -78,7 +79,7 @@ class _SearchState extends State<Search> {
                         ),
                         leading: InkWell(
                           onTap: () {
-                            Navigator.pop(context);
+                            widget.onBack?.call();
                           },
                           child: MyImage(
                               width: 15, height: 15, imagePath: "back.png"),
