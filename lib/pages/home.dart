@@ -242,7 +242,8 @@ class _HomeState extends State<Home> {
               key: drawerkey,
               body: Column(
                 children: [
-                  appBar(),
+                  // Only show appBar for Home page
+                  if (_currentBottomNavIndex == 0) appBar(),
                   Expanded(
                     child: _buildPageContent(),
                   ),

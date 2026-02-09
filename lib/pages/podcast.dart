@@ -110,7 +110,7 @@ class _PodcastState extends State<Podcast> {
               ),
             ],
           ),
-          _buildMusicPanel(context),
+          // MusicPanel now handled by FloatingPlayer in Home
         ],
       ),
     );

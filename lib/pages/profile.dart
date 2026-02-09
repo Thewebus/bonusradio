@@ -40,12 +40,15 @@ class ProfileState extends State<Profile> {
   Future<void> getApi() async {
     await profileProvider.getProfile(context);
 
-    usernameController.text =
-        profileProvider.profileModel.result?[0].fullName.toString() ?? "";
-    emailController.text =
-        profileProvider.profileModel.result?[0].email.toString() ?? "";
-    numberController.text =
-        profileProvider.profileModel.result?[0].mobileNumber.toString() ?? "";
+    if (profileProvider.profileModel.result != null &&
+        profileProvider.profileModel.result!.isNotEmpty) {
+      usernameController.text =
+          profileProvider.profileModel.result?[0].fullName.toString() ?? "";
+      emailController.text =
+          profileProvider.profileModel.result?[0].email.toString() ?? "";
+      numberController.text =
+          profileProvider.profileModel.result?[0].mobileNumber.toString() ?? "";
+    }
   }
 
   @override
@@ -72,7 +75,8 @@ class ProfileState extends State<Profile> {
                     builder: (context, profileprovider, child) {
                   if (profileprovider.loading) {
                     return Utils.pageLoader();
-                  } else {
+                  } else if (profileprovider.profileModel.result != null &&
+                      profileprovider.profileModel.result!.isNotEmpty) {
                     return Positioned.fill(
                       child: Align(
                         alignment: Alignment.bottomCenter,
@@ -89,6 +93,8 @@ class ProfileState extends State<Profile> {
                         ),
                       ),
                     );
+                  } else {
+                    return const SizedBox.shrink();
                   }
                 }),
               ],
@@ -236,11 +242,17 @@ class ProfileState extends State<Profile> {
         showCountryFlag: true,
         showDropdownIcon: false,
         initialCountryCode:
-            profileProvider.profileModel.result?[0].countryName == ""
+            (profileProvider.profileModel.result != null &&
+                        profileProvider.profileModel.result!.isNotEmpty &&
+                        profileProvider.profileModel.result![0].countryName !=
+                            "") ==
+                    false
                 ? Constant.initialCountryCode
-                : profileProvider.profileModel.result?[0].countryName
-                        .toString() ??
-                    Constant.initialCountryCode,
+                : (profileProvider.profileModel.result != null &&
+                        profileProvider.profileModel.result!.isNotEmpty)
+                    ? profileProvider.profileModel.result![0].countryName
+                        .toString()
+                    : Constant.initialCountryCode,
         dropdownTextStyle: Utils.googleFontStyle(
             1, 16, FontStyle.normal, gray, FontWeight.w500),
         keyboardType: TextInputType.number,
