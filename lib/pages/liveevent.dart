@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
-import 'package:yourappname/music/musicdetails.dart';
-import 'package:yourappname/pages/login.dart';
-import 'package:yourappname/pages/nodata.dart';
-import 'package:yourappname/provider/liveeventsprovider.dart';
-import 'package:yourappname/subscription/allpayment.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/constant.dart';
-import 'package:yourappname/utils/customwidget.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/widget/myappbar.dart';
-import 'package:yourappname/widget/mynetworkimg.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/music/musicdetails.dart';
+import 'package:myBonus/pages/login.dart';
+import 'package:myBonus/pages/nodata.dart';
+import 'package:myBonus/provider/liveeventsprovider.dart';
+import 'package:myBonus/subscription/allpayment.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/utils/customwidget.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/myappbar.dart';
+import 'package:myBonus/widget/mynetworkimg.dart';
+import 'package:myBonus/widget/mytext.dart';
 
 class LiveEvent extends StatefulWidget {
   const LiveEvent({super.key});

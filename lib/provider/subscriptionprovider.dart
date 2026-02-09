@@ -1,8 +1,8 @@
-import 'package:yourappname/model/subscriptionmodel.dart';
-import 'package:yourappname/utils/constant.dart';
-import 'package:yourappname/webservice/apiservices.dart';
+import 'package:myBonus/model/subscriptionmodel.dart';
+import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 import 'package:flutter/material.dart';
-import 'package:yourappname/utils/utils.dart';
+import 'package:myBonus/utils/utils.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   SubscriptionModel subscriptionModel = SubscriptionModel();

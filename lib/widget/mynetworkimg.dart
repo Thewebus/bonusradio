@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:yourappname/widget/myimage.dart';
+import 'package:myBonus/widget/myimage.dart';
 
 // ignore: must_be_immutable
 class MyNetworkImage extends StatelessWidget {

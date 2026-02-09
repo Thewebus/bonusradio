@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
-import 'package:yourappname/pages/editprofile.dart';
-import 'package:yourappname/provider/profileprovider.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/constant.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/utils/sharedpref.dart';
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/widget/myappbar.dart';
-import 'package:yourappname/widget/myimage.dart';
-import 'package:yourappname/widget/mynetworkimg.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/pages/editprofile.dart';
+import 'package:myBonus/provider/profileprovider.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/sharedpref.dart';
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/myappbar.dart';
+import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/mynetworkimg.dart';
+import 'package:myBonus/widget/mytext.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});

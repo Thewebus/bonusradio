@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/widget/mytext.dart';
 import '../widget/myimage.dart';
 
 class NoData extends StatelessWidget {

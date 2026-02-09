@@ -1,7 +1,7 @@
-import 'package:yourappname/model/historymodel.dart';
-import 'package:yourappname/webservice/apiservices.dart';
+import 'package:myBonus/model/historymodel.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 import 'package:flutter/material.dart';
-import 'package:yourappname/utils/utils.dart';
+import 'package:myBonus/utils/utils.dart';
 
 class SubHistoryProvider extends ChangeNotifier {
   HistoryModel historyModel = HistoryModel();

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:yourappname/pages/home.dart';
-import 'package:yourappname/pages/intro.dart';
-import 'package:yourappname/provider/generalprovider.dart';
-import 'package:yourappname/utils/adhelper.dart';
-import 'package:yourappname/utils/constant.dart';
-import 'package:yourappname/utils/sharedpref.dart';
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/widget/myimage.dart';
+import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/pages/intro.dart';
+import 'package:myBonus/provider/generalprovider.dart';
+import 'package:myBonus/utils/adhelper.dart';
+import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/utils/sharedpref.dart';
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/myimage.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});

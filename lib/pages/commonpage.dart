@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/utils/sharedpref.dart';
-import 'package:yourappname/utils/utils.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/sharedpref.dart';
+import 'package:myBonus/utils/utils.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:yourappname/widget/myimage.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/mytext.dart';
 
 class CommonPage extends StatefulWidget {
   final String title, url;

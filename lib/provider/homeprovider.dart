@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:yourappname/model/bannermodel.dart' as banner;
-import 'package:yourappname/model/sectionlistmodel.dart' as section;
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/webservice/apiservices.dart';
+import 'package:myBonus/model/bannermodel.dart' as banner;
+import 'package:myBonus/model/sectionlistmodel.dart' as section;
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 
 class HomeProvider extends ChangeNotifier {
   banner.BannerModel bannerModel = banner.BannerModel();

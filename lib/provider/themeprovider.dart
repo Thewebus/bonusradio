@@ -1,4 +1,4 @@
-import 'package:yourappname/utils/constant.dart';
+import 'package:myBonus/utils/constant.dart';
 import 'package:flutter/material.dart';
 
 class ThemeProvider with ChangeNotifier {

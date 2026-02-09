@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:yourappname/pages/selectlanguage.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/utils/sharedpref.dart';
-import 'package:yourappname/widget/mynetworkimg.dart';
-import 'package:yourappname/widget/mytext.dart';
-import 'package:yourappname/model/introscreenmodel.dart';
+import 'package:myBonus/pages/selectlanguage.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/sharedpref.dart';
+import 'package:myBonus/widget/mynetworkimg.dart';
+import 'package:myBonus/widget/mytext.dart';
+import 'package:myBonus/model/introscreenmodel.dart';
 
 class Intro extends StatefulWidget {
   final List<Result>? introList;

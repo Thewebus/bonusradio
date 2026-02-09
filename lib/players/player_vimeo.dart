@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vimeo_video_player/vimeo_video_player.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/utils.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/utils.dart';
 
 class PlayerVimeo extends StatefulWidget {
   final String? videoId, videoUrl, vUploadType, videoThumb;

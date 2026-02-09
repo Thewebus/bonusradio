@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:yourappname/model/sectiondetailmodel.dart' as sectiondetail;
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/webservice/apiservices.dart';
+import 'package:myBonus/model/sectiondetailmodel.dart' as sectiondetail;
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 
 class ViewAllProvider extends ChangeNotifier {
   /* Section Detail Field */

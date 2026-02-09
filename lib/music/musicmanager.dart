@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:yourappname/pages/home.dart';
-import 'package:yourappname/music/musicdetails.dart';
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/widget/musicutils.dart';
+import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/music/musicdetails.dart';
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/musicutils.dart';
 
 class MusicManager {
   List<AudioSource> playlist = [];

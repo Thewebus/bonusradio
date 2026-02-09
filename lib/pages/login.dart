@@ -9,17 +9,17 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:yourappname/pages/home.dart';
-import 'package:yourappname/pages/normallogin.dart';
-import 'package:yourappname/pages/otp.dart';
-import 'package:yourappname/provider/generalprovider.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/constant.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/utils/sharedpref.dart';
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/widget/myimage.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/pages/normallogin.dart';
+import 'package:myBonus/pages/otp.dart';
+import 'package:myBonus/provider/generalprovider.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/sharedpref.dart';
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/mytext.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class Login extends StatefulWidget {

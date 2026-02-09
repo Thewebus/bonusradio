@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:yourappname/model/notificationlistmodel.dart';
-import 'package:yourappname/webservice/apiservices.dart';
+import 'package:myBonus/model/notificationlistmodel.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 
 class NotificationProvider extends ChangeNotifier {
   NotificationModel notificationModel = NotificationModel();

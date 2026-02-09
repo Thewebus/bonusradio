@@ -5,14 +5,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
-import 'package:yourappname/pages/home.dart';
-import 'package:yourappname/provider/generalprovider.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/constant.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/utils/utils.dart';
-import 'package:yourappname/widget/myimage.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/provider/generalprovider.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/mytext.dart';
 
 class OTP extends StatefulWidget {
   final String fullnumber, countrycode, countryName, number;

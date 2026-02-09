@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:yourappname/utils/color.dart';
-import 'package:yourappname/utils/dimens.dart';
-import 'package:yourappname/widget/myimage.dart';
-import 'package:yourappname/widget/mytext.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/mytext.dart';
 
 class MyAppbar extends StatelessWidget {
   final dynamic onBack;
