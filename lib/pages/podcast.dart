@@ -20,7 +20,8 @@ import 'package:myBonus/widget/mytext.dart';
 import 'package:myBonus/model/podcastsectionmodel.dart' as podcastsection;
 
 class Podcast extends StatefulWidget {
-  const Podcast({super.key});
+  final VoidCallback? onBack;
+  const Podcast({super.key, this.onBack});
 
   @override
   State<Podcast> createState() => _PodcastState();
@@ -82,7 +83,7 @@ class _PodcastState extends State<Podcast> {
                 isSimpleappbar: 1,
                 isMultiLang: true,
                 onBack: () {
-                  Navigator.pop(context);
+                  widget.onBack?.call();
                 },
               ),
               Expanded(

@@ -15,7 +15,8 @@ import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
 class Profile extends StatefulWidget {
-  const Profile({super.key});
+  final VoidCallback? onBack;
+  const Profile({super.key, this.onBack});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -66,7 +67,7 @@ class ProfileState extends State<Profile> {
                   title: "profile",
                   isMultiLang: true,
                   onBack: () {
-                    Navigator.of(context).pop(false);
+                    widget.onBack?.call();
                   },
                   icon: "back,png",
                 ),

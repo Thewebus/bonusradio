@@ -296,13 +296,21 @@ class _HomeState extends State<Home> {
       case 0:
         return _buildHomeContent();
       case 1:
-        return const Podcast();
+        return Podcast(onBack: () {
+          setState(() {
+            _currentBottomNavIndex = 0;
+          });
+        });
       case 2:
-        return const LiveEvent();
+        return LiveEvent();
       case 3:
-        return const Search();
+        return Search();
       case 4:
-        return const Profile();
+        return Profile(onBack: () {
+          setState(() {
+            _currentBottomNavIndex = 0;
+          });
+        });
       default:
         return _buildHomeContent();
     }
