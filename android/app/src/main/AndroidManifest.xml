@@ -22,7 +22,7 @@
    <!-- If Use Stripe :======> android:enableOnBackInvokedCallback="false" 
         If NOT Use Stripe :==> android:enableOnBackInvokedCallback="true" -->
    <application
-        android:label="myBonus"
+        android:label="BONUS RADIO"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
