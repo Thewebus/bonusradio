@@ -65,6 +65,10 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
           bottom: 76, // leave space above bottom nav
           child: GestureDetector(
             onTap: () async {
+              // Expand the miniplayer to full height before opening full player
+              try {
+                playerExpandProgress.value = MediaQuery.of(context).size.height;
+              } catch (_) {}
               // Open full player page
               await Navigator.push(
                 context,
@@ -72,6 +76,10 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                   builder: (context) => const MusicDetails(ishomepage: false),
                 ),
               );
+              // When returning, collapse back to mini height
+              try {
+                playerExpandProgress.value = playerMinHeight;
+              } catch (_) {}
               setState(() {});
             },
             child: Material(

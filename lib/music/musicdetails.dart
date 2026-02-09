@@ -214,10 +214,19 @@ class _MusicDetailsState extends State<MusicDetails>
                     elevation: 0,
                     titleSpacing: 0,
                     automaticallyImplyLeading: false,
-                    leading: RotatedBox(
+                    leading: IconButton(
+                      icon: RotatedBox(
                         quarterTurns: 3,
                         child: MyImage(
-                            width: 15, height: 15, imagePath: "back.png")),
+                          width: 15,
+                          height: 15,
+                          imagePath: "back.png",
+                        ),
+                      ),
+                      onPressed: () {
+                        if (Navigator.canPop(context)) Navigator.pop(context);
+                      },
+                    ),
                     title: MyText(
                       color: white,
                       text: "Now Playing",
