@@ -255,30 +255,32 @@ class _HomeState extends State<Home> {
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 selectedItemColor: colorPrimary,
                 unselectedItemColor: gray,
+                elevation: 8,
+                enableFeedback: true,
                 onTap: (index) {
                   setState(() {
                     _currentBottomNavIndex = index;
                   });
                 },
-                items: const [
+                items: [
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
+                    icon: _buildNavIcon(Icons.home, 0),
                     label: 'Home',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.podcasts),
+                    icon: _buildNavIcon(Icons.podcasts, 1),
                     label: 'Podcast',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.live_tv),
+                    icon: _buildNavIcon(Icons.live_tv, 2),
                     label: 'Live',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.search),
+                    icon: _buildNavIcon(Icons.search, 3),
                     label: 'Search',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
+                    icon: _buildNavIcon(Icons.person, 4),
                     label: 'Profile',
                   ),
                 ],
@@ -287,6 +289,19 @@ class _HomeState extends State<Home> {
             const FloatingPlayer(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavIcon(IconData icon, int index) {
+    final isSelected = _currentBottomNavIndex == index;
+    return AnimatedScale(
+      scale: isSelected ? 1.15 : 1.0,
+      duration: const Duration(milliseconds: 300),
+      child: AnimatedOpacity(
+        opacity: isSelected ? 1.0 : 0.6,
+        duration: const Duration(milliseconds: 300),
+        child: Icon(icon),
       ),
     );
   }
@@ -302,7 +317,11 @@ class _HomeState extends State<Home> {
           });
         });
       case 2:
-        return LiveEvent();
+        return LiveEvent(onBack: () {
+          setState(() {
+            _currentBottomNavIndex = 0;
+          });
+        });
       case 3:
         return Search();
       case 4:
