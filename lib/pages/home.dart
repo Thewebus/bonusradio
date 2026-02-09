@@ -18,6 +18,7 @@ import 'package:myBonus/pages/viewall.dart';
 import 'package:myBonus/pages/radiobyid.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/commonpage.dart';
+import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/notification.dart';
 import 'package:myBonus/pages/profile.dart';
@@ -65,6 +66,7 @@ class _HomeState extends State<Home> {
   double ratingValue = 0.0;
   CarouselSliderController pageController = CarouselSliderController();
   List<AudioSource> playlist = [];
+  int _currentBottomNavIndex = 0;
 
   /* Provider */
   late GeneralProvider generalProvider;
@@ -237,62 +239,46 @@ class _HomeState extends State<Home> {
           children: [
             Scaffold(
               key: drawerkey,
-              drawerEnableOpenDragGesture: true,
-              drawer: buildDrawer(),
               body: Column(
                 children: [
                   appBar(),
-                  Consumer<HomeProvider>(
-                      builder: (context, homeprovider, child) {
-                    if ((homeprovider.bannerModel.result == null ||
-                            (homeprovider.bannerModel.result?.length ?? 0) ==
-                                0) &&
-                        (homeprovider.sectionList?.length ?? 0) == 0 &&
-                        !homeprovider.bannerLoading &&
-                        !homeprovider.sectionLoading) {
-                      return const Center(
-                        child: NoData(text: "", subTitle: ""),
-                      );
-                    } else {
-                      return Expanded(
-                        child: RefreshIndicator(
-                          backgroundColor: white,
-                          color: colorAccent,
-                          displacement: 70,
-                          edgeOffset: 1.0,
-                          triggerMode: RefreshIndicatorTriggerMode.anywhere,
-                          strokeWidth: 3,
-                          onRefresh: () async {
-                            homeProvider.clearProvider();
-                            _fetchData(0);
-                          },
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            controller: _scrollController,
-                            physics: const BouncingScrollPhysics(),
-                            child: Column(
-                              children: [
-                                banner(),
-                                buildPage(),
-                                Utils.showBannerAd(context),
-                                ValueListenableBuilder(
-                                  valueListenable: currentlyPlaying,
-                                  builder: (BuildContext context,
-                                      AudioPlayer? audioObject, Widget? child) {
-                                    if (audioObject?.audioSource != null) {
-                                      return const SizedBox(height: 100);
-                                    } else {
-                                      return const SizedBox.shrink();
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                  }),
+                  Expanded(
+                    child: _buildPageContent(),
+                  ),
+                ],
+              ),
+              bottomNavigationBar: BottomNavigationBar(
+                currentIndex: _currentBottomNavIndex,
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                selectedItemColor: colorPrimary,
+                unselectedItemColor: gray,
+                onTap: (index) {
+                  setState(() {
+                    _currentBottomNavIndex = index;
+                  });
+                },
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.podcasts),
+                    label: 'Podcast',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.live_tv),
+                    label: 'Live',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.search),
+                    label: 'Search',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person),
+                    label: 'Profile',
+                  ),
                 ],
               ),
             ),
@@ -301,6 +287,75 @@ class _HomeState extends State<Home> {
         ),
       ),
     );
+  }
+
+  Widget _buildPageContent() {
+    switch (_currentBottomNavIndex) {
+      case 0:
+        return _buildHomeContent();
+      case 1:
+        return const Podcast();
+      case 2:
+        return const LiveEvent();
+      case 3:
+        return const Search();
+      case 4:
+        return const Profile();
+      default:
+        return _buildHomeContent();
+    }
+  }
+
+  Widget _buildHomeContent() {
+    return Consumer<HomeProvider>(
+        builder: (context, homeprovider, child) {
+      if ((homeprovider.bannerModel.result == null ||
+              (homeprovider.bannerModel.result?.length ?? 0) ==
+                  0) &&
+          (homeprovider.sectionList?.length ?? 0) == 0 &&
+          !homeprovider.bannerLoading &&
+          !homeprovider.sectionLoading) {
+        return const Center(
+          child: NoData(text: "", subTitle: ""),
+        );
+      } else {
+        return RefreshIndicator(
+          backgroundColor: white,
+          color: colorAccent,
+          displacement: 70,
+          edgeOffset: 1.0,
+          triggerMode: RefreshIndicatorTriggerMode.anywhere,
+          strokeWidth: 3,
+          onRefresh: () async {
+            homeProvider.clearProvider();
+            _fetchData(0);
+          },
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                banner(),
+                buildPage(),
+                Utils.showBannerAd(context),
+                ValueListenableBuilder(
+                  valueListenable: currentlyPlaying,
+                  builder: (BuildContext context,
+                      AudioPlayer? audioObject, Widget? child) {
+                    if (audioObject?.audioSource != null) {
+                      return const SizedBox(height: 100);
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    });
   }
 
   /* Drawer & AppBar Start */
@@ -958,9 +1013,14 @@ class _HomeState extends State<Home> {
                 const SystemUiOverlayStyle(statusBarColor: colorPrimary),
             titleSpacing: 10,
             leading: IconButton(
-              icon: const Icon(Icons.menu, color: white),
+              icon: const Icon(Icons.settings, color: white),
               onPressed: () {
-                drawerkey.currentState?.openDrawer();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Settings(),
+                  ),
+                );
               },
             ),
             title: Row(
