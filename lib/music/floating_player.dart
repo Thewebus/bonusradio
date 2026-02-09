@@ -36,6 +36,10 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
     return ValueListenableBuilder<AudioPlayer?>(
       valueListenable: currentlyPlaying,
       builder: (context, player, child) {
+        // Ensure _visible is true if player exists and current source is set
+        if (player != null && player.sequenceState?.currentSource != null && !_visible) {
+          _visible = true;
+        }
         if (player == null || !_visible) return const SizedBox.shrink();
 
         final tag = player.sequenceState?.currentSource?.tag;
@@ -131,15 +135,21 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(player.playing ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 34, color: colorPrimary),
-                      onPressed: () {
-                        if (player.playing) {
-                          player.pause();
-                        } else {
-                          player.play();
-                        }
-                        setState(() {});
+                    StreamBuilder<bool>(
+                      stream: player.playingStream,
+                      builder: (context, snapshot) {
+                        final isPlaying = snapshot.data ?? player.playing ?? false;
+                        return IconButton(
+                          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 34, color: colorPrimary),
+                          onPressed: () {
+                            if (isPlaying) {
+                              player.pause();
+                            } else {
+                              player.play();
+                            }
+                            setState(() {});
+                          },
+                        );
                       },
                     ),
                     IconButton(
