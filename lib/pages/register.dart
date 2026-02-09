@@ -220,14 +220,14 @@ class RegisterState extends State<Register> {
         keyboardType: textInputType,
         textInputAction: textInputAction,
         showCountryFlag: true,
-        showDropdownIcon: false,
+        showDropdownIcon: true,
         initialCountryCode: Constant.initialCountryCode,
         dropdownTextStyle: GoogleFonts.inter(
             fontSize: Dimens.textMedium,
             fontStyle: FontStyle.normal,
             letterSpacing: 1.0,
-            color: gray,
-            fontWeight: FontWeight.w400),
+            color: colorPrimary,
+            fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           prefixIcon: Icon(icon),
           suffixIcon: isPassword == true

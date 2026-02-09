@@ -1106,10 +1106,9 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(
                               builder: (context) => const Login()));
                     } else {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Profile()));
+                      setState(() {
+                        _currentBottomNavIndex = 4;
+                      });
                     }
                   },
                   child: Constant.userID == null

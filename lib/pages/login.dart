@@ -183,10 +183,10 @@ class _LoginState extends State<Login> {
         style: Utils.googleFontStyle(1, 16, FontStyle.normal,
             Theme.of(context).colorScheme.surface, FontWeight.w500),
         showCountryFlag: true,
-        showDropdownIcon: false,
+        showDropdownIcon: true,
         initialCountryCode: Constant.initialCountryCode,
         dropdownTextStyle: Utils.googleFontStyle(
-            1, 16, FontStyle.normal, gray, FontWeight.w500),
+            1, 16, FontStyle.normal, colorPrimary, FontWeight.w600),
         keyboardType: TextInputType.number,
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
