@@ -90,7 +90,8 @@ class _SettingsState extends State<Settings> {
                               color: colorPrimary,
                             ),
                             SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.05),
+                                width:
+                                    MediaQuery.of(context).size.width * 0.05),
                             MyText(
                               color: Theme.of(context).colorScheme.surface,
                               text: "darkmode",
@@ -532,8 +533,7 @@ class _SettingsState extends State<Settings> {
                       Icons.star,
                       color: colorPrimary,
                     ),
-                    half:
-                        const Icon(Icons.star_half, color: colorPrimary),
+                    half: const Icon(Icons.star_half, color: colorPrimary),
                     empty: const Icon(Icons.star_border, color: lightgray),
                   ),
                   onRatingUpdate: (double value) {
@@ -825,8 +825,7 @@ class _SettingsState extends State<Settings> {
             return Column(
               children: [
                 _buildSettingItem(
-                  generalProvider.socialLinkModel.result?[position].image ??
-                      '',
+                  generalProvider.socialLinkModel.result?[position].image ?? '',
                   generalProvider.socialLinkModel.result?[position].name ?? '',
                   () {
                     Navigator.of(context).push(

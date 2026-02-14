@@ -16,7 +16,8 @@ import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
 class LiveEvent extends StatefulWidget {
-  const LiveEvent({super.key});
+  final VoidCallback? onBack;
+  const LiveEvent({super.key, this.onBack});
 
   @override
   State<LiveEvent> createState() => _LiveEventState();
@@ -77,7 +78,7 @@ class _LiveEventState extends State<LiveEvent> {
             isSimpleappbar: 1,
             isMultiLang: true,
             onBack: () {
-              Navigator.pop(context);
+              widget.onBack?.call();
             },
           ),
           Expanded(
