@@ -4,8 +4,9 @@ flutter_launcher_icons:
   image_path: "assets/appicon/appicon.png"
   min_sdk_android: 21
   # Adaptive icon settings — control foreground (image) and background (color or image)
-  adaptive_icon_foreground: "assets/appicon/appicon.png"
-  adaptive_icon_background: "#00000000"
+  adaptive_icon_foreground: "assets/appicon/appicon_fg.png"
+  adaptive_icon_background: "assets/appicon/appicon_bg.png"
+  adaptive_icon_padding: 0
   remove_alpha_ios: true
   web:
     generate: true

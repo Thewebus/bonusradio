@@ -103,9 +103,11 @@ class _HomeState extends State<Home> {
     }
     /* Radio Api */
     try {
-      _fetchData(0);
+      await _fetchData(0);
       await generalProvider.getPages();
       await generalProvider.getSocialLink();
+      // Auto play first radio after data is loaded
+      _autoPlayFirstRadio();
       homeProvider.setLoading(false);
     } catch (e) {
       printLog("Error Api ====>${e.toString()}");
@@ -221,6 +223,37 @@ class _HomeState extends State<Home> {
     homeProvider.setLoadMore(false);
   }
 
+  void _autoPlayFirstRadio() {
+    try {
+      if (homeProvider.bannerModel.result != null &&
+          (homeProvider.bannerModel.result?.length ?? 0) > 0) {
+        final firstRadio = homeProvider.bannerModel.result?[0];
+        if (firstRadio != null && firstRadio.type == 1) {
+          // Type 1 = Radio
+          printLog("Auto playing first radio: ${firstRadio.name}");
+          Utils.playAudio(
+            context,
+            "radio",
+            firstRadio.isPremium ?? 0,
+            firstRadio.isBuy ?? 0,
+            firstRadio.image.toString(),
+            firstRadio.name.toString(),
+            'homebanner',
+            firstRadio.songUrl.toString(),
+            firstRadio.name.toString(),
+            firstRadio.name.toString(),
+            firstRadio.id.toString(),
+            "",
+            0,
+            homeProvider.bannerModel.result?.toList() ?? [],
+          );
+        }
+      }
+    } catch (e) {
+      printLog("Error auto playing first radio: $e");
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -273,7 +306,7 @@ class _HomeState extends State<Home> {
                   ),
                   BottomNavigationBarItem(
                     icon: _buildNavIcon(Icons.live_tv, 2),
-                    label: 'Vidéos',
+                    label: 'Films',
                   ),
                   BottomNavigationBarItem(
                     icon: _buildNavIcon(Icons.search, 3),
@@ -1664,7 +1697,7 @@ class _HomeState extends State<Home> {
                                       SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
-                                                0.50,
+                                                0.40,
                                         child: MyText(
                                           color: white,
                                           text: homeprovider.bannerModel
@@ -1687,19 +1720,24 @@ class _HomeState extends State<Home> {
                                           fontstyle: FontStyle.normal,
                                         ),
                                       ),
-                                      MyText(
-                                        color: white,
-                                        text: homeprovider.bannerModel
-                                                .result?[index].artistName
-                                                .toString() ??
-                                            "",
-                                        textalign: TextAlign.center,
-                                        fontsize: Dimens.textSmall,
-                                        inter: 1,
-                                        maxline: 2,
-                                        fontwaight: FontWeight.w600,
-                                        overflow: TextOverflow.ellipsis,
-                                        fontstyle: FontStyle.normal,
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.40,
+                                        child: MyText(
+                                          color: white,
+                                          text: homeprovider.bannerModel
+                                                  .result?[index].artistName
+                                                  .toString() ??
+                                              "",
+                                          textalign: TextAlign.left,
+                                          fontsize: Dimens.textSmall,
+                                          inter: 1,
+                                          maxline: 2,
+                                          fontwaight: FontWeight.w600,
+                                          overflow: TextOverflow.ellipsis,
+                                          fontstyle: FontStyle.normal,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1721,10 +1759,142 @@ class _HomeState extends State<Home> {
                                             width: 20,
                                           ),
                                         )
-                                      : MyImage(
-                                          imagePath: "ic_play.png",
-                                          height: 35,
-                                          width: 35,
+                                      : Flexible(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              // Bouton "Ecouter" - Actif
+                                              Flexible(
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    gradient:
+                                                        const LinearGradient(
+                                                      colors: [
+                                                        colorAccent,
+                                                        colorPrimary
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: colorPrimary
+                                                            .withOpacity(0.3),
+                                                        blurRadius: 8,
+                                                        offset:
+                                                            const Offset(0, 2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.play_arrow,
+                                                        color: white,
+                                                        size: 16,
+                                                      ),
+                                                      const SizedBox(width: 3),
+                                                      Flexible(
+                                                        child: MyText(
+                                                          color: white,
+                                                          text: "Écouter",
+                                                          fontsize: Dimens
+                                                              .textExtraSmall,
+                                                          fontwaight:
+                                                              FontWeight.w600,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              // Bouton "Regarder" - Actif
+                                              Flexible(
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _currentBottomNavIndex =
+                                                          2;
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      gradient:
+                                                          const LinearGradient(
+                                                        colors: [
+                                                          colorAccent,
+                                                          colorPrimary
+                                                        ],
+                                                        begin:
+                                                            Alignment.topLeft,
+                                                        end: Alignment
+                                                            .bottomRight,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: colorPrimary
+                                                              .withOpacity(0.3),
+                                                          blurRadius: 8,
+                                                          offset: const Offset(
+                                                              0, 2),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.videocam,
+                                                          color: white,
+                                                          size: 16,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 3),
+                                                        Flexible(
+                                                          child: MyText(
+                                                            color: white,
+                                                            text: "Regarder",
+                                                            fontsize: Dimens
+                                                                .textExtraSmall,
+                                                            fontwaight:
+                                                                FontWeight.w600,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                 ],
                               ),

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.yourappname" 
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.example.yourappname"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -19,18 +18,9 @@
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
-   <!-- If Use Stripe :======> android:enableOnBackInvokedCallback="false" 
+    <!-- If Use Stripe :======> android:enableOnBackInvokedCallback="false" 
         If NOT Use Stripe :==> android:enableOnBackInvokedCallback="true" -->
-   <application
-        android:label="BONUS RADIO"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true"
-        android:largeHeap="true"
-        android:enableOnBackInvokedCallback="false"
-        android:hardwareAccelerated="true"
-        tools:replace="android:label" >
+    <application android:label="Bonus Radio" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true" android:largeHeap="true" android:enableOnBackInvokedCallback="false" android:hardwareAccelerated="true" tools:replace="android:label">
 
         <!-- <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
@@ -39,23 +29,12 @@
             </intent-filter>
         </receiver> -->
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:resizeableActivity="true"
-            android:supportsPictureInPicture="false"
-            android:windowSoftInputMode="adjustResize">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:resizeableActivity="true" android:supportsPictureInPicture="false" android:windowSoftInputMode="adjustResize">
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user
                  while the Flutter UI initializes. After that, this theme continues
                  to determine the Window background behind the Flutter UI. -->
-            <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"/>
+            <meta-data android:name="io.flutter.embedding.android.NormalTheme" android:resource="@style/NormalTheme"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -65,11 +44,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        
+
         <!-- Set up the Sign in with Apple activity, such that it's callable from the browser-redirect -->
-        <activity
-            android:name="com.aboutyou.dart_packages.sign_in_with_apple.SignInWithAppleCallback"
-            android:exported="true">
+        <activity android:name="com.aboutyou.dart_packages.sign_in_with_apple.SignInWithAppleCallback" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -80,31 +57,24 @@
             </intent-filter>
         </activity>
 
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3579016098566983~2557537428"/>
+        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3579016098566983~2557537428"/>
 
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />   
-            
+        <meta-data android:name="flutterEmbedding" android:value="2" />
+
         <!-- ============================ Music Player ============================ -->
-            <!-- ADD THIS "SERVICE" element -->
-            <service android:name="com.ryanheise.audioservice.AudioService"
-                android:foregroundServiceType="mediaPlayback"
-                android:exported="true" >
-              <intent-filter>
+        <!-- ADD THIS "SERVICE" element -->
+        <service android:name="com.ryanheise.audioservice.AudioService" android:foregroundServiceType="mediaPlayback" android:exported="true">
+            <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
-              </intent-filter>
-            </service>
+            </intent-filter>
+        </service>
 
-            <!-- ADD THIS "RECEIVER" element -->
-            <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver"
-                android:exported="true">
-              <intent-filter>
+        <!-- ADD THIS "RECEIVER" element -->
+        <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver" android:exported="true">
+            <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
-              </intent-filter>
-            </receiver> 
+            </intent-filter>
+        </receiver>
         <!-- ============================ Music Player ============================ -->
 
     </application>

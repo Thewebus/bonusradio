@@ -9,6 +9,45 @@ import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
+// ============= CONFIGURATION DE LA WAVEFORM =============
+class WaveformConfig {
+  // Couleurs
+  static const bool useMultiColor =
+      true; // true = multicolore, false = couleur unie
+  static const Color solidColor =
+      Colors.red; // Couleur unie (si useMultiColor = false)
+  static const List<Color> multiColors = [
+    Color(0xFF00F5FF), // Cyan
+    Color(0xFFFF006E), // Rose
+    Color(0xFFFFBE0B), // Orange
+    Color(0xFF8338EC), // Violet
+    Color(0xFF00D9FF), // Bleu
+  ];
+
+  // Opacité
+  static const double baseOpacity = 0.1; // Opacité de base (0.0 à 1.0)
+  static const double peakOpacity = 0.1; // Opacité maximale lors des pics
+
+  // Animation
+  static const int animationSpeed =
+      100; // Vitesse en millisecondes (plus petit = plus rapide)
+  static const int waveUpdateInterval = 60; // Fréquence de mise à jour (ms)
+
+  // Barres
+  static const int barCount = 50; // Nombre de barres
+  static const double barWidthRatio = 0.5; // Largeur des barres (0.0 à 1.0)
+  static const double minBarHeight =
+      0.1; // Hauteur minimale des barres (0.0 à 1.0)
+  static const double maxBarHeight =
+      1.0; // Hauteur maximale des barres (0.0 à 1.0)
+
+  // Réactivité
+  static const double bassBoost =
+      1.5; // Amplification des basses (1.0 = normal)
+  static const double smoothness = 0.3; // Lissage de l'animation (0.0 à 1.0)
+}
+// =========================================================
+
 class FloatingPlayer extends StatefulWidget {
   const FloatingPlayer({super.key});
 
@@ -18,26 +57,89 @@ class FloatingPlayer extends StatefulWidget {
 
 class _WaveAnimation extends StatefulWidget {
   final bool isPlaying;
-  
-  const _WaveAnimation({required this.isPlaying});
+  final AudioPlayer? player;
+
+  const _WaveAnimation({required this.isPlaying, this.player});
 
   @override
   State<_WaveAnimation> createState() => _WaveAnimationState();
 }
 
-class _WaveAnimationState extends State<_WaveAnimation> with SingleTickerProviderStateMixin {
+class _WaveAnimationState extends State<_WaveAnimation>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  final math.Random _random = math.Random();
+  final List<double> _barHeights = [];
+  final List<double> _targetHeights = [];
 
   @override
   void initState() {
     super.initState();
+    // Initialiser les hauteurs des barres
+    for (int i = 0; i < WaveformConfig.barCount; i++) {
+      _barHeights.add(WaveformConfig.minBarHeight);
+      _targetHeights.add(WaveformConfig.minBarHeight);
+    }
+
     _controller = AnimationController(
-      duration: const Duration(seconds: 4),
+      duration: Duration(milliseconds: WaveformConfig.animationSpeed),
       vsync: this,
     );
+
     if (widget.isPlaying) {
       _controller.repeat();
+      _startWaveformUpdates();
     }
+  }
+
+  void _startWaveformUpdates() {
+    Future.delayed(Duration(milliseconds: WaveformConfig.waveUpdateInterval),
+        () {
+      if (mounted && widget.isPlaying) {
+        _updateWaveform();
+        _startWaveformUpdates();
+      }
+    });
+  }
+
+  void _updateWaveform() {
+    setState(() {
+      for (int i = 0; i < WaveformConfig.barCount; i++) {
+        // Simuler des variations réalistes basées sur la musique
+        final bassFrequency =
+            i < WaveformConfig.barCount * 0.2; // Premières 20% = basses
+        final midFrequency = i >= WaveformConfig.barCount * 0.2 &&
+            i < WaveformConfig.barCount * 0.7;
+        final highFrequency = i >= WaveformConfig.barCount * 0.7;
+
+        double amplitude;
+        if (bassFrequency) {
+          // Basses: variations plus amples et plus lentes
+          amplitude = _random.nextDouble() * WaveformConfig.bassBoost;
+        } else if (midFrequency) {
+          // Médiums: variations modérées
+          amplitude = _random.nextDouble() * 0.8;
+        } else {
+          // Aigus: variations rapides et légères
+          amplitude = _random.nextDouble() * 0.6;
+        }
+
+        // Ajouter des pics occasionnels pour simuler les beats
+        if (_random.nextDouble() > 0.85) {
+          amplitude *= 1.5;
+        }
+
+        final targetHeight = WaveformConfig.minBarHeight +
+            (amplitude *
+                (WaveformConfig.maxBarHeight - WaveformConfig.minBarHeight));
+
+        _targetHeights[i] = targetHeight;
+
+        // Lissage de l'animation
+        _barHeights[i] = _barHeights[i] +
+            ((_targetHeights[i] - _barHeights[i]) * WaveformConfig.smoothness);
+      }
+    });
   }
 
   @override
@@ -45,8 +147,14 @@ class _WaveAnimationState extends State<_WaveAnimation> with SingleTickerProvide
     super.didUpdateWidget(oldWidget);
     if (widget.isPlaying && !_controller.isAnimating) {
       _controller.repeat();
+      _startWaveformUpdates();
     } else if (!widget.isPlaying && _controller.isAnimating) {
       _controller.stop();
+      // Réinitialiser les barres
+      for (int i = 0; i < WaveformConfig.barCount; i++) {
+        _barHeights[i] = WaveformConfig.minBarHeight;
+        _targetHeights[i] = WaveformConfig.minBarHeight;
+      }
     }
   }
 
@@ -62,9 +170,8 @@ class _WaveAnimationState extends State<_WaveAnimation> with SingleTickerProvide
       animation: _controller,
       builder: (context, child) {
         return CustomPaint(
-          painter: WavePainter(
-            progress: _controller.value,
-            color: colorPrimary.withOpacity(0.1),
+          painter: RealtimeWaveformPainter(
+            barHeights: _barHeights,
           ),
           child: const SizedBox.expand(),
         );
@@ -73,46 +180,56 @@ class _WaveAnimationState extends State<_WaveAnimation> with SingleTickerProvide
   }
 }
 
-class WavePainter extends CustomPainter {
-  final double progress;
-  final Color color;
+class RealtimeWaveformPainter extends CustomPainter {
+  final List<double> barHeights;
 
-  WavePainter({required this.progress, required this.color});
+  RealtimeWaveformPainter({required this.barHeights});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+    final barWidth = size.width / WaveformConfig.barCount;
+    final centerY = size.height / 2;
 
-    final path = Path();
-    const waveCount = 3;
-    final waveWidth = size.width / waveCount;
-    const waveHeight = 4.0;
-
-    path.moveTo(0, size.height / 2);
-
-    for (int i = 0; i <= waveCount * 2; i++) {
-      final waveX = i * waveWidth / 2;
-      final waveY = size.height / 2 +
-          math.sin((i * 1.5 + progress * 4 * math.pi)) * waveHeight;
-      if (i == 0) {
-        path.moveTo(waveX, waveY);
+    for (int i = 0; i < barHeights.length; i++) {
+      // Déterminer la couleur
+      Color barColor;
+      if (WaveformConfig.useMultiColor) {
+        final colorIndex = i % WaveformConfig.multiColors.length;
+        barColor = WaveformConfig.multiColors[colorIndex];
       } else {
-        path.lineTo(waveX, waveY);
+        barColor = WaveformConfig.solidColor;
       }
+
+      // Calculer l'opacité basée sur la hauteur (plus haut = plus opaque)
+      final heightRatio = barHeights[i] / WaveformConfig.maxBarHeight;
+      final opacity = WaveformConfig.baseOpacity +
+          (heightRatio *
+              (WaveformConfig.peakOpacity - WaveformConfig.baseOpacity));
+
+      final height = barHeights[i] * size.height;
+
+      final paint = Paint()
+        ..color = barColor.withOpacity(opacity.clamp(0.0, 1.0))
+        ..style = PaintingStyle.fill
+        ..strokeCap = StrokeCap.round;
+
+      // Dessiner la barre (rectangle arrondi)
+      final barRect = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(i * barWidth + barWidth / 2, centerY),
+          width: barWidth * WaveformConfig.barWidthRatio,
+          height: height,
+        ),
+        Radius.circular(barWidth * 0.4),
+      );
+
+      canvas.drawRRect(barRect, paint);
     }
-
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(WavePainter oldDelegate) {
-    return oldDelegate.progress != progress;
+  bool shouldRepaint(RealtimeWaveformPainter oldDelegate) {
+    return true; // Toujours repeindre pour l'animation en temps réel
   }
 }
 
@@ -138,7 +255,9 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
       valueListenable: currentlyPlaying,
       builder: (context, player, child) {
         // Ensure _visible is true if player exists and current source is set
-        if (player != null && player.sequenceState?.currentSource != null && !_visible) {
+        if (player != null &&
+            player.sequenceState?.currentSource != null &&
+            !_visible) {
           _visible = true;
         }
         if (player == null || !_visible) return const SizedBox.shrink();
@@ -197,19 +316,24 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                   StreamBuilder<bool>(
                     stream: player.playingStream,
                     builder: (context, snapshot) {
-                      final isPlaying = snapshot.data ?? player.playing ?? false;
+                      final isPlaying =
+                          snapshot.data ?? player.playing ?? false;
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: SizedBox(
                           height: 70,
-                          child: _WaveAnimation(isPlaying: isPlaying),
+                          child: _WaveAnimation(
+                            isPlaying: isPlaying,
+                            player: player,
+                          ),
                         ),
                       );
                     },
                   ),
                   // Main content
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -221,8 +345,15 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                             width: 54,
                             height: 54,
                             child: artUri.isNotEmpty
-                                ? MyNetworkImage(imgWidth: 54, imgHeight: 54, fit: BoxFit.cover, imageUrl: artUri)
-                                : MyImage(width: 54, height: 54, imagePath: 'appicon.png'),
+                                ? MyNetworkImage(
+                                    imgWidth: 54,
+                                    imgHeight: 54,
+                                    fit: BoxFit.cover,
+                                    imageUrl: artUri)
+                                : MyImage(
+                                    width: 54,
+                                    height: 54,
+                                    imagePath: 'appicon.png'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -232,7 +363,8 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               MyText(
-                                color: Theme.of(context).colorScheme.onBackground,
+                                color:
+                                    Theme.of(context).colorScheme.onBackground,
                                 text: title,
                                 multilanguage: false,
                                 fontsize: 14,
@@ -242,7 +374,10 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                               ),
                               const SizedBox(height: 4),
                               MyText(
-                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.7),
                                 text: subtitle,
                                 multilanguage: false,
                                 fontsize: 12,
@@ -256,9 +391,15 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                         StreamBuilder<bool>(
                           stream: player.playingStream,
                           builder: (context, snapshot) {
-                            final isPlaying = snapshot.data ?? player.playing ?? false;
+                            final isPlaying =
+                                snapshot.data ?? player.playing ?? false;
                             return IconButton(
-                              icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill, size: 34, color: colorPrimary),
+                              icon: Icon(
+                                  isPlaying
+                                      ? Icons.pause_circle_filled
+                                      : Icons.play_circle_fill,
+                                  size: 34,
+                                  color: colorPrimary),
                               onPressed: () {
                                 if (isPlaying) {
                                   player.pause();
