@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -52,10 +53,10 @@ class MusicDetails extends StatefulWidget {
 }
 
 class _MusicDetailsState extends State<MusicDetails>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   late MusicDetailProvider musicDetailProvider;
-  final ScrollController _scrollController = ScrollController();
   final commentController = TextEditingController();
+  late AnimationController _bounceController;
 
   @override
   void initState() {
@@ -65,11 +66,18 @@ class _MusicDetailsState extends State<MusicDetails>
     ambiguate(WidgetsBinding.instance)?.addObserver(this);
     SystemChrome.setSystemUIOverlayStyle(
         const SystemUiOverlayStyle(statusBarColor: black));
+
+    // Initialize bounce animation controller
+    _bounceController = AnimationController(
+      duration: const Duration(milliseconds: 250), // Durée réglable en ms
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
     ambiguate(WidgetsBinding.instance)?.removeObserver(this);
+    _bounceController.dispose();
     super.dispose();
   }
 
@@ -112,11 +120,22 @@ class _MusicDetailsState extends State<MusicDetails>
 
   @override
   Widget build(BuildContext context) {
+    final bool lockExpanded = !widget.ishomepage;
+    final double fullHeight = MediaQuery.of(context).size.height;
+    if (lockExpanded) {
+      const elementOpacity = 1.0;
+      const progressIndicatorHeight = 2.0;
+      return Scaffold(
+        body: buildMusicPanel(
+            fullHeight, elementOpacity, progressIndicatorHeight),
+      );
+    }
+
     return Miniplayer(
       valueNotifier: playerExpandProgress,
       minHeight: playerMinHeight,
       duration: const Duration(seconds: 1),
-      maxHeight: MediaQuery.of(context).size.height,
+      maxHeight: fullHeight,
       controller: miniPlayerController,
       elevation: 4,
       // backgroundColor: colorPrimary,
@@ -138,38 +157,13 @@ class _MusicDetailsState extends State<MusicDetails>
         final bool miniplayer = percentage < miniplayerPercentageDeclaration;
 
         if (!miniplayer) {
+          // Full screen mode - keep UI fully visible
+          const elementOpacity = 1.0;
+          const progressIndicatorHeight = 2.0;
+
           return Scaffold(
-            body: StreamBuilder<SequenceState?>(
-                stream: audioPlayer.sequenceStateStream,
-                builder: (context, snapshot) {
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (notification) {
-                      if (_scrollController.offset >=
-                              _scrollController.position.maxScrollExtent &&
-                          !_scrollController.position.outOfRange &&
-                          (musicDetailProvider.currentPage ?? 0) <
-                              (musicDetailProvider.totalPage ?? 0)) {
-                        musicDetailProvider.setLoadMore(true);
-                        _fetchEpisodeByPodcast(
-                            ((audioPlayer.sequenceState.currentSource?.tag
-                                        as MediaItem?)
-                                    ?.artist)
-                                .toString(),
-                            musicDetailProvider.currentPage ?? 0);
-                      }
-                      return true;
-                    },
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      child: Column(
-                        children: [
-                          buildPodcastAppBar(),
-                          buildPodcastMusicPage(),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+            body: buildMusicPanel(
+                height, elementOpacity, progressIndicatorHeight),
           );
         }
 
@@ -181,7 +175,6 @@ class _MusicDetailsState extends State<MusicDetails>
 
         final elementOpacity = 1 - 1 * percentageMiniplayer;
         final progressIndicatorHeight = 2 - 2 * percentageMiniplayer;
-        // MiniPlayer End
 
         // Scaffold
         return Scaffold(
@@ -200,7 +193,7 @@ class _MusicDetailsState extends State<MusicDetails>
           children: [
             Container(
               width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.38,
+              height: MediaQuery.of(context).size.height * 0.05,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
@@ -209,42 +202,12 @@ class _MusicDetailsState extends State<MusicDetails>
               ),
               child: Column(
                 children: [
-                  AppBar(
-                    // backgroundColor: transparent,
-                    elevation: 0,
-                    titleSpacing: 0,
-                    automaticallyImplyLeading: false,
-                    leading: IconButton(
-                      icon: RotatedBox(
-                        quarterTurns: 3,
-                        child: MyImage(
-                          width: 15,
-                          height: 15,
-                          imagePath: "back.png",
-                        ),
-                      ),
-                      onPressed: () {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                      },
-                    ),
-                    title: MyText(
-                      color: white,
-                      text: "Now Playing",
-                      textalign: TextAlign.center,
-                      fontsize: Dimens.textlargeBig,
-                      inter: 1,
-                      maxline: 2,
-                      fontwaight: FontWeight.w500,
-                      overflow: TextOverflow.ellipsis,
-                      fontstyle: FontStyle.normal,
-                    ),
-                    centerTitle: true,
-                  ),
+                  // AppBar removed to save space - back button hidden
                 ],
               ),
             ),
             Container(
-              height: MediaQuery.of(context).size.height * 0.07,
+              height: MediaQuery.of(context).size.height * 0.02,
               padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
             )
           ],
@@ -1210,273 +1173,282 @@ class _MusicDetailsState extends State<MusicDetails>
     );
   }
 
-  // Small MiniPlayer Panal Open Using This Method
+  // Small MiniPlayer Panel Open Using This Method
   Widget buildMusicPanel(
       dynamic dynamicPanelHeight, elementOpacity, progressIndicatorHeight) {
-    return StreamBuilder<SequenceState?>(
-      stream: audioPlayer.sequenceStateStream,
-      builder: (context, snapshot) {
-        // if ((audioPlayer.sequenceState.currentSource?.tag as MediaItem?)
-        //             ?.extras?['is_premium'] ==
-        //         1 &&
-        //     (audioPlayer.sequenceState.currentSource?.tag as MediaItem?)
-        //             ?.extras?['is_buy'] ==
-        //         0) {
-        //   audioPlayer.pause();
-        // } else {
-        //   audioPlayer.play();
-        // }
-        return Container(
-          color: Theme.of(context).secondaryHeaderColor,
-          child: Column(
-            children: [
-              Opacity(
-                opacity: elementOpacity,
-                child: StreamBuilder<PositionData>(
-                  stream: positionDataStream,
-                  builder: (context, snapshot) {
-                    final positionData = snapshot.data;
-                    return ProgressBar(
-                      progress: positionData?.position ?? Duration.zero,
-                      buffered: positionData?.bufferedPosition ?? Duration.zero,
-                      total: positionData?.duration ?? Duration.zero,
-                      progressBarColor: colorPrimary,
-                      baseBarColor: colorAccent,
-                      bufferedBarColor: white.withValues(alpha: 0.24),
-                      barCapShape: BarCapShape.square,
-                      barHeight: progressIndicatorHeight,
-                      thumbRadius: 0.0,
-                      timeLabelLocation: TimeLabelLocation.none,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 15),
-              Expanded(
-                child: Opacity(
-                  opacity: elementOpacity,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /* Music Image */
-                      StreamBuilder<SequenceState?>(
-                        stream: audioPlayer.sequenceStateStream,
-                        builder: (context, snapshot) {
-                          return Container(
-                            width: 90,
-                            height: 60,
-                            alignment: Alignment.center,
-                            padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: MyNetworkImage(
-                                imgWidth: MediaQuery.of(context).size.width,
-                                imgHeight: MediaQuery.of(context).size.height,
-                                imageUrl: ((audioPlayer.sequenceState
-                                            .currentSource?.tag as MediaItem?)
-                                        ?.artUri)
-                                    .toString(),
-                                fit: BoxFit.fill,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      Expanded(
-                        child: StreamBuilder<SequenceState?>(
-                          stream: audioPlayer.sequenceStateStream,
-                          builder: (context, snapshot) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                TextScroll(
-                                  intervalSpaces: 10,
-                                  mode: TextScrollMode.endless,
-                                  ((audioPlayer.sequenceState.currentSource?.tag
-                                              as MediaItem?)
-                                          ?.title)
-                                      .toString(),
-                                  selectable: true,
-                                  delayBefore:
-                                      const Duration(milliseconds: 500),
-                                  fadedBorder: true,
-                                  style: Utils.googleFontStyle(
-                                      1,
-                                      16,
-                                      FontStyle.normal,
-                                      Theme.of(context).colorScheme.surface,
-                                      FontWeight.w500),
-                                  fadeBorderVisibility:
-                                      FadeBorderVisibility.auto,
-                                  fadeBorderSide: FadeBorderSide.both,
-                                  velocity: const Velocity(
-                                      pixelsPerSecond: Offset(50, 0)),
-                                ),
-                                const SizedBox(height: 5),
-                                MyText(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  text: ((audioPlayer.sequenceState
-                                              .currentSource?.tag as MediaItem?)
-                                          ?.displayDescription)
-                                      .toString(),
-                                  textalign: TextAlign.left,
-                                  fontsize: Dimens.textSmall,
-                                  inter: 1,
-                                  maxline: 1,
-                                  fontwaight: FontWeight.w400,
-                                  overflow: TextOverflow.ellipsis,
-                                  fontstyle: FontStyle.normal,
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                      // _buildLikeUnlike(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          StreamBuilder<SequenceState?>(
-                            stream: audioPlayer.sequenceStateStream,
-                            builder: (context, snapshot) {
-                              if (dynamicPanelHeight <= playerMinHeight) {
-                                if (audioPlayer.hasPrevious) {
-                                  return IconButton(
-                                    iconSize: 25.0,
-                                    icon: Icon(
-                                      Icons.skip_previous_rounded,
-                                      color:
-                                          Theme.of(context).colorScheme.surface,
-                                    ),
-                                    onPressed: audioPlayer.hasPrevious
-                                        ? audioPlayer.seekToPrevious
-                                        : null,
-                                  );
-                                } else {
-                                  return const SizedBox.shrink();
-                                }
-                              } else {
-                                return const SizedBox.shrink();
-                              }
-                            },
-                          ),
+    return SizedBox.expand(
+      child: StreamBuilder<SequenceState?>(
+        stream: audioPlayer.sequenceStateStream,
+        builder: (context, snapshot) {
+          final mediaItem =
+              audioPlayer.sequenceState.currentSource?.tag as MediaItem?;
 
-                          /* Play/Pause */
-                          StreamBuilder<PlayerState>(
-                            stream: audioPlayer.playerStateStream,
-                            builder: (context, snapshot) {
-                              if (dynamicPanelHeight <= playerMinHeight) {
-                                final playerState = snapshot.data;
-                                final processingState =
-                                    playerState?.processingState;
-                                final playing = playerState?.playing;
-                                if (processingState ==
-                                        ProcessingState.loading ||
-                                    processingState ==
-                                        ProcessingState.buffering) {
-                                  return Container(
-                                    margin: const EdgeInsets.all(8.0),
-                                    width: 35.0,
-                                    height: 35.0,
-                                    child: Utils.pageLoader(),
-                                  );
-                                } else if (playing != true) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: colorAccent,
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.play_arrow_rounded,
-                                        color: white,
-                                      ),
-                                      color: white,
-                                      iconSize: 20.0,
-                                      onPressed: () {
-                                        printLog("Button Pressed");
-                                        _checkPremiumPlayPause();
-                                      },
-                                    ),
-                                  );
-                                } else if (processingState !=
-                                    ProcessingState.completed) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: colorAccent,
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.pause_rounded,
-                                        color: white,
-                                      ),
-                                      iconSize: 20.0,
-                                      color: white,
-                                      onPressed: () {
-                                        printLog("Button Pressed");
-                                        _checkPremiumPlayPause();
-                                      },
-                                    ),
-                                  );
-                                } else {
-                                  return IconButton(
-                                    icon: const Icon(
-                                      Icons.replay_rounded,
-                                      color: colorPrimary,
-                                    ),
-                                    iconSize: 25.0,
-                                    onPressed: () => audioPlayer.seek(
-                                        Duration.zero,
-                                        index:
-                                            audioPlayer.effectiveIndices.first),
-                                  );
-                                }
-                              } else {
-                                return const SizedBox.shrink();
-                              }
-                            },
-                          ),
-
-                          /* Next */
-                          StreamBuilder<SequenceState?>(
-                            stream: audioPlayer.sequenceStateStream,
-                            builder: (context, snapshot) {
-                              if (dynamicPanelHeight <= playerMinHeight) {
-                                if (audioPlayer.hasNext) {
-                                  return IconButton(
-                                    iconSize: 25.0,
-                                    icon: Icon(
-                                      Icons.skip_next_rounded,
-                                      color:
-                                          Theme.of(context).colorScheme.surface,
-                                    ),
-                                    onPressed: audioPlayer.hasNext
-                                        ? audioPlayer.seekToNext
-                                        : null,
-                                  );
-                                } else {
-                                  return const SizedBox.shrink();
-                                }
-                              } else {
-                                return const SizedBox.shrink();
-                              }
-                            },
-                          ),
-                          const SizedBox(width: 15),
-                        ],
-                      ),
-                    ],
+          return Container(
+            color: Theme.of(context).secondaryHeaderColor,
+            child: Stack(
+              children: [
+                // Background image + gradient
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 1.0,
+                    child: Image.asset(
+                      'assets/images/lect-back.jpg',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Theme.of(context)
+                              .secondaryHeaderColor
+                              .withValues(alpha: 0.0),
+                          Theme.of(context)
+                              .secondaryHeaderColor
+                              .withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Main content
+                Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // zoneLectPub - Pub zone with customizable parameters
+                    Opacity(
+                      opacity: elementOpacity,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                        child: Container(
+                          width: double.infinity, // Largeur réglable
+                          height: 200, // Hauteur réglable
+                          decoration: BoxDecoration(
+                            color: colorPrimary.withValues(
+                                alpha: 0.15), // Couleur réglable
+                            borderRadius:
+                                BorderRadius.circular(20), // Arrondis réglables
+                            border: Border.all(
+                              color: colorPrimary.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'zoneLectPub',
+                              style: TextStyle(
+                                color: white.withValues(alpha: 0.6),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // cercleLect - Circle with image and bounce effect
+                    StreamBuilder<PlayerState>(
+                      stream: audioPlayer.playerStateStream,
+                      builder: (context, snapshot) {
+                        final playing = snapshot.data?.playing ?? false;
+
+                        // Control animation based on playing state
+                        if (playing && !_bounceController.isAnimating) {
+                          _bounceController.repeat(reverse: true);
+                        } else if (!playing && _bounceController.isAnimating) {
+                          _bounceController.stop();
+                          _bounceController.reset();
+                        }
+
+                        return Flexible(
+                          flex: 2,
+                          child: Center(
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Background brand image (non-animated)
+                                Transform.translate(
+                                  offset: const Offset(0,
+                                      -80), // Décalage vertical réglable (négatif = monter)
+                                  child: Opacity(
+                                    opacity: 1.0, // Opacité réglable
+                                    child: Image.asset(
+                                      'assets/images/lect-brand.png',
+                                      width: 280, // Taille réglable
+                                      height: 280,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                                // Animated circle on top
+                                ScaleTransition(
+                                  scale: Tween<double>(begin: 0.98, end: 1.0)
+                                      .animate(
+                                    CurvedAnimation(
+                                      parent: _bounceController,
+                                      curve: Curves.easeInOut,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 160), // Décalage réglable
+                                    child: Opacity(
+                                      opacity: elementOpacity * 1.0,
+                                      child: Container(
+                                        width: 200,
+                                        height: 200,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color.fromARGB(
+                                                      255, 245, 177, 4)
+                                                  .withValues(alpha: 0.2),
+                                              blurRadius: 20,
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(100),
+                                          child: Image.asset(
+                                            'assets/images/lect-head.png',
+                                            width: 200,
+                                            height: 200,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Play/Pause button below circle
+                    Opacity(
+                      opacity: elementOpacity,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            16, 20, 16, 8), // Top padding réglable (30)
+                        child: Center(
+                          child: StreamBuilder<PlayerState>(
+                            stream: audioPlayer.playerStateStream,
+                            builder: (context, snap) {
+                              final playing = snap.data?.playing ?? false;
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: colorPrimary.withValues(alpha: 1.0),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          colorPrimary.withValues(alpha: 0.5),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    playing
+                                        ? Icons.pause_rounded
+                                        : Icons.play_arrow_rounded,
+                                    color: white,
+                                    size: 50,
+                                  ),
+                                  iconSize: 80,
+                                  onPressed: () {
+                                    _checkPremiumPlayPause();
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Progress bar + Title
+                    Flexible(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          // Progress bar désactivée
+                          // Opacity(
+                          //   opacity: elementOpacity,
+                          //   child: StreamBuilder<PositionData>(
+                          //     stream: positionDataStream,
+                          //     builder: (context, snap) {
+                          //       final pos = snap.data;
+                          //       return Padding(
+                          //         padding:
+                          //             const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          //         child: ProgressBar(
+                          //           progress: pos?.position ?? Duration.zero,
+                          //           buffered:
+                          //               pos?.bufferedPosition ?? Duration.zero,
+                          //           total: pos?.duration ?? Duration.zero,
+                          //           progressBarColor: colorPrimary,
+                          //           baseBarColor: white.withValues(alpha: 0.1),
+                          //           barCapShape: BarCapShape.round,
+                          //           barHeight: 4,
+                          //           thumbRadius: 6,
+                          //           timeLabelLocation: TimeLabelLocation.below,
+                          //         ),
+                          //       );
+                          //     },
+                          //   ),
+                          // ),
+                          // Title & artist
+                          Opacity(
+                            opacity: elementOpacity,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    mediaItem?.title ?? 'Unknown',
+                                    style: const TextStyle(
+                                      color: white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    mediaItem?.displayDescription ?? 'Unknown',
+                                    style: TextStyle(
+                                      color: white.withValues(alpha: 0.7),
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1496,12 +1468,6 @@ class _MusicDetailsState extends State<MusicDetails>
     musicManager.seek(movePosition);
   }
 
-  Future<void> _fetchEpisodeByPodcast(dynamic podcastId, int? nextPage) async {
-    printLog("Pageno:== ${(nextPage ?? 0) + 1}");
-    await musicDetailProvider.getEpisodebyPodcastList(
-        podcastId, (nextPage ?? 0) + 1);
-    musicDetailProvider.setLoadMore(false);
-  }
   /* ================================================ Like / UnLike END */
 
   void commentBottomSheet(

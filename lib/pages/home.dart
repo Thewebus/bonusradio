@@ -22,6 +22,7 @@ import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/notification.dart';
 import 'package:myBonus/pages/profile.dart';
+import 'package:myBonus/pages/radio.dart';
 import 'package:myBonus/pages/search.dart';
 import 'package:myBonus/provider/generalprovider.dart';
 import 'package:myBonus/provider/homeprovider.dart';
@@ -57,6 +58,13 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  static const int _radioTabIndex = 0;
+  static const int _homeTabIndex = 1;
+  static const int _podcastTabIndex = 2;
+  static const int _filmsTabIndex = 3;
+  static const int _searchTabIndex = 4;
+  static const int _profileTabIndex = 5;
+
   SharedPref sharedpre = SharedPref();
   late ScrollController _scrollController;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -276,50 +284,84 @@ class _HomeState extends State<Home> {
               body: Column(
                 children: [
                   // Only show appBar for Home page
-                  if (_currentBottomNavIndex == 0) appBar(),
+                  if (_currentBottomNavIndex == _homeTabIndex) appBar(),
                   Expanded(
                     child: _buildPageContent(),
                   ),
                 ],
               ),
-              bottomNavigationBar: BottomNavigationBar(
-                currentIndex: _currentBottomNavIndex,
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                selectedItemColor: colorPrimary,
-                unselectedItemColor: gray,
-                elevation: 8,
-                enableFeedback: true,
-                onTap: (index) {
-                  setState(() {
-                    _currentBottomNavIndex = index;
-                  });
-                },
-                items: [
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.home, 0),
-                    label: 'Home',
+              bottomNavigationBar: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
                   ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.podcasts, 1),
-                    label: 'Podcasts',
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
                   ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.live_tv, 2),
-                    label: 'Films',
+                  child: BottomNavigationBar(
+                    currentIndex: _currentBottomNavIndex,
+                    type: BottomNavigationBarType.fixed,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    selectedItemColor: colorPrimary,
+                    unselectedItemColor: gray,
+                    elevation: 0, // Pas d'élévation (gérée par Container)
+                    enableFeedback: true,
+                    onTap: (index) {
+                      setState(() {
+                        _currentBottomNavIndex = index;
+                      });
+                    },
+                    items: [
+                      BottomNavigationBarItem(
+                        icon: _buildNavIcon(Icons.radio, _radioTabIndex),
+                        label: 'Radio',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: _buildNavIcon(Icons.home, _homeTabIndex),
+                        label: 'Home',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: _buildNavIcon(Icons.podcasts, _podcastTabIndex),
+                        label: 'Podcasts',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: _buildNavIcon(Icons.live_tv, _filmsTabIndex),
+                        label: 'Films',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: _buildNavIcon(Icons.search, _searchTabIndex),
+                        label: 'Recherche',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: _buildNavIcon(Icons.person, _profileTabIndex),
+                        label: 'Compte',
+                      ),
+                    ],
                   ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.search, 3),
-                    label: 'Recherche',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: _buildNavIcon(Icons.person, 4),
-                    label: 'Compte',
-                  ),
-                ],
+                ),
               ),
             ),
-            const FloatingPlayer(),
+            FloatingPlayer(
+              currentTabIndex: _currentBottomNavIndex,
+              onOpenRadio: () {
+                setState(() {
+                  _currentBottomNavIndex = _radioTabIndex;
+                });
+              },
+            ),
           ],
         ),
       ),
@@ -341,30 +383,32 @@ class _HomeState extends State<Home> {
 
   Widget _buildPageContent() {
     switch (_currentBottomNavIndex) {
-      case 0:
+      case _radioTabIndex:
+        return const RadioScreen();
+      case _homeTabIndex:
         return _buildHomeContent();
-      case 1:
+      case _podcastTabIndex:
         return Podcast(onBack: () {
           setState(() {
-            _currentBottomNavIndex = 0;
+            _currentBottomNavIndex = _homeTabIndex;
           });
         });
-      case 2:
+      case _filmsTabIndex:
         return LiveEvent(onBack: () {
           setState(() {
-            _currentBottomNavIndex = 0;
+            _currentBottomNavIndex = _homeTabIndex;
           });
         });
-      case 3:
+      case _searchTabIndex:
         return Search(onBack: () {
           setState(() {
-            _currentBottomNavIndex = 0;
+            _currentBottomNavIndex = _homeTabIndex;
           });
         });
-      case 4:
+      case _profileTabIndex:
         return Profile(onBack: () {
           setState(() {
-            _currentBottomNavIndex = 0;
+            _currentBottomNavIndex = _homeTabIndex;
           });
         });
       default:
@@ -3524,7 +3568,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildMusicPanel(BuildContext context) {
+  Widget buildMusicPanel(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: currentlyPlaying,
       builder: (BuildContext context, AudioPlayer? audioObject, Widget? child) {

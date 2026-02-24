@@ -49,7 +49,14 @@ class WaveformConfig {
 // =========================================================
 
 class FloatingPlayer extends StatefulWidget {
-  const FloatingPlayer({super.key});
+  final VoidCallback? onOpenRadio;
+  final int currentTabIndex;
+
+  const FloatingPlayer({
+    super.key,
+    this.onOpenRadio,
+    this.currentTabIndex = -1,
+  });
 
   @override
   State<FloatingPlayer> createState() => _FloatingPlayerState();
@@ -110,8 +117,6 @@ class _WaveAnimationState extends State<_WaveAnimation>
             i < WaveformConfig.barCount * 0.2; // Premières 20% = basses
         final midFrequency = i >= WaveformConfig.barCount * 0.2 &&
             i < WaveformConfig.barCount * 0.7;
-        final highFrequency = i >= WaveformConfig.barCount * 0.7;
-
         double amplitude;
         if (bassFrequency) {
           // Basses: variations plus amples et plus lentes
@@ -256,18 +261,21 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
       builder: (context, player, child) {
         // Ensure _visible is true if player exists and current source is set
         if (player != null &&
-            player.sequenceState?.currentSource != null &&
+            player.sequenceState.currentSource != null &&
             !_visible) {
           _visible = true;
         }
-        if (player == null || !_visible) return const SizedBox.shrink();
+        // Hide mini-player if on Radio tab (index 0)
+        if (player == null || !_visible || widget.currentTabIndex == 0) {
+          return const SizedBox.shrink();
+        }
 
-        final tag = player.sequenceState?.currentSource?.tag;
+        final tag = player.sequenceState.currentSource?.tag;
         String title = '';
         String subtitle = '';
         String artUri = '';
         if (tag is MediaItem) {
-          title = tag.title ?? '';
+          title = tag.title;
           subtitle = tag.artist ?? '';
           artUri = tag.artUri?.toString() ?? '';
         } else if (tag is Map) {
@@ -289,21 +297,11 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
           bottom: 76, // leave space above bottom nav
           child: GestureDetector(
             onTap: () async {
-              // Expand the miniplayer to full height before opening full player
+              // Expand the miniplayer to full height before opening radio tab
               try {
                 playerExpandProgress.value = MediaQuery.of(context).size.height;
               } catch (_) {}
-              // Open full player page
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MusicDetails(ishomepage: false),
-                ),
-              );
-              // When returning, collapse back to mini height
-              try {
-                playerExpandProgress.value = playerMinHeight;
-              } catch (_) {}
+              widget.onOpenRadio?.call();
               setState(() {});
             },
             child: Material(
@@ -316,8 +314,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                   StreamBuilder<bool>(
                     stream: player.playingStream,
                     builder: (context, snapshot) {
-                      final isPlaying =
-                          snapshot.data ?? player.playing ?? false;
+                      final isPlaying = snapshot.data ?? player.playing;
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: SizedBox(
@@ -391,8 +388,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                         StreamBuilder<bool>(
                           stream: player.playingStream,
                           builder: (context, snapshot) {
-                            final isPlaying =
-                                snapshot.data ?? player.playing ?? false;
+                            final isPlaying = snapshot.data ?? player.playing;
                             return IconButton(
                               icon: Icon(
                                   isPlaying
