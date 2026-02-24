@@ -57,6 +57,18 @@ class _MusicDetailsState extends State<MusicDetails>
   late MusicDetailProvider musicDetailProvider;
   final commentController = TextEditingController();
   late AnimationController _bounceController;
+  late AnimationController _notesController;
+
+  // Animation types for notesLect
+  static const String animationFlutter =
+      'flutter'; // Scintillement (recommandé)
+  static const String animationPulse = 'pulse'; // Pulse d'opacité
+  static const String animationRotatePulse = 'rotate_pulse'; // Rotation + Pulse
+  static const String animationFloat = 'float'; // Float (montée/descente)
+  static const String animationScale = 'scale'; // Scale (agrandissement)
+
+  // Sélection d'animation (à modifier ici)
+  String notesAnimationType = animationScale; // Par défaut
 
   @override
   void initState() {
@@ -72,12 +84,19 @@ class _MusicDetailsState extends State<MusicDetails>
       duration: const Duration(milliseconds: 250), // Durée réglable en ms
       vsync: this,
     );
+
+    // Initialize notes animation controller
+    _notesController = AnimationController(
+      duration: const Duration(milliseconds: 600), // Durée réglable en ms
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
     ambiguate(WidgetsBinding.instance)?.removeObserver(this);
     _bounceController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -1264,12 +1283,26 @@ class _MusicDetailsState extends State<MusicDetails>
                           _bounceController.reset();
                         }
 
+                        // Control notes animation based on playing state
+                        if (playing && !_notesController.isAnimating) {
+                          _notesController.repeat(reverse: true);
+                        } else if (!playing && _notesController.isAnimating) {
+                          _notesController.stop();
+                          _notesController.reset();
+                        }
+
                         return Flexible(
-                          flex: 2,
+                          flex: 4,
                           child: Center(
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
+                                // notesLect - Notes image with animation (fade in/out when playing)
+                                AnimatedOpacity(
+                                  opacity: playing ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 500),
+                                  child: _buildAnimatedNotesLect(),
+                                ),
                                 // Background brand image (non-animated)
                                 Transform.translate(
                                   offset: const Offset(0,
@@ -1846,5 +1879,85 @@ class _MusicDetailsState extends State<MusicDetails>
         ),
       ),
     );
+  }
+
+  // Build animated notesLect widget based on selected animation type
+  Widget _buildAnimatedNotesLect() {
+    final notesBase = Transform.translate(
+      offset: const Offset(0, 80), // Positionnement vertical réglable
+      child: Center(
+        child: Opacity(
+          opacity: 0.80, // Opacité réglable
+          child: Image.asset(
+            'assets/images/lect-notes.png',
+            width: 300, // Largeur réglable
+            height: 300, // Hauteur réglable
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+
+    // Apply animation based on notesAnimationType
+    switch (notesAnimationType) {
+      case animationFlutter:
+        // Scintillement (Flutter) - Recommandé
+        return FadeTransition(
+          opacity: Tween<double>(begin: 0.4, end: 1.0).animate(
+            CurvedAnimation(parent: _notesController, curve: Curves.easeInOut),
+          ),
+          child: notesBase,
+        );
+
+      case animationPulse:
+        // Pulse d'opacité
+        return FadeTransition(
+          opacity: Tween<double>(begin: 0.6, end: 1.0).animate(
+            CurvedAnimation(parent: _notesController, curve: Curves.easeInOut),
+          ),
+          child: notesBase,
+        );
+
+      case animationRotatePulse:
+        // Rotation + Pulse
+        return RotationTransition(
+          turns: Tween<double>(begin: -0.02, end: 0.02).animate(
+            CurvedAnimation(parent: _notesController, curve: Curves.easeInOut),
+          ),
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 0.5, end: 1.0).animate(
+              CurvedAnimation(
+                  parent: _notesController, curve: Curves.easeInOut),
+            ),
+            child: notesBase,
+          ),
+        );
+
+      case animationFloat:
+        // Float (montée/descente)
+        return Transform.translate(
+          offset: Offset(
+            0,
+            20 *
+                (Tween<double>(begin: -1, end: 1).evaluate(
+                  CurvedAnimation(
+                      parent: _notesController, curve: Curves.easeInOut),
+                )),
+          ),
+          child: notesBase,
+        );
+
+      case animationScale:
+        // Scale
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.95, end: 1.05).animate(
+            CurvedAnimation(parent: _notesController, curve: Curves.easeInOut),
+          ),
+          child: notesBase,
+        );
+
+      default:
+        return notesBase;
+    }
   }
 }
