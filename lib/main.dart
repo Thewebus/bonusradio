@@ -18,7 +18,7 @@ import 'package:myBonus/provider/searchprovider.dart';
 import 'package:myBonus/provider/themeprovider.dart';
 import 'package:myBonus/provider/viewallprovider.dart';
 import 'package:myBonus/provider/generalprovider.dart';
-import 'package:myBonus/pages/splash.dart';
+import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/provider/radiobyidprovider.dart';
 import 'package:myBonus/provider/homeprovider.dart';
 import 'package:myBonus/provider/languageprovider.dart';
@@ -123,6 +123,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       checkTheme();
+      await _setDefaultLanguageIfNeeded();
     });
   }
 
@@ -131,6 +132,16 @@ class _MyAppState extends State<MyApp> {
     Constant.isDark = await sharedpre.readBool("isdark") ?? false;
     printLog("isDark==> ${Constant.isDark}");
     themeProvider.changeTheme(Constant.isDark);
+  }
+
+  Future<void> _setDefaultLanguageIfNeeded() async {
+    final isLanguageInitialized =
+        await sharedpre.readBool('is_language_initialized') ?? false;
+
+    if (!isLanguageInitialized) {
+      LocaleNotifier.of(context)?.change('fr');
+      await sharedpre.saveBool('is_language_initialized', true);
+    }
   }
 
   // This widget is the root of your application.
@@ -148,7 +159,7 @@ class _MyAppState extends State<MyApp> {
         supportedLocales: Locales.supportedLocales,
         locale: locale,
         debugShowCheckedModeBanner: false,
-        home: const Splash(),
+        home: const Home(),
       ),
     );
   }

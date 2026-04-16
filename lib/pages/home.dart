@@ -62,8 +62,8 @@ class _HomeState extends State<Home> {
   static const int _homeTabIndex = 1;
   static const int _podcastTabIndex = 2;
   static const int _filmsTabIndex = 3;
-  static const int _searchTabIndex = 4;
-  static const int _profileTabIndex = 5;
+  // static const int _searchTabIndex = 4; // Désactivé
+  static const int _profileTabIndex = 4;
 
   SharedPref sharedpre = SharedPref();
   late ScrollController _scrollController;
@@ -341,10 +341,11 @@ class _HomeState extends State<Home> {
                         icon: _buildNavIcon(Icons.live_tv, _filmsTabIndex),
                         label: 'Films',
                       ),
-                      BottomNavigationBarItem(
-                        icon: _buildNavIcon(Icons.search, _searchTabIndex),
-                        label: 'Recherche',
-                      ),
+                      // Menu Recherche désactivé
+                      // BottomNavigationBarItem(
+                      //   icon: _buildNavIcon(Icons.search, _searchTabIndex),
+                      //   label: 'Recherche',
+                      // ),
                       BottomNavigationBarItem(
                         icon: _buildNavIcon(Icons.person, _profileTabIndex),
                         label: 'Compte',
@@ -399,12 +400,13 @@ class _HomeState extends State<Home> {
             _currentBottomNavIndex = _homeTabIndex;
           });
         });
-      case _searchTabIndex:
-        return Search(onBack: () {
-          setState(() {
-            _currentBottomNavIndex = _homeTabIndex;
-          });
-        });
+      // Page Recherche désactivée
+      // case _searchTabIndex:
+      //   return Search(onBack: () {
+      //     setState(() {
+      //       _currentBottomNavIndex = _homeTabIndex;
+      //     });
+      //   });
       case _profileTabIndex:
         return Profile(onBack: () {
           setState(() {
