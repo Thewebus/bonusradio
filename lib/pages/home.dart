@@ -290,70 +290,7 @@ class _HomeState extends State<Home> {
                   ),
                 ],
               ),
-              bottomNavigationBar: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
-                  ),
-                  child: BottomNavigationBar(
-                    currentIndex: _currentBottomNavIndex,
-                    type: BottomNavigationBarType.fixed,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    selectedItemColor: colorPrimary,
-                    unselectedItemColor: gray,
-                    elevation: 0, // Pas d'élévation (gérée par Container)
-                    enableFeedback: true,
-                    onTap: (index) {
-                      setState(() {
-                        _currentBottomNavIndex = index;
-                      });
-                    },
-                    items: [
-                      BottomNavigationBarItem(
-                        icon: _buildNavIcon(Icons.radio, _radioTabIndex),
-                        label: 'Radio',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: _buildNavIcon(Icons.home, _homeTabIndex),
-                        label: 'Home',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: _buildNavIcon(Icons.podcasts, _podcastTabIndex),
-                        label: 'Podcasts',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: _buildNavIcon(Icons.live_tv, _filmsTabIndex),
-                        label: 'Films',
-                      ),
-                      // Menu Recherche désactivé
-                      // BottomNavigationBarItem(
-                      //   icon: _buildNavIcon(Icons.search, _searchTabIndex),
-                      //   label: 'Recherche',
-                      // ),
-                      BottomNavigationBarItem(
-                        icon: _buildNavIcon(Icons.person, _profileTabIndex),
-                        label: 'Compte',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              bottomNavigationBar: _buildBottomNavigationBar(),
             ),
             FloatingPlayer(
               currentTabIndex: _currentBottomNavIndex,
@@ -369,15 +306,79 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildNavIcon(IconData icon, int index) {
+  Widget _buildBottomNavigationBar() {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: white,
+        border: Border(
+          top: BorderSide(
+            color: black.withValues(alpha: 0.08),
+            width: 1,
+          ),
+        ),
+      ),
+      padding: EdgeInsets.fromLTRB(6, 6, 6, bottomInset > 0 ? bottomInset : 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildBottomNavItem(Icons.radio, 'Radio', _radioTabIndex),
+          _buildBottomNavItem(Icons.home_outlined, 'Accueil', _homeTabIndex),
+          _buildBottomNavItem(
+              Icons.podcasts_outlined, 'Podcast', _podcastTabIndex),
+          _buildBottomNavItem(Icons.live_tv_outlined, 'Live', _filmsTabIndex),
+          _buildBottomNavItem(Icons.person_outline, 'Profil', _profileTabIndex),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavItem(IconData icon, String label, int index) {
     final isSelected = _currentBottomNavIndex == index;
-    return AnimatedScale(
-      scale: isSelected ? 1.15 : 1.0,
-      duration: const Duration(milliseconds: 300),
-      child: AnimatedOpacity(
-        opacity: isSelected ? 1.0 : 0.6,
-        duration: const Duration(milliseconds: 300),
-        child: Icon(icon),
+
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          setState(() {
+            _currentBottomNavIndex = index;
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 28,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: isSelected ? black : transparent,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Icon(
+                icon,
+                size: 24,
+                color: isSelected ? black : black.withValues(alpha: 0.55),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? black : black.withValues(alpha: 0.65),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

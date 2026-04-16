@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 import 'dart:math' as math;
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
@@ -161,9 +160,6 @@ class _MusicDetailsState extends State<MusicDetails>
   final bool _pubLoop = true;
   final Duration _pubDisplayDuration = const Duration(seconds: 12);
   final Duration _pubFadeDuration = const Duration(seconds: 1);
-  final double _pubBackdropOpacity = 1.0;
-  final double _pubBackdropDarken = 0.3;
-  final double _pubBlurAmount = 6.0; // Blur effect (0 = no blur)
 
   List<String> _pubImages = [];
   int _pubIndex = 0;
@@ -1404,7 +1400,7 @@ class _MusicDetailsState extends State<MusicDetails>
     );
   }
 
-  Widget _buildPubSlideshow() {
+  Widget _buildPubSlideshow({required bool showIndicators}) {
     if (_pubImages.isEmpty) {
       printLog(
           '🎬 _buildPubSlideshow: EMPTY - showing "Espace Pub" placeholder');
@@ -1421,26 +1417,47 @@ class _MusicDetailsState extends State<MusicDetails>
         pubHeight = LectResponsiveConfig.pubSlideshowHeightLarge;
       }
 
-      return Container(
-        width: double.infinity, // Largeur reglable
-        height: pubHeight, // Hauteur reglable
-        decoration: BoxDecoration(
-          color: black,
-          borderRadius: BorderRadius.circular(20), // Arrondis reglables
-          border: Border.all(
-            color: colorPrimary.withValues(alpha: 0.3),
-            width: 1,
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: black.withValues(alpha: 0.16),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: double.infinity,
+                height: pubHeight,
+                color: black.withValues(alpha: 0.9),
+                alignment: Alignment.center,
+                child: const Text(
+                  'Espace Pub',
+                  style: TextStyle(
+                    color: white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        alignment: Alignment.center,
-        child: const Text(
-          'Espace Pub',
-          style: TextStyle(
-            color: white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+          if (showIndicators) const SizedBox(height: 10),
+          if (showIndicators)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildPubIndicatorDot(isActive: true),
+              ],
+            ),
+        ],
       );
     }
 
@@ -1461,74 +1478,113 @@ class _MusicDetailsState extends State<MusicDetails>
       pubHeight = LectResponsiveConfig.pubSlideshowHeightLarge;
     }
 
-    return Container(
-      width: double.infinity, // Largeur réglable
-      height: pubHeight, // Hauteur réglable
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(currentImage),
-          fit: BoxFit.none,
-          opacity: _pubBackdropOpacity,
-          colorFilter: ColorFilter.mode(
-            const Color.fromARGB(255, 0, 0, 0)
-                .withValues(alpha: _pubBackdropDarken),
-            BlendMode.darken,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: black.withValues(alpha: 0.16),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: AnimatedSwitcher(
+              duration: _pubFadeDuration,
+              child: Image.asset(
+                currentImage,
+                key: ValueKey<String>(currentImage),
+                width: double.infinity,
+                height: pubHeight,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  printLog('❌ ERROR loading image $currentImage: $error');
+                  return Container(
+                    width: double.infinity,
+                    height: pubHeight,
+                    color: black.withValues(alpha: 0.9),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Espace Pub',
+                      style: TextStyle(
+                        color: white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
-        color: colorPrimary.withValues(alpha: 0.0), // Couleur réglable
-        borderRadius: BorderRadius.circular(10), // Arrondis réglables
+        if (showIndicators) const SizedBox(height: 10),
+        if (showIndicators && _pubImages.length > 1)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _pubImages.length,
+              (index) => _buildPubIndicatorDot(isActive: index == _pubIndex),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPubIndicatorDot({required bool isActive}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      width: isActive ? 10 : 8,
+      height: isActive ? 10 : 8,
+      decoration: BoxDecoration(
+        color: isActive ? colorPrimary : gray.withValues(alpha: 0.45),
+        shape: BoxShape.circle,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: _pubBlurAmount > 0
-            ? BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: _pubBlurAmount,
-                  sigmaY: _pubBlurAmount,
-                ),
-                child: AnimatedSwitcher(
-                  duration: _pubFadeDuration,
-                  child: Image.asset(
-                    currentImage,
-                    key: ValueKey<String>(currentImage),
-                    fit: BoxFit.fill,
-                    errorBuilder: (context, error, stackTrace) {
-                      printLog('❌ ERROR loading image $currentImage: $error');
-                      return const Center(
-                        child: Text(
-                          'Espace Pub',
-                          style: TextStyle(
-                            color: white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              )
-            : AnimatedSwitcher(
-                duration: _pubFadeDuration,
-                child: Image.asset(
-                  currentImage,
-                  key: ValueKey<String>(currentImage),
-                  fit: BoxFit.fill,
-                  errorBuilder: (context, error, stackTrace) {
-                    printLog('❌ ERROR loading image $currentImage: $error');
-                    return const Center(
-                      child: Text(
-                        'Espace Pub',
-                        style: TextStyle(
-                          color: white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  },
+    );
+  }
+
+  Widget _buildExpandedPlayerBackground() {
+    final accentSoft = const Color(0xFFFFC5BA);
+    final darkEdge = const Color(0xFF120406);
+
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0.0, -0.10),
+                radius: 1.15,
+                colors: [
+                  accentSoft.withValues(alpha: 0.74),
+                  const Color(0xFF5B1E24).withValues(alpha: 0.72),
+                  darkEdge,
+                ],
+                stops: const [0.06, 0.36, 1.0],
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.center,
+                  end: Alignment.topCenter,
+                  colors: [
+                    white.withValues(alpha: 0.00),
+                    white.withValues(alpha: 1.00),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1542,39 +1598,49 @@ class _MusicDetailsState extends State<MusicDetails>
         builder: (context, snapshot) {
           final mediaItem =
               audioPlayer.sequenceState.currentSource?.tag as MediaItem?;
+          final bool isExpandedPlayer =
+              (dynamicPanelHeight as num).toDouble() >=
+                  MediaQuery.of(context).size.height *
+                      miniplayerPercentageDeclaration;
 
           return Container(
-            color: Theme.of(context).secondaryHeaderColor,
+            color: isExpandedPlayer
+                ? const Color(0xFF120406)
+                : Theme.of(context).secondaryHeaderColor,
             child: Stack(
               children: [
-                // Background image + gradient
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 1.0,
-                    child: Image.asset(
-                      'assets/images/lect-back.jpg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Theme.of(context)
-                              .secondaryHeaderColor
-                              .withValues(alpha: 0.0),
-                          Theme.of(context)
-                              .secondaryHeaderColor
-                              .withValues(alpha: 0.0),
-                        ],
+                if (isExpandedPlayer)
+                  _buildExpandedPlayerBackground()
+                else ...[
+                  // Background image + gradient (mini player)
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: Image.asset(
+                        'assets/images/lect-back.jpg',
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context)
+                                .secondaryHeaderColor
+                                .withValues(alpha: 0.0),
+                            Theme.of(context)
+                                .secondaryHeaderColor
+                                .withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 // Main content
                 Column(
                   mainAxisSize: MainAxisSize.max,
@@ -1585,7 +1651,9 @@ class _MusicDetailsState extends State<MusicDetails>
                       opacity: elementOpacity,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: _buildPubSlideshow(),
+                        child: _buildPubSlideshow(
+                          showIndicators: isExpandedPlayer,
+                        ),
                       ),
                     ),
                     // cercleLect - Circle with image and bounce effect
@@ -2378,12 +2446,35 @@ class _MusicDetailsState extends State<MusicDetails>
       offset: Offset(0, offsetY),
       child: Center(
         child: Opacity(
-          opacity: 0.80, // Opacité réglable
-          child: Image.asset(
-            'assets/images/lect-notes.png',
-            width: size,
-            height: size,
-            fit: BoxFit.contain,
+          opacity: 0.92,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  const Color(0xFFFFFFFF).withValues(alpha: 0.45),
+                  BlendMode.srcATop,
+                ),
+                child: Image.asset(
+                  'assets/images/lect-notes.png',
+                  width: size * 1.08,
+                  height: size * 1.08,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              ColorFiltered(
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFFFFFFFF),
+                  BlendMode.srcATop,
+                ),
+                child: Image.asset(
+                  'assets/images/lect-notes.png',
+                  width: size,
+                  height: size,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
           ),
         ),
       ),

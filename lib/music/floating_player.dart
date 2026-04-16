@@ -4,7 +4,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
-import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -259,6 +258,9 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
     return ValueListenableBuilder<AudioPlayer?>(
       valueListenable: currentlyPlaying,
       builder: (context, player, child) {
+        final AudioPlayer? effectivePlayer =
+            player ?? (audioPlayer.audioSource != null ? audioPlayer : null);
+
         // Ensure _visible is true if player exists and current source is set
         if (player != null &&
             player.sequenceState.currentSource != null &&
@@ -266,11 +268,13 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
           _visible = true;
         }
         // Hide mini-player if on Radio tab (index 0)
-        if (player == null || !_visible || widget.currentTabIndex == 0) {
+        if (effectivePlayer == null ||
+            !_visible ||
+            widget.currentTabIndex == 0) {
           return const SizedBox.shrink();
         }
 
-        final tag = player.sequenceState.currentSource?.tag;
+        final tag = effectivePlayer.sequenceState.currentSource?.tag;
         String title = '';
         String subtitle = '';
         String artUri = '';
@@ -312,16 +316,17 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                 children: [
                   // Wave animation background
                   StreamBuilder<bool>(
-                    stream: player.playingStream,
+                    stream: effectivePlayer.playingStream,
                     builder: (context, snapshot) {
-                      final isPlaying = snapshot.data ?? player.playing;
+                      final isPlaying =
+                          snapshot.data ?? effectivePlayer.playing;
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: SizedBox(
                           height: 70,
                           child: _WaveAnimation(
                             isPlaying: isPlaying,
-                            player: player,
+                            player: effectivePlayer,
                           ),
                         ),
                       );
@@ -386,21 +391,22 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                           ),
                         ),
                         StreamBuilder<bool>(
-                          stream: player.playingStream,
+                          stream: effectivePlayer.playingStream,
                           builder: (context, snapshot) {
-                            final isPlaying = snapshot.data ?? player.playing;
+                            final isPlaying =
+                                snapshot.data ?? effectivePlayer.playing;
                             return IconButton(
                               icon: Icon(
-                                  isPlaying
-                                      ? Icons.pause_circle_filled
-                                      : Icons.play_circle_fill,
-                                  size: 34,
-                                  color: colorPrimary),
+                                isPlaying
+                                    ? Icons.pause_circle_filled
+                                    : Icons.play_circle_fill,
+                                size: 34,
+                              ),
                               onPressed: () {
                                 if (isPlaying) {
-                                  player.pause();
+                                  effectivePlayer.pause();
                                 } else {
-                                  player.play();
+                                  effectivePlayer.play();
                                 }
                                 setState(() {});
                               },
