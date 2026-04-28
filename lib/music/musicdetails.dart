@@ -308,6 +308,30 @@ class _MusicDetailsState extends State<MusicDetails>
     });
   }
 
+  void _goToNextPub() {
+    if (_pubImages.length <= 1) return;
+    setState(() {
+      if (_pubIndex < _pubImages.length - 1) {
+        _pubIndex += 1;
+      } else if (_pubLoop) {
+        _pubIndex = 0;
+      }
+    });
+    _startPubRotation();
+  }
+
+  void _goToPreviousPub() {
+    if (_pubImages.length <= 1) return;
+    setState(() {
+      if (_pubIndex > 0) {
+        _pubIndex -= 1;
+      } else if (_pubLoop) {
+        _pubIndex = _pubImages.length - 1;
+      }
+    });
+    _startPubRotation();
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive) {
@@ -1422,7 +1446,7 @@ class _MusicDetailsState extends State<MusicDetails>
         children: [
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
                   color: black.withValues(alpha: 0.16),
@@ -1432,7 +1456,7 @@ class _MusicDetailsState extends State<MusicDetails>
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: double.infinity,
                 height: pubHeight,
@@ -1481,44 +1505,56 @@ class _MusicDetailsState extends State<MusicDetails>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: black.withValues(alpha: 0.16),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: AnimatedSwitcher(
-              duration: _pubFadeDuration,
-              child: Image.asset(
-                currentImage,
-                key: ValueKey<String>(currentImage),
-                width: double.infinity,
-                height: pubHeight,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  printLog('❌ ERROR loading image $currentImage: $error');
-                  return Container(
-                    width: double.infinity,
-                    height: pubHeight,
-                    color: black.withValues(alpha: 0.9),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Espace Pub',
-                      style: TextStyle(
-                        color: white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+        GestureDetector(
+          onHorizontalDragEnd: (details) {
+            final velocity = details.primaryVelocity ?? 0;
+            if (velocity > 0) {
+              // Swipe vers la droite => slide suivante (comme demandé)
+              _goToNextPub();
+            } else if (velocity < 0) {
+              // Swipe vers la gauche => slide précédente (comme demandé)
+              _goToPreviousPub();
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: black.withValues(alpha: 0.16),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedSwitcher(
+                duration: _pubFadeDuration,
+                child: Image.asset(
+                  currentImage,
+                  key: ValueKey<String>(currentImage),
+                  width: double.infinity,
+                  height: pubHeight,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    printLog('❌ ERROR loading image $currentImage: $error');
+                    return Container(
+                      width: double.infinity,
+                      height: pubHeight,
+                      color: black.withValues(alpha: 0.9),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Espace Pub',
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -1543,7 +1579,8 @@ class _MusicDetailsState extends State<MusicDetails>
       width: isActive ? 10 : 8,
       height: isActive ? 10 : 8,
       decoration: BoxDecoration(
-        color: isActive ? colorPrimary : gray.withValues(alpha: 0.45),
+        color:
+            isActive ? const Color(0xFFE53935) : white.withValues(alpha: 0.95),
         shape: BoxShape.circle,
       ),
     );
