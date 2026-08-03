@@ -48,6 +48,7 @@ class Dimens {
   static double cityheight = 120;
   static double liveEventheight = 220;
   static double liveEventWidth = 260;
+  static double listRowHeight = 76;
 
   /*  ======================== Home Page Layout Height Width End  ========================*/
 

@@ -15,6 +15,18 @@ const gray = Color(0xff878787);
 const lightgray = Color(0xffD3D3D3);
 const transparent = Colors.transparent;
 
+/* Accueil Redesign Colors (onglet Accueil uniquement) */
+const homeAccueilBg = Color(0xFFF7F1E6);
+const homeSearchBarBg = Color(0xFF5C1712);
+const homeLiveBadge = Color(0xFFE3352B);
+const List<Color> homeCategoryPalette = [
+  Color(0xFFF3B9B0),
+  Color(0xFFF6D8A8),
+  Color(0xFFD9C5EE),
+  Color(0xFFB9D6F3),
+  Color(0xFFB9E4C9),
+];
+
 /* ============================= Light Theme =============================== */
 
 final ThemeData lightTheme = ThemeData(

@@ -24,6 +24,7 @@ import 'package:myBonus/pages/notification.dart';
 import 'package:myBonus/pages/profile.dart';
 import 'package:myBonus/pages/radio.dart';
 import 'package:myBonus/pages/search.dart';
+import 'package:myBonus/provider/addfavouriteprovider.dart';
 import 'package:myBonus/provider/generalprovider.dart';
 import 'package:myBonus/provider/homeprovider.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
@@ -43,6 +44,7 @@ import 'package:myBonus/music/floating_player.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mynetworkimg2.dart';
 import 'package:myBonus/widget/mytext.dart';
+import 'package:myBonus/widget/sectionrowtile.dart';
 import 'package:myBonus/model/sectionlistmodel.dart' as section;
 
 ValueNotifier<AudioPlayer?> currentlyPlaying = ValueNotifier(null);
@@ -327,7 +329,7 @@ class _HomeState extends State<Home> {
           _buildBottomNavItem(Icons.home_outlined, 'Accueil', _homeTabIndex),
           _buildBottomNavItem(
               Icons.podcasts_outlined, 'Podcast', _podcastTabIndex),
-          _buildBottomNavItem(Icons.live_tv_outlined, 'Live', _filmsTabIndex),
+          _buildBottomNavItem(Icons.live_tv_outlined, 'Films', _filmsTabIndex),
           _buildBottomNavItem(Icons.person_outline, 'Profil', _profileTabIndex),
         ],
       ),
@@ -1101,18 +1103,7 @@ class _HomeState extends State<Home> {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 0),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorPrimary,
-            colorPrimary,
-          ],
-          end: Alignment.bottomLeft,
-          begin: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(25), bottomRight: Radius.circular(25)),
-      ),
+      color: homeAccueilBg,
       child: Column(
         children: [
           AppBar(
@@ -1120,11 +1111,13 @@ class _HomeState extends State<Home> {
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: transparent,
-            systemOverlayStyle:
-                const SystemUiOverlayStyle(statusBarColor: colorPrimary),
+            systemOverlayStyle: const SystemUiOverlayStyle(
+                statusBarColor: homeAccueilBg,
+                statusBarBrightness: Brightness.light,
+                statusBarIconBrightness: Brightness.dark),
             titleSpacing: 10,
             leading: IconButton(
-              icon: const Icon(Icons.settings, color: white),
+              icon: const Icon(Icons.settings, color: black),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -1139,14 +1132,14 @@ class _HomeState extends State<Home> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 MyText(
-                  color: white,
+                  color: black,
                   multilanguage: true,
                   text: "discover",
                   textalign: TextAlign.center,
                   fontsize: Dimens.textlargeExtraBig,
                   inter: 1,
                   maxline: 2,
-                  fontwaight: FontWeight.w500,
+                  fontwaight: FontWeight.w700,
                   overflow: TextOverflow.ellipsis,
                   fontstyle: FontStyle.normal,
                 ),
@@ -1169,7 +1162,7 @@ class _HomeState extends State<Home> {
                   },
                   icon: const Icon(
                     Icons.notifications_outlined,
-                    color: white,
+                    color: black,
                     size: 30,
                   ),
                 ),
@@ -1202,7 +1195,7 @@ class _HomeState extends State<Home> {
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(50),
                               border: Border.all(
-                                color: white,
+                                color: homeSearchBarBg,
                                 width: 2,
                               )),
                           child: ClipRRect(
@@ -1229,6 +1222,8 @@ class _HomeState extends State<Home> {
               textAlign: TextAlign.left,
               keyboardType: TextInputType.text,
               readOnly: true,
+              style: Utils.googleFontStyle(
+                  1, 16, FontStyle.normal, white, FontWeight.w400),
               onTap: () {
                 Navigator.push(
                   context,
@@ -1248,12 +1243,12 @@ class _HomeState extends State<Home> {
                     width: 20,
                     height: 20,
                     imagePath: "ic_search.png",
-                    color: lightgray,
+                    color: white,
                   ),
                 ),
                 hintText: Locales.string(context, "search"),
                 hintStyle: Utils.googleFontStyle(
-                    1, 18, FontStyle.normal, lightgray, FontWeight.w400),
+                    1, 16, FontStyle.normal, white, FontWeight.w400),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(32),
                   borderSide: const BorderSide(
@@ -1263,7 +1258,7 @@ class _HomeState extends State<Home> {
                 ),
                 filled: true,
                 contentPadding: const EdgeInsets.all(10),
-                fillColor: white,
+                fillColor: homeSearchBarBg,
               ),
             ),
           ),
@@ -1454,6 +1449,9 @@ class _HomeState extends State<Home> {
         return Dimens.landscapRadioHeight;
       } else if (screenLayout == "portrait") {
         return Dimens.portraitRadioHeight;
+      } else if (screenLayout == "list") {
+        return Dimens.listRowHeight *
+            (sectionList?[sectionindex ?? 0].data?.length ?? 0);
       } else {
         return 0.0;
       }
@@ -1464,6 +1462,9 @@ class _HomeState extends State<Home> {
         return Dimens.landscapPodcastHeight;
       } else if (screenLayout == "portrait") {
         return Dimens.portraitPodcastHeight;
+      } else if (screenLayout == "list") {
+        return Dimens.listRowHeight *
+            (sectionList?[sectionindex ?? 0].data?.length ?? 0);
       } else {
         return 0.0;
       }
@@ -1497,6 +1498,9 @@ class _HomeState extends State<Home> {
       } else if ((sectionList?[index].screenLayout.toString() ?? "") ==
           "portrait") {
         return portraitRadio(index, sectionList);
+      } else if ((sectionList?[index].screenLayout.toString() ?? "") ==
+          "list") {
+        return list(index, sectionList, type);
       } else {
         return const SizedBox.shrink();
       }
@@ -1509,6 +1513,9 @@ class _HomeState extends State<Home> {
       } else if ((sectionList?[index].screenLayout.toString() ?? "") ==
           "portrait") {
         return portraitPodcast(index, sectionList);
+      } else if ((sectionList?[index].screenLayout.toString() ?? "") ==
+          "list") {
+        return list(index, sectionList, type);
       } else {
         return const SizedBox.shrink();
       }
@@ -1666,7 +1673,7 @@ class _HomeState extends State<Home> {
                         }
                       },
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(22),
                         child: Stack(
                           children: [
                             MyNetworkImage(
@@ -1687,17 +1694,57 @@ class _HomeState extends State<Home> {
                             Container(
                               width: MediaQuery.of(context).size.width,
                               height: MediaQuery.of(context).size.height,
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  begin: Alignment.center,
+                                  begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     transparent,
-                                    transparent,
+                                    homeSearchBarBg.withValues(alpha: 0.75),
                                   ],
                                 ),
                               ),
                             ),
+                            if (homeprovider.bannerModel.result?[index].type ==
+                                1)
+                              Positioned(
+                                top: 13,
+                                left: 13,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: black.withValues(alpha: 0.35),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: homeLiveBadge,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      MyText(
+                                        color: white,
+                                        text: "EN DIRECT",
+                                        multilanguage: false,
+                                        textalign: TextAlign.center,
+                                        fontsize: Dimens.textExtraSmall,
+                                        inter: 1,
+                                        maxline: 1,
+                                        fontwaight: FontWeight.w700,
+                                        overflow: TextOverflow.ellipsis,
+                                        fontstyle: FontStyle.normal,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             Positioned.fill(
                               bottom: 13,
                               left: 13,
@@ -2845,40 +2892,63 @@ class _HomeState extends State<Home> {
                       width: MediaQuery.of(context).size.width * 0.19,
                       height: MediaQuery.of(context).size.height * 0.15,
                       decoration: BoxDecoration(
-                          color: Theme.of(context).secondaryHeaderColor,
-                          borderRadius: BorderRadius.circular(25)),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                          color: homeCategoryPalette[
+                              index % homeCategoryPalette.length],
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Stack(
                         children: [
-                          MyNetworkImage(
-                            imgWidth: 45,
-                            imgHeight: 45,
-                            imageUrl: sectionList?[sectionindex]
-                                    .data?[index]
-                                    .image
-                                    .toString() ??
-                                "",
-                            fit: BoxFit.cover,
-                          ),
-                          SizedBox(
-                              height:
-                                  MediaQuery.of(context).size.height * 0.01),
-                          Container(
-                            padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
-                            child: MyText(
-                                color: Theme.of(context).colorScheme.surface,
-                                text: sectionList?[sectionindex]
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              MyNetworkImage(
+                                imgWidth: 40,
+                                imgHeight: 40,
+                                imageUrl: sectionList?[sectionindex]
                                         .data?[index]
-                                        .name
+                                        .image
                                         .toString() ??
                                     "",
-                                textalign: TextAlign.center,
-                                fontsize: Dimens.textSmall,
-                                inter: 1,
-                                maxline: 1,
-                                fontwaight: FontWeight.w500,
-                                overflow: TextOverflow.ellipsis,
-                                fontstyle: FontStyle.normal),
+                                fit: BoxFit.cover,
+                              ),
+                              SizedBox(
+                                  height: MediaQuery.of(context).size.height *
+                                      0.01),
+                              Container(
+                                padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
+                                child: MyText(
+                                    color: black,
+                                    text: sectionList?[sectionindex]
+                                            .data?[index]
+                                            .name
+                                            .toString() ??
+                                        "",
+                                    textalign: TextAlign.center,
+                                    fontsize: Dimens.textSmall,
+                                    inter: 1,
+                                    maxline: 1,
+                                    fontwaight: FontWeight.w700,
+                                    overflow: TextOverflow.ellipsis,
+                                    fontstyle: FontStyle.normal),
+                              ),
+                            ],
+                          ),
+                          Positioned(
+                            bottom: 6,
+                            right: 6,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: white.withValues(alpha: 0.85),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: homeSearchBarBg,
+                                size: 14,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -2890,6 +2960,101 @@ class _HomeState extends State<Home> {
           ),
         ),
       ],
+    );
+  }
+
+  /* List Row Layout - used for "Podcasts populaires" / "Derniers titres" style sections */
+  Widget list(
+      int sectionindex, List<section.Result>? sectionList, int type) {
+    final data = sectionList?[sectionindex].data ?? [];
+    return Column(
+      children: List.generate(data.length, (index) {
+        final item = data[index];
+        final isPremiumLocked =
+            (item.isPremium ?? 0) == 1 && (item.isBuy ?? 0) == 0;
+
+        Future<void> playItem() async {
+          if (type == 1) {
+            Utils.playAudio(
+                context,
+                "radio",
+                item.isPremium ?? 0,
+                item.isBuy ?? 0,
+                item.image.toString(),
+                item.name.toString(),
+                'homebanner',
+                item.songUrl.toString(),
+                item.languageName.toString(),
+                item.artistName.toString(),
+                item.id.toString(),
+                "",
+                index,
+                data.toList());
+          } else {
+            final musicdetailProvider =
+                Provider.of<MusicDetailProvider>(context, listen: false);
+            await musicdetailProvider.getEpisodebyPodcastList(
+                item.id.toString(), 0);
+            if (!musicdetailProvider.loading) {
+              if (musicdetailProvider.getEpisodeByPodcstModel.status == 200 &&
+                  ((musicdetailProvider.getEpisodeByPodcstModel.result
+                              ?.length ??
+                          0) >
+                      0)) {
+                if (!context.mounted) return;
+                Utils.playAudio(
+                    context,
+                    "podcast",
+                    item.isPremium ?? 0,
+                    item.isBuy ?? 0,
+                    item.landscapeImg.toString(),
+                    item.title.toString(),
+                    '',
+                    musicdetailProvider.episodeList?[0].episodeAudio
+                            .toString() ??
+                        "",
+                    "",
+                    musicdetailProvider.episodeList?[0].description
+                            .toString() ??
+                        "",
+                    musicdetailProvider.episodeList?[0].id.toString() ?? "",
+                    item.id.toString(),
+                    0,
+                    musicdetailProvider.episodeList?.toList() ?? []);
+              }
+            }
+          }
+        }
+
+        void onFavourite() {
+          if (Constant.userID == null) {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const Login()));
+            return;
+          }
+          Provider.of<AddFavouriteProvider>(context, listen: false)
+              .getAddFavourite(Constant.userID ?? "", item.id.toString());
+          Utils.showToast("Ajouté aux favoris");
+        }
+
+        void onShare() {
+          Utils.shareApp(
+              "${type == 1 ? item.name : item.title}\n\n${Constant.androidAppShareUrlDesc}");
+        }
+
+        return SectionRowTile(
+          imageUrl: type == 1
+              ? item.image.toString()
+              : item.landscapeImg.toString(),
+          title: (type == 1 ? item.name : item.title).toString(),
+          subtitle: (type == 1 ? item.artistName : item.description) ?? "",
+          isPremium: isPremiumLocked,
+          onTap: playItem,
+          onPlayTap: playItem,
+          onFavouriteTap: onFavourite,
+          onShareTap: onShare,
+        );
+      }),
     );
   }
 
