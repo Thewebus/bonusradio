@@ -10,6 +10,7 @@ class MyAppbar extends StatelessWidget {
   final String? icon, title;
   final int isSimpleappbar;
   final bool? isMultiLang;
+  final bool useAccueilTheme;
 
   const MyAppbar({
     super.key,
@@ -18,6 +19,7 @@ class MyAppbar extends StatelessWidget {
     this.title,
     this.isMultiLang,
     required this.isSimpleappbar,
+    this.useAccueilTheme = false,
   });
 
   @override
@@ -26,19 +28,20 @@ class MyAppbar extends StatelessWidget {
   }
 
   Widget appBar(BuildContext context) {
+    final Color accent = useAccueilTheme ? homeSearchBarBg : colorPrimary;
     if (isSimpleappbar == 1) {
       return Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              colorPrimary,
-              colorPrimary,
+              accent,
+              accent,
             ],
             end: Alignment.bottomLeft,
             begin: Alignment.topRight,
           ),
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(25),
               bottomRight: Radius.circular(25)),
         ),
@@ -55,7 +58,7 @@ class MyAppbar extends StatelessWidget {
                   scrolledUnderElevation: 0,
                   surfaceTintColor: transparent,
                   systemOverlayStyle:
-                      const SystemUiOverlayStyle(statusBarColor: colorPrimary),
+                      SystemUiOverlayStyle(statusBarColor: accent),
                   leading: InkWell(
                     onTap: onBack,
                     child: MyImage(
@@ -90,16 +93,16 @@ class MyAppbar extends StatelessWidget {
             width: double.infinity,
             height: MediaQuery.of(context).size.height * 0.25,
             padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  colorPrimary,
-                  colorPrimary,
+                  accent,
+                  accent,
                 ],
                 end: Alignment.bottomLeft,
                 begin: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(25),
                   bottomRight: Radius.circular(25)),
             ),

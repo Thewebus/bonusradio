@@ -73,6 +73,7 @@ class _PodcastState extends State<Podcast> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: homeAccueilBg,
       body: Stack(
         children: [
           Column(
@@ -82,6 +83,7 @@ class _PodcastState extends State<Podcast> {
                 icon: "back.png",
                 isSimpleappbar: 1,
                 isMultiLang: true,
+                useAccueilTheme: true,
                 onBack: () {
                   widget.onBack?.call();
                 },

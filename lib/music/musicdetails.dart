@@ -31,6 +31,53 @@ import 'package:text_scroll/text_scroll.dart';
 AudioPlayer audioPlayer = AudioPlayer();
 late MusicManager musicManager;
 
+// Decorative diagonal wave streaks + dot texture drawn over the expanded
+// player's background gradient (static, no animation).
+class _BackgroundTexturePainter extends CustomPainter {
+  const _BackgroundTexturePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wavePaint = Paint()
+      ..color = white.withValues(alpha: 0.10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
+
+    for (int i = 0; i < 3; i++) {
+      final yStart = size.height * (0.15 + i * 0.22);
+      final path = Path()
+        ..moveTo(-size.width * 0.2, yStart)
+        ..quadraticBezierTo(
+          size.width * 0.5,
+          yStart - size.height * 0.10,
+          size.width * 1.2,
+          yStart + size.height * 0.15,
+        );
+      canvas.drawPath(path, wavePaint);
+    }
+
+    // Vinyl record grooves: concentric circles centered just below the
+    // bottom edge, fading out toward the outer rings.
+    final vinylPaint = Paint()..style = PaintingStyle.stroke;
+    final vinylCenter = Offset(size.width * 0.5, size.height * 1.05);
+    const int ringCount = 7;
+    final maxRadius = size.width * 0.75;
+    for (int i = 1; i <= ringCount; i++) {
+      final radius = maxRadius * (i / ringCount);
+      final opacity = 0.14 * (1 - i / ringCount) + 0.03;
+      vinylPaint
+        ..color = white.withValues(alpha: opacity)
+        ..strokeWidth = 1.2;
+      canvas.drawCircle(vinylCenter, radius, vinylPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BackgroundTexturePainter oldDelegate) => false;
+}
+
 // Configuration responsive pour les images lect-*
 // Les breakpoints sont exprimés en diagonale d'écran (pouces).
 // Approximation utilisée: diagonalInches = sqrt(width^2 + height^2) / 160
@@ -389,7 +436,7 @@ class _MusicDetailsState extends State<MusicDetails>
       maxHeight: fullHeight,
       controller: miniPlayerController,
       elevation: 4,
-      // backgroundColor: colorPrimary,
+      // backgroundColor: homeLiveBadge,
       onDismissed: () async {
         printLog("onDismissed");
         currentlyPlaying.value = null;
@@ -601,7 +648,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(20),
-                                          color: colorPrimary.withValues(
+                                          color: homeLiveBadge.withValues(
                                               alpha: 0.25),
                                         ),
                                         child: Row(
@@ -650,7 +697,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(20),
-                                          color: colorPrimary.withValues(
+                                          color: homeLiveBadge.withValues(
                                               alpha: 0.25),
                                         ),
                                         child: Row(
@@ -697,10 +744,10 @@ class _MusicDetailsState extends State<MusicDetails>
                         buffered:
                             positionData?.bufferedPosition ?? Duration.zero,
                         total: positionData?.duration ?? Duration.zero,
-                        progressBarColor: colorPrimary,
+                        progressBarColor: homeLiveBadge,
                         baseBarColor: lightgray,
                         bufferedBarColor: gray,
-                        thumbColor: colorPrimary,
+                        thumbColor: homeLiveBadge,
                         barHeight: 4.0,
                         thumbRadius: 6.0,
                         timeLabelPadding: 5.0,
@@ -809,8 +856,8 @@ class _MusicDetailsState extends State<MusicDetails>
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [
-                                  colorPrimary,
-                                  colorPrimary,
+                                  homeLiveBadge,
+                                  homeLiveBadge,
                                 ],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -835,8 +882,8 @@ class _MusicDetailsState extends State<MusicDetails>
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [
-                                  colorPrimary,
-                                  colorPrimary,
+                                  homeLiveBadge,
+                                  homeLiveBadge,
                                 ],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -859,7 +906,7 @@ class _MusicDetailsState extends State<MusicDetails>
                           return IconButton(
                             icon: const Icon(
                               Icons.replay_rounded,
-                              color: colorPrimary,
+                              color: homeLiveBadge,
                             ),
                             iconSize: 60.0,
                             onPressed: () => audioPlayer.seek(Duration.zero,
@@ -1001,9 +1048,9 @@ class _MusicDetailsState extends State<MusicDetails>
                                 color: Theme.of(context).colorScheme.surface,
                                 size: 30.0),
                             const Icon(Icons.repeat,
-                                color: colorPrimary, size: 30.0),
+                                color: homeLiveBadge, size: 30.0),
                             const Icon(Icons.repeat_one,
-                                color: colorPrimary, size: 30.0),
+                                color: homeLiveBadge, size: 30.0),
                           ];
                           const cycleModes = [
                             LoopMode.off,
@@ -1029,7 +1076,8 @@ class _MusicDetailsState extends State<MusicDetails>
                           return IconButton(
                             iconSize: 30.0,
                             icon: shuffleModeEnabled
-                                ? const Icon(Icons.shuffle, color: colorPrimary)
+                                ? const Icon(Icons.shuffle,
+                                    color: homeLiveBadge)
                                 : Icon(Icons.shuffle,
                                     color:
                                         Theme.of(context).colorScheme.surface),
@@ -1063,7 +1111,7 @@ class _MusicDetailsState extends State<MusicDetails>
                         topLeft: Radius.circular(18),
                         topRight: Radius.circular(18),
                       ),
-                      color: colorPrimary.withValues(alpha: 0.25),
+                      color: homeLiveBadge.withValues(alpha: 0.25),
                     ),
                     child: Consumer<MusicDetailProvider>(
                       builder: (context, seactionprovider, child) {
@@ -1264,7 +1312,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                           musicdetailprovider
                                               .episodeList?[index].id
                                               .toString()
-                                      ? colorPrimary.withValues(alpha: 0.25)
+                                      ? homeLiveBadge.withValues(alpha: 0.25)
                                       : transparent,
                                 ),
                                 child: Row(
@@ -1335,7 +1383,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                           ),
                                           const SizedBox(height: 2),
                                           MyText(
-                                            color: colorPrimary,
+                                            color: homeLiveBadge,
                                             text: Utils.dateformat(
                                                 DateTime.parse(
                                                     musicdetailprovider
@@ -1587,38 +1635,28 @@ class _MusicDetailsState extends State<MusicDetails>
   }
 
   Widget _buildExpandedPlayerBackground() {
-    final accentSoft = const Color(0xFFFFC5BA);
-    final darkEdge = const Color(0xFF120406);
-
     return Positioned.fill(
       child: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: const Alignment(0.0, -0.10),
-                radius: 1.15,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  accentSoft.withValues(alpha: 0.74),
-                  const Color(0xFF5B1E24).withValues(alpha: 0.72),
-                  darkEdge,
+                  Color(0xFFF6E7CE),
+                  Color(0xFFE4C69B),
+                  Color(0xFFB98A5A),
+                  Color(0xFF7A4C2C),
+                  Color(0xFF2D160F),
                 ],
-                stops: const [0.06, 0.36, 1.0],
+                stops: [0.0, 0.20, 0.45, 0.70, 1.0],
               ),
             ),
           ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.center,
-                  end: Alignment.topCenter,
-                  colors: [
-                    white.withValues(alpha: 0.00),
-                    white.withValues(alpha: 1.00),
-                  ],
-                ),
-              ),
+          const Positioned.fill(
+            child: CustomPaint(
+              painter: _BackgroundTexturePainter(),
             ),
           ),
         ],
@@ -1956,12 +1994,12 @@ class _MusicDetailsState extends State<MusicDetails>
                               final playing = snap.data?.playing ?? false;
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: colorPrimary.withValues(alpha: 1.0),
+                                  color: homeLiveBadge.withValues(alpha: 1.0),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color:
-                                          colorPrimary.withValues(alpha: 1.0),
+                                          homeLiveBadge.withValues(alpha: 1.0),
                                       blurRadius: 15,
                                       spreadRadius: 2,
                                     ),
@@ -2006,7 +2044,7 @@ class _MusicDetailsState extends State<MusicDetails>
                           //           buffered:
                           //               pos?.bufferedPosition ?? Duration.zero,
                           //           total: pos?.duration ?? Duration.zero,
-                          //           progressBarColor: colorPrimary,
+                          //           progressBarColor: homeLiveBadge,
                           //           baseBarColor: white.withValues(alpha: 0.1),
                           //           barCapShape: BarCapShape.round,
                           //           barHeight: 4,
@@ -2255,7 +2293,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   MyText(
-                                                      color: colorPrimary,
+                                                      color: homeLiveBadge,
                                                       text: commentprovider
                                                                   .commentList?[
                                                                       index]
@@ -2489,25 +2527,13 @@ class _MusicDetailsState extends State<MusicDetails>
             children: [
               ColorFiltered(
                 colorFilter: ColorFilter.mode(
-                  const Color(0xFFFFFFFF).withValues(alpha: 0.45),
+                  const Color.fromARGB(255, 138, 80, 4).withValues(alpha: 0.9),
                   BlendMode.srcATop,
                 ),
                 child: Image.asset(
                   'assets/images/lect-notes.png',
-                  width: size * 1.08,
-                  height: size * 1.08,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              ColorFiltered(
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFFFFFFFF),
-                  BlendMode.srcATop,
-                ),
-                child: Image.asset(
-                  'assets/images/lect-notes.png',
-                  width: size,
-                  height: size,
+                  width: size * 1.1,
+                  height: size * 1.1,
                   fit: BoxFit.contain,
                 ),
               ),

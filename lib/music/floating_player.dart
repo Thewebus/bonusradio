@@ -4,8 +4,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
-import 'package:myBonus/widget/myimage.dart';
-import 'package:myBonus/widget/mynetworkimg.dart';
+import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/widget/mytext.dart';
 
 // ============= CONFIGURATION DE LA WAVEFORM =============
@@ -277,23 +277,24 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
         final tag = effectivePlayer.sequenceState.currentSource?.tag;
         String title = '';
         String subtitle = '';
-        String artUri = '';
+        String playType = '';
         if (tag is MediaItem) {
           title = tag.title;
-          subtitle = tag.artist ?? '';
-          artUri = tag.artUri?.toString() ?? '';
+          subtitle = tag.displayDescription ?? '';
+          playType = tag.displaySubtitle ?? '';
         } else if (tag is Map) {
           title = (tag['title'] ?? '').toString();
-          subtitle = (tag['artist'] ?? '').toString();
-          artUri = (tag['artUri'] ?? tag['image'] ?? '').toString();
+          subtitle = (tag['displayDescription'] ?? '').toString();
+          playType = (tag['displaySubtitle'] ?? '').toString();
         } else if (tag != null) {
           try {
             final dynamic t = tag;
             title = (t.title ?? '').toString();
-            subtitle = (t.artist ?? '').toString();
-            artUri = (t.artUri ?? '').toString();
+            subtitle = (t.displayDescription ?? '').toString();
+            playType = (t.displaySubtitle ?? '').toString();
           } catch (_) {}
         }
+        final bool isLive = playType == Constant.radioType;
 
         return Positioned(
           left: 16,
@@ -311,116 +312,142 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
             child: Material(
               elevation: 12,
               borderRadius: BorderRadius.circular(16),
-              color: Theme.of(context).cardColor,
-              child: Stack(
-                children: [
-                  // Wave animation background
-                  StreamBuilder<bool>(
-                    stream: effectivePlayer.playingStream,
-                    builder: (context, snapshot) {
-                      final isPlaying =
-                          snapshot.data ?? effectivePlayer.playing;
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: SizedBox(
-                          height: 70,
-                          child: _WaveAnimation(
-                            isPlaying: isPlaying,
-                            player: effectivePlayer,
-                          ),
+              color: homeAccueilBg,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Container(
+                        width: 32,
+                        height: 32,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: homeSearchBarBg.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
                         ),
-                      );
-                    },
-                  ),
-                  // Main content
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
+                        child: const Icon(
+                          Icons.keyboard_arrow_up,
+                          color: homeSearchBarBg,
+                          size: 20,
+                        ),
+                      ),
+                      onPressed: () async {
+                        try {
+                          playerExpandProgress.value =
+                              MediaQuery.of(context).size.height;
+                        } catch (_) {}
+                        widget.onOpenRadio?.call();
+                        setState(() {});
+                      },
                     ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: SizedBox(
-                            width: 54,
-                            height: 54,
-                            child: artUri.isNotEmpty
-                                ? MyNetworkImage(
-                                    imgWidth: 54,
-                                    imgHeight: 54,
-                                    fit: BoxFit.cover,
-                                    imageUrl: artUri)
-                                : MyImage(
-                                    width: 54,
-                                    height: 54,
-                                    imagePath: 'appicon.png'),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isLive)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: homeLiveBadge,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  MyText(
+                                    color: homeLiveBadge,
+                                    text: "EN DIRECT",
+                                    multilanguage: false,
+                                    fontsize: 10,
+                                    fontwaight: FontWeight.w700,
+                                    maxline: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          MyText(
+                            color: black,
+                            text: title,
+                            multilanguage: false,
+                            fontsize: 14,
+                            fontwaight: FontWeight.w600,
+                            maxline: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              MyText(
-                                color:
-                                    Theme.of(context).colorScheme.onBackground,
-                                text: title,
-                                multilanguage: false,
-                                fontsize: 14,
-                                fontwaight: FontWeight.w600,
-                                maxline: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              MyText(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.7),
-                                text: subtitle,
-                                multilanguage: false,
-                                fontsize: 12,
-                                fontwaight: FontWeight.w500,
-                                maxline: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                          const SizedBox(height: 2),
+                          MyText(
+                            color: black.withValues(alpha: 0.6),
+                            text: subtitle,
+                            multilanguage: false,
+                            fontsize: 12,
+                            fontwaight: FontWeight.w500,
+                            maxline: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        StreamBuilder<bool>(
-                          stream: effectivePlayer.playingStream,
-                          builder: (context, snapshot) {
-                            final isPlaying =
-                                snapshot.data ?? effectivePlayer.playing;
-                            return IconButton(
-                              icon: Icon(
-                                isPlaying
-                                    ? Icons.pause_circle_filled
-                                    : Icons.play_circle_fill,
-                                size: 34,
-                              ),
-                              onPressed: () {
-                                if (isPlaying) {
-                                  effectivePlayer.pause();
-                                } else {
-                                  effectivePlayer.play();
-                                }
-                                setState(() {});
-                              },
-                            );
+                        ],
+                      ),
+                    ),
+                    StreamBuilder<bool>(
+                      stream: effectivePlayer.playingStream,
+                      builder: (context, snapshot) {
+                        final isPlaying =
+                            snapshot.data ?? effectivePlayer.playing;
+                        return SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: _WaveAnimation(
+                              isPlaying: isPlaying,
+                              player: effectivePlayer,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    StreamBuilder<bool>(
+                      stream: effectivePlayer.playingStream,
+                      builder: (context, snapshot) {
+                        final isPlaying =
+                            snapshot.data ?? effectivePlayer.playing;
+                        return IconButton(
+                          icon: Icon(
+                            isPlaying
+                                ? Icons.pause_circle_filled
+                                : Icons.play_circle_fill,
+                            color: homeSearchBarBg,
+                            size: 34,
+                          ),
+                          onPressed: () {
+                            if (isPlaying) {
+                              effectivePlayer.pause();
+                            } else {
+                              effectivePlayer.play();
+                            }
+                            setState(() {});
                           },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.grey),
-                          onPressed: _stopPlayer,
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.close,
+                          color: Colors.grey, size: 18),
+                      onPressed: _stopPlayer,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

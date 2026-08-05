@@ -69,7 +69,7 @@ class _LiveEventState extends State<LiveEvent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: appBgColor,
+      backgroundColor: homeAccueilBg,
       body: Column(
         children: [
           MyAppbar(
@@ -77,6 +77,7 @@ class _LiveEventState extends State<LiveEvent> {
             icon: "back.png",
             isSimpleappbar: 1,
             isMultiLang: true,
+            useAccueilTheme: true,
             onBack: () {
               widget.onBack?.call();
             },

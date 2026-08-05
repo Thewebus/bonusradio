@@ -272,8 +272,10 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: PopScope(
+    return Container(
+      color: homeAccueilBg,
+      child: SafeArea(
+        child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
@@ -283,6 +285,7 @@ class _HomeState extends State<Home> {
           children: [
             Scaffold(
               key: drawerkey,
+              backgroundColor: homeAccueilBg,
               body: Column(
                 children: [
                   // Only show appBar for Home page
@@ -304,6 +307,7 @@ class _HomeState extends State<Home> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -313,13 +317,24 @@ class _HomeState extends State<Home> {
 
     return Container(
       decoration: BoxDecoration(
-        color: white,
+        color: homeAccueilBg,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
         border: Border(
           top: BorderSide(
             color: black.withValues(alpha: 0.08),
             width: 1,
           ),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       padding: EdgeInsets.fromLTRB(6, 6, 6, bottomInset > 0 ? bottomInset : 8),
       child: Row(
@@ -354,18 +369,18 @@ class _HomeState extends State<Home> {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                width: 28,
-                height: 3,
+                width: 40,
+                height: 32,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? black : transparent,
-                  borderRadius: BorderRadius.circular(3),
+                  color: isSelected ? homeSearchBarBg : transparent,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Icon(
-                icon,
-                size: 24,
-                color: isSelected ? black : black.withValues(alpha: 0.55),
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: isSelected ? white : black.withValues(alpha: 0.55),
+                ),
               ),
               const SizedBox(height: 4),
               Text(

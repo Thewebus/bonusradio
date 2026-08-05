@@ -55,6 +55,7 @@ class ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: homeAccueilBg,
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(
@@ -66,6 +67,7 @@ class ProfileState extends State<Profile> {
                   isSimpleappbar: 2,
                   title: "profile",
                   isMultiLang: true,
+                  useAccueilTheme: true,
                   onBack: () {
                     widget.onBack?.call();
                   },
