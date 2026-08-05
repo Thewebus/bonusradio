@@ -96,7 +96,7 @@ class _LiveEventState extends State<LiveEvent> {
               },
               child: SingleChildScrollView(
                 controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(0, 15, 0, 15),
+                padding: const EdgeInsets.fromLTRB(0, 15, 0, 160),
                 scrollDirection: Axis.vertical,
                 physics: const BouncingScrollPhysics(),
                 child: Column(

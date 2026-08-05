@@ -102,7 +102,7 @@ class _PodcastState extends State<Podcast> {
                   },
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(0, 15, 0, 80),
+                    padding: const EdgeInsets.fromLTRB(0, 15, 0, 160),
                     child: Column(
                       children: [
                         buildPage(),

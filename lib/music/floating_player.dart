@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:miniplayer/miniplayer.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/utils/color.dart';
@@ -48,12 +49,10 @@ class WaveformConfig {
 // =========================================================
 
 class FloatingPlayer extends StatefulWidget {
-  final VoidCallback? onOpenRadio;
   final int currentTabIndex;
 
   const FloatingPlayer({
     super.key,
-    this.onOpenRadio,
     this.currentTabIndex = -1,
   });
 
@@ -253,6 +252,10 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
     });
   }
 
+  void _expandPlayer() {
+    miniPlayerController.animateToHeight(state: PanelState.MAX);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AudioPlayer?>(
@@ -267,10 +270,11 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
             !_visible) {
           _visible = true;
         }
-        // Hide mini-player if on Radio tab (index 0)
+        // Hide mini-player if on the Radio tab (its own full-screen panel
+        // already shows the "now playing" info).
         if (effectivePlayer == null ||
             !_visible ||
-            widget.currentTabIndex == 0) {
+            widget.currentTabIndex == radioTabIndex) {
           return const SizedBox.shrink();
         }
 
@@ -296,29 +300,14 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
         }
         final bool isLive = playType == Constant.radioType;
 
-        return Positioned(
-          left: 16,
-          right: 16,
-          bottom: 76, // leave space above bottom nav
-          child: GestureDetector(
-            onTap: () async {
-              // Expand the miniplayer to full height before opening radio tab
-              try {
-                playerExpandProgress.value = MediaQuery.of(context).size.height;
-              } catch (_) {}
-              widget.onOpenRadio?.call();
-              setState(() {});
-            },
-            child: Material(
-              elevation: 12,
-              borderRadius: BorderRadius.circular(16),
-              color: homeAccueilBg,
-              child: Container(
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: _expandPlayer,
+              child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                ),
                 child: Row(
                   children: [
                     IconButton(
@@ -336,14 +325,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                           size: 20,
                         ),
                       ),
-                      onPressed: () async {
-                        try {
-                          playerExpandProgress.value =
-                              MediaQuery.of(context).size.height;
-                        } catch (_) {}
-                        widget.onOpenRadio?.call();
-                        setState(() {});
-                      },
+                      onPressed: _expandPlayer,
                     ),
                     Expanded(
                       child: Column(
@@ -450,7 +432,14 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                 ),
               ),
             ),
-          ),
+            Divider(
+              height: 1,
+              thickness: 1,
+              indent: 16,
+              endIndent: 16,
+              color: black.withValues(alpha: 0.08),
+            ),
+          ],
         );
       },
     );

@@ -189,7 +189,12 @@ final MiniplayerController miniPlayerController = MiniplayerController();
 
 class MusicDetails extends StatefulWidget {
   final bool ishomepage;
-  const MusicDetails({super.key, required this.ishomepage});
+  final double minHeight;
+  const MusicDetails({
+    super.key,
+    required this.ishomepage,
+    this.minHeight = playerMinHeight,
+  });
 
   @override
   State<MusicDetails> createState() => _MusicDetailsState();
@@ -424,14 +429,18 @@ class _MusicDetailsState extends State<MusicDetails>
       const elementOpacity = 1.0;
       const progressIndicatorHeight = 2.0;
       return Scaffold(
+        // Bottom clearance for the floating dock (Home no longer reserves
+        // space via Scaffold.bottomNavigationBar) — only the content shifts
+        // up, the background still extends full-bleed behind the dock.
         body: buildMusicPanel(
-            fullHeight, elementOpacity, progressIndicatorHeight),
+            fullHeight, elementOpacity, progressIndicatorHeight,
+            bottomContentClearance: 150),
       );
     }
 
     return Miniplayer(
       valueNotifier: playerExpandProgress,
-      minHeight: playerMinHeight,
+      minHeight: widget.minHeight,
       duration: const Duration(seconds: 1),
       maxHeight: fullHeight,
       controller: miniPlayerController,
@@ -460,14 +469,21 @@ class _MusicDetailsState extends State<MusicDetails>
           const progressIndicatorHeight = 2.0;
 
           return Scaffold(
+            // widget.minHeight == 0 marks the persistent Home overlay,
+            // which sits behind the always-on-top floating dock — shift the
+            // content up so the dock doesn't cover the bottom controls,
+            // while the background stays full-bleed behind it. Other
+            // callers (ViewAll/Search/RadioById/PodcastViewAll) have no
+            // such dock and keep their current full-bleed layout.
             body: buildMusicPanel(
-                height, elementOpacity, progressIndicatorHeight),
+                height, elementOpacity, progressIndicatorHeight,
+                bottomContentClearance: widget.minHeight == 0 ? 150 : 0),
           );
         }
 
         //Miniplayer in BuildMethod
         final percentageMiniplayer = percentageFromValueInRange(
-            min: playerMinHeight,
+            min: widget.minHeight,
             max: MediaQuery.of(context).size.height,
             value: height);
 
@@ -1666,7 +1682,8 @@ class _MusicDetailsState extends State<MusicDetails>
 
   // Small MiniPlayer Panel Open Using This Method
   Widget buildMusicPanel(
-      dynamic dynamicPanelHeight, elementOpacity, progressIndicatorHeight) {
+      dynamic dynamicPanelHeight, elementOpacity, progressIndicatorHeight,
+      {double bottomContentClearance = 0}) {
     return SizedBox.expand(
       child: StreamBuilder<SequenceState?>(
         stream: audioPlayer.sequenceStateStream,
@@ -1717,7 +1734,9 @@ class _MusicDetailsState extends State<MusicDetails>
                   ),
                 ],
                 // Main content
-                Column(
+                Padding(
+                  padding: EdgeInsets.only(bottom: bottomContentClearance),
+                  child: Column(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -2109,6 +2128,7 @@ class _MusicDetailsState extends State<MusicDetails>
                       ),
                     ),
                   ],
+                ),
                 ),
               ],
             ),

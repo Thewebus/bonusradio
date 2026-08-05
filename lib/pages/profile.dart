@@ -58,6 +58,7 @@ class ProfileState extends State<Profile> {
       backgroundColor: homeAccueilBg,
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
+        padding: const EdgeInsets.only(bottom: 160),
         child: Column(
           children: [
             // AppBar

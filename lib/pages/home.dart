@@ -9,6 +9,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:miniplayer/miniplayer.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/liveevent.dart';
@@ -52,6 +53,10 @@ const double playerMinHeight = 100;
 const miniplayerPercentageDeclaration = 0.6;
 List<AudioSource> playlist = [];
 
+// Public (not library-private) so floating_player.dart can compare against
+// it without a hardcoded magic number.
+const int radioTabIndex = 2;
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -60,10 +65,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  static const int _radioTabIndex = 0;
-  static const int _homeTabIndex = 1;
-  static const int _podcastTabIndex = 2;
-  static const int _filmsTabIndex = 3;
+  static const int _homeTabIndex = 0;
+  static const int _filmsTabIndex = 1;
+  static const int _podcastTabIndex = 3;
   // static const int _searchTabIndex = 4; // Désactivé
   static const int _profileTabIndex = 4;
 
@@ -77,7 +81,7 @@ class _HomeState extends State<Home> {
   double ratingValue = 0.0;
   CarouselSliderController pageController = CarouselSliderController();
   List<AudioSource> playlist = [];
-  int _currentBottomNavIndex = 0;
+  int _currentBottomNavIndex = radioTabIndex;
 
   /* Provider */
   late GeneralProvider generalProvider;
@@ -295,15 +299,27 @@ class _HomeState extends State<Home> {
                   ),
                 ],
               ),
-              bottomNavigationBar: _buildBottomNavigationBar(),
             ),
-            FloatingPlayer(
-              currentTabIndex: _currentBottomNavIndex,
-              onOpenRadio: () {
-                setState(() {
-                  _currentBottomNavIndex = _radioTabIndex;
-                });
+            // Persistent sliding full-screen player, expanded via the
+            // dock's chevron (playerExpandProgress / miniPlayerController).
+            // minHeight: 0 keeps it invisible until expanded, since the
+            // dock already shows the compact "now playing" row. Placed
+            // BEFORE the dock so the dock always stays on top and reachable
+            // (the player has no back button of its own).
+            ValueListenableBuilder<AudioPlayer?>(
+              valueListenable: currentlyPlaying,
+              builder: (context, player, child) {
+                if (player?.audioSource == null) {
+                  return const SizedBox.shrink();
+                }
+                return const MusicDetails(ishomepage: true, minHeight: 0);
               },
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 10,
+              child: _buildDockCard(),
             ),
           ],
         ),
@@ -312,40 +328,34 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: homeAccueilBg,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        border: Border(
-          top: BorderSide(
-            color: black.withValues(alpha: 0.08),
-            width: 1,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.fromLTRB(6, 6, 6, bottomInset > 0 ? bottomInset : 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+  Widget _buildDockCard() {
+    return Material(
+      elevation: 12,
+      shadowColor: black.withValues(alpha: 0.25),
+      borderRadius: BorderRadius.circular(24),
+      color: homeAccueilBg,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildBottomNavItem(Icons.radio, 'Radio', _radioTabIndex),
-          _buildBottomNavItem(Icons.home_outlined, 'Accueil', _homeTabIndex),
-          _buildBottomNavItem(
-              Icons.podcasts_outlined, 'Podcast', _podcastTabIndex),
-          _buildBottomNavItem(Icons.live_tv_outlined, 'Films', _filmsTabIndex),
-          _buildBottomNavItem(Icons.person_outline, 'Profil', _profileTabIndex),
+          FloatingPlayer(currentTabIndex: _currentBottomNavIndex),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildBottomNavItem(
+                    Icons.home_outlined, 'Accueil', _homeTabIndex),
+                _buildBottomNavItem(
+                    Icons.live_tv_outlined, 'Films', _filmsTabIndex),
+                _buildBottomNavItem(Icons.radio, 'Radios', radioTabIndex),
+                _buildBottomNavItem(
+                    Icons.podcasts_outlined, 'Podcasts', _podcastTabIndex),
+                _buildBottomNavItem(
+                    Icons.person_outline, 'Compte', _profileTabIndex),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -358,6 +368,11 @@ class _HomeState extends State<Home> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
+          // Collapse the sliding full-screen player when leaving the Radio
+          // tab, so it doesn't keep covering whichever tab is now shown.
+          if (index != radioTabIndex) {
+            miniPlayerController.animateToHeight(state: PanelState.MIN);
+          }
           setState(() {
             _currentBottomNavIndex = index;
           });
@@ -402,7 +417,7 @@ class _HomeState extends State<Home> {
 
   Widget _buildPageContent() {
     switch (_currentBottomNavIndex) {
-      case _radioTabIndex:
+      case radioTabIndex:
         return const RadioScreen();
       case _homeTabIndex:
         return _buildHomeContent();
@@ -462,22 +477,12 @@ class _HomeState extends State<Home> {
             scrollDirection: Axis.vertical,
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 160),
             child: Column(
               children: [
                 banner(),
                 buildPage(),
                 Utils.showBannerAd(context),
-                ValueListenableBuilder(
-                  valueListenable: currentlyPlaying,
-                  builder: (BuildContext context, AudioPlayer? audioObject,
-                      Widget? child) {
-                    if (audioObject?.audioSource != null) {
-                      return const SizedBox(height: 100);
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  },
-                ),
               ],
             ),
           ),
