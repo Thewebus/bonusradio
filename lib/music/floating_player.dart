@@ -316,12 +316,13 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                         height: 32,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: homeSearchBarBg.withValues(alpha: 0.1),
+                          color: homeSearchBarBg(context)
+                              .withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.keyboard_arrow_up,
-                          color: homeSearchBarBg,
+                          color: homeSearchBarBg(context),
                           size: 20,
                         ),
                       ),
@@ -341,14 +342,14 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                                   Container(
                                     width: 6,
                                     height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: homeLiveBadge,
+                                    decoration: BoxDecoration(
+                                      color: homeLiveBadge(context),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   MyText(
-                                    color: homeLiveBadge,
+                                    color: homeLiveBadge(context),
                                     text: "EN DIRECT",
                                     multilanguage: false,
                                     fontsize: 10,
@@ -409,7 +410,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                             isPlaying
                                 ? Icons.pause_circle_filled
                                 : Icons.play_circle_fill,
-                            color: homeSearchBarBg,
+                            color: homeSearchBarBg(context),
                             size: 34,
                           ),
                           onPressed: () {

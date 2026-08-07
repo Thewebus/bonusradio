@@ -16,6 +16,7 @@ import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
 class Settings extends StatefulWidget {
@@ -65,64 +66,91 @@ class _SettingsState extends State<Settings> {
         padding: const EdgeInsets.symmetric(vertical: 15),
         child: Column(
           children: [
-            /* Dark Mode Toggle */
+            /* Theme Mode Selector: Auto / Day / Night */
             Consumer<ThemeProvider>(builder: (context, themeprovider, child) {
-              return InkWell(
-                focusColor: transparent,
-                splashColor: transparent,
-                hoverColor: transparent,
-                highlightColor: transparent,
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
-                  height: 60,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            MyImage(
-                              width: 25,
-                              height: 25,
-                              imagePath: "ic_darkmode.png",
-                              color: colorPrimary,
-                            ),
-                            SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 0.05),
-                            MyText(
-                              color: Theme.of(context).colorScheme.surface,
-                              text: "darkmode",
-                              textalign: TextAlign.center,
-                              multilanguage: true,
-                              fontsize: Dimens.textTitle,
-                              inter: 1,
-                              maxline: 2,
-                              fontwaight: FontWeight.w500,
-                              overflow: TextOverflow.ellipsis,
-                              fontstyle: FontStyle.normal,
-                            ),
-                          ],
+              Future<void> select(AppThemeMode mode) async {
+                themeprovider.setMode(mode);
+                await sharedpre.remove("theme_mode");
+                await sharedpre.save("theme_mode", mode.name);
+              }
+
+              Widget modeButton(
+                  IconData icon, AppThemeMode mode, String tooltip) {
+                final bool isActive = themeprovider.mode == mode;
+                return Expanded(
+                  child: Tooltip(
+                    message: tooltip,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => select(mode),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isActive ? colorPrimary : transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isActive ? colorPrimary : gray,
+                          ),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: isActive
+                              ? white
+                              : Theme.of(context).colorScheme.surface,
                         ),
                       ),
-                      Switch(
-                        activeThumbColor: black,
-                        activeTrackColor: gray,
-                        inactiveTrackColor: gray,
-                        value: Constant.isDark,
-                        onChanged: (value) async {
-                          themeprovider.changeTheme(value);
-                          await sharedpre.remove("isdark");
-                          await sharedpre.saveBool("isdark", value);
-                        },
-                      ),
-                    ],
+                    ),
                   ),
+                );
+              }
+
+              return Container(
+                padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        MyImage(
+                          width: 25,
+                          height: 25,
+                          imagePath: "ic_darkmode.png",
+                          color: colorPrimary,
+                        ),
+                        SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.05),
+                        MyText(
+                          color: Theme.of(context).colorScheme.surface,
+                          text: "darkmode",
+                          textalign: TextAlign.center,
+                          multilanguage: true,
+                          fontsize: Dimens.textTitle,
+                          inter: 1,
+                          maxline: 2,
+                          fontwaight: FontWeight.w500,
+                          overflow: TextOverflow.ellipsis,
+                          fontstyle: FontStyle.normal,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        modeButton(
+                            Icons.settings, AppThemeMode.auto, "Auto"),
+                        modeButton(
+                            Icons.wb_sunny, AppThemeMode.day, "Jour"),
+                        modeButton(
+                            Icons.nightlight_round, AppThemeMode.night,
+                            "Nuit"),
+                      ],
+                    ),
+                  ],
                 ),
               );
             }),
+            const SizedBox(height: 15),
             divider(),
 
             /* Change Language */
@@ -219,8 +247,9 @@ class _SettingsState extends State<Settings> {
   Widget _buildSettingItem(
     String icon,
     String name,
-    Function() onTap,
-  ) {
+    Function() onTap, {
+    bool isNetworkIcon = false,
+  }) {
     return InkWell(
       focusColor: transparent,
       splashColor: transparent,
@@ -238,12 +267,19 @@ class _SettingsState extends State<Settings> {
                 shape: BoxShape.circle,
                 color: transparent,
               ),
-              child: MyImage(
-                width: 30,
-                height: 30,
-                imagePath: icon,
-                color: colorPrimary,
-              ),
+              child: isNetworkIcon
+                  ? MyNetworkImage(
+                      imgWidth: 30,
+                      imgHeight: 30,
+                      fit: BoxFit.cover,
+                      imageUrl: icon,
+                    )
+                  : MyImage(
+                      width: 30,
+                      height: 30,
+                      imagePath: icon,
+                      color: colorPrimary,
+                    ),
             ),
             SizedBox(width: MediaQuery.of(context).size.width * 0.05),
             MyText(
@@ -795,6 +831,7 @@ class _SettingsState extends State<Settings> {
                       ),
                     );
                   },
+                  isNetworkIcon: true,
                 ),
                 divider(),
               ],
@@ -841,6 +878,7 @@ class _SettingsState extends State<Settings> {
                       ),
                     );
                   },
+                  isNetworkIcon: true,
                 ),
                 divider(),
               ],

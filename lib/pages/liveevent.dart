@@ -69,7 +69,7 @@ class _LiveEventState extends State<LiveEvent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: homeAccueilBg,
+      backgroundColor: homeAccueilBg(context),
       body: Column(
         children: [
           MyAppbar(

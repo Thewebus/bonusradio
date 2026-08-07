@@ -277,52 +277,52 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: homeAccueilBg,
+      color: homeAccueilBg(context),
       child: SafeArea(
         child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          exitDilog(context);
-        },
-        child: Stack(
-          children: [
-            Scaffold(
-              key: drawerkey,
-              backgroundColor: homeAccueilBg,
-              body: Column(
-                children: [
-                  // Only show appBar for Home page
-                  if (_currentBottomNavIndex == _homeTabIndex) appBar(),
-                  Expanded(
-                    child: _buildPageContent(),
-                  ),
-                ],
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            exitDilog(context);
+          },
+          child: Stack(
+            children: [
+              Scaffold(
+                key: drawerkey,
+                backgroundColor: homeAccueilBg(context),
+                body: Column(
+                  children: [
+                    // Only show appBar for Home page
+                    if (_currentBottomNavIndex == _homeTabIndex) appBar(),
+                    Expanded(
+                      child: _buildPageContent(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Persistent sliding full-screen player, expanded via the
-            // dock's chevron (playerExpandProgress / miniPlayerController).
-            // minHeight: 0 keeps it invisible until expanded, since the
-            // dock already shows the compact "now playing" row. Placed
-            // BEFORE the dock so the dock always stays on top and reachable
-            // (the player has no back button of its own).
-            ValueListenableBuilder<AudioPlayer?>(
-              valueListenable: currentlyPlaying,
-              builder: (context, player, child) {
-                if (player?.audioSource == null) {
-                  return const SizedBox.shrink();
-                }
-                return const MusicDetails(ishomepage: true, minHeight: 0);
-              },
-            ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 10,
-              child: _buildDockCard(),
-            ),
-          ],
-        ),
+              // Persistent sliding full-screen player, expanded via the
+              // dock's chevron (playerExpandProgress / miniPlayerController).
+              // minHeight: 0 keeps it invisible until expanded, since the
+              // dock already shows the compact "now playing" row. Placed
+              // BEFORE the dock so the dock always stays on top and reachable
+              // (the player has no back button of its own).
+              ValueListenableBuilder<AudioPlayer?>(
+                valueListenable: currentlyPlaying,
+                builder: (context, player, child) {
+                  if (player?.audioSource == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return const MusicDetails(ishomepage: true, minHeight: 0);
+                },
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 10,
+                child: _buildDockCard(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -330,10 +330,10 @@ class _HomeState extends State<Home> {
 
   Widget _buildDockCard() {
     return Material(
-      elevation: 12,
-      shadowColor: black.withValues(alpha: 0.25),
-      borderRadius: BorderRadius.circular(24),
-      color: homeAccueilBg,
+      elevation: 5,
+      shadowColor: black.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(8),
+      color: homeAccueilBg(context),
       clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -388,7 +388,7 @@ class _HomeState extends State<Home> {
                 height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? homeSearchBarBg : transparent,
+                  color: isSelected ? homeSearchBarBg(context) : transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -561,14 +561,16 @@ class _HomeState extends State<Home> {
                                     activeThumbColor: black,
                                     activeTrackColor: gray,
                                     inactiveTrackColor: gray,
-                                    value: Constant.isDark,
+                                    value: themeprovider.mode ==
+                                        AppThemeMode.night,
                                     onChanged: (value) async {
-                                      themeprovider.changeTheme(value);
-                                      await sharedpre.remove("isdark");
-                                      await sharedpre.saveBool("isdark", value);
-
-                                      printLog(
-                                          "ISDARK==> ${sharedpre.readBool("isdark").toString()}");
+                                      final mode = value
+                                          ? AppThemeMode.night
+                                          : AppThemeMode.day;
+                                      themeprovider.setMode(mode);
+                                      await sharedpre.remove("theme_mode");
+                                      await sharedpre.save(
+                                          "theme_mode", mode.name);
                                     },
                                   ),
                                 ],
@@ -1123,7 +1125,7 @@ class _HomeState extends State<Home> {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 0),
-      color: homeAccueilBg,
+      color: homeAccueilBg(context),
       child: Column(
         children: [
           AppBar(
@@ -1131,10 +1133,13 @@ class _HomeState extends State<Home> {
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: transparent,
-            systemOverlayStyle: const SystemUiOverlayStyle(
-                statusBarColor: homeAccueilBg,
-                statusBarBrightness: Brightness.light,
-                statusBarIconBrightness: Brightness.dark),
+            systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: homeAccueilBg(context),
+                statusBarBrightness: Theme.of(context).brightness,
+                statusBarIconBrightness:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Brightness.light
+                        : Brightness.dark),
             titleSpacing: 10,
             leading: IconButton(
               icon: const Icon(Icons.settings, color: black),
@@ -1199,8 +1204,10 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(
                               builder: (context) => const Login()));
                     } else {
+                      miniPlayerController.animateToHeight(
+                          state: PanelState.MIN);
                       setState(() {
-                        _currentBottomNavIndex = 4;
+                        _currentBottomNavIndex = _profileTabIndex;
                       });
                     }
                   },
@@ -1215,7 +1222,7 @@ class _HomeState extends State<Home> {
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(50),
                               border: Border.all(
-                                color: homeSearchBarBg,
+                                color: homeSearchBarBg(context),
                                 width: 2,
                               )),
                           child: ClipRRect(
@@ -1278,7 +1285,7 @@ class _HomeState extends State<Home> {
                 ),
                 filled: true,
                 contentPadding: const EdgeInsets.all(10),
-                fillColor: homeSearchBarBg,
+                fillColor: homeSearchBarBg(context),
               ),
             ),
           ),
@@ -1720,7 +1727,8 @@ class _HomeState extends State<Home> {
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     transparent,
-                                    homeSearchBarBg.withValues(alpha: 0.75),
+                                    homeSearchBarBg(context)
+                                        .withValues(alpha: 0.75),
                                   ],
                                 ),
                               ),
@@ -1743,8 +1751,8 @@ class _HomeState extends State<Home> {
                                       Container(
                                         width: 8,
                                         height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: homeLiveBadge,
+                                        decoration: BoxDecoration(
+                                          color: homeLiveBadge(context),
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -1942,9 +1950,13 @@ class _HomeState extends State<Home> {
                                               Flexible(
                                                 child: InkWell(
                                                   onTap: () {
+                                                    miniPlayerController
+                                                        .animateToHeight(
+                                                            state: PanelState
+                                                                .MIN);
                                                     setState(() {
                                                       _currentBottomNavIndex =
-                                                          2;
+                                                          _filmsTabIndex;
                                                     });
                                                   },
                                                   child: Container(
@@ -2912,8 +2924,8 @@ class _HomeState extends State<Home> {
                       width: MediaQuery.of(context).size.width * 0.19,
                       height: MediaQuery.of(context).size.height * 0.15,
                       decoration: BoxDecoration(
-                          color: homeCategoryPalette[
-                              index % homeCategoryPalette.length],
+                          color: homeCategoryPalette(context)[
+                              index % homeCategoryPalette(context).length],
                           borderRadius: BorderRadius.circular(20)),
                       child: Stack(
                         children: [
@@ -2963,9 +2975,9 @@ class _HomeState extends State<Home> {
                                 color: white.withValues(alpha: 0.85),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.play_arrow,
-                                color: homeSearchBarBg,
+                                color: homeSearchBarBg(context),
                                 size: 14,
                               ),
                             ),
@@ -2984,8 +2996,7 @@ class _HomeState extends State<Home> {
   }
 
   /* List Row Layout - used for "Podcasts populaires" / "Derniers titres" style sections */
-  Widget list(
-      int sectionindex, List<section.Result>? sectionList, int type) {
+  Widget list(int sectionindex, List<section.Result>? sectionList, int type) {
     final data = sectionList?[sectionindex].data ?? [];
     return Column(
       children: List.generate(data.length, (index) {
@@ -3017,8 +3028,8 @@ class _HomeState extends State<Home> {
                 item.id.toString(), 0);
             if (!musicdetailProvider.loading) {
               if (musicdetailProvider.getEpisodeByPodcstModel.status == 200 &&
-                  ((musicdetailProvider.getEpisodeByPodcstModel.result
-                              ?.length ??
+                  ((musicdetailProvider
+                              .getEpisodeByPodcstModel.result?.length ??
                           0) >
                       0)) {
                 if (!context.mounted) return;
@@ -3063,9 +3074,8 @@ class _HomeState extends State<Home> {
         }
 
         return SectionRowTile(
-          imageUrl: type == 1
-              ? item.image.toString()
-              : item.landscapeImg.toString(),
+          imageUrl:
+              type == 1 ? item.image.toString() : item.landscapeImg.toString(),
           title: (type == 1 ? item.name : item.title).toString(),
           subtitle: (type == 1 ? item.artistName : item.description) ?? "",
           isPremium: isPremiumLocked,

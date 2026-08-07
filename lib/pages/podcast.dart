@@ -73,7 +73,7 @@ class _PodcastState extends State<Podcast> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: homeAccueilBg,
+      backgroundColor: homeAccueilBg(context),
       body: Stack(
         children: [
           Column(

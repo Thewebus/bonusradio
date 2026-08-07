@@ -14,7 +14,7 @@ class Constant {
   static String? userImage;
   static String currencySymbol = "";
   static String currency = "";
-  static bool isDark = false;
+  static String themeMode = "auto";
   static String radioType = "radio";
   static String podcastType = "podcast";
 

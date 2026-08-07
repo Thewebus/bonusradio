@@ -28,7 +28,8 @@ class MyAppbar extends StatelessWidget {
   }
 
   Widget appBar(BuildContext context) {
-    final Color accent = useAccueilTheme ? homeSearchBarBg : colorPrimary;
+    final Color accent =
+        useAccueilTheme ? homeSearchBarBg(context) : colorPrimary;
     if (isSimpleappbar == 1) {
       return Container(
         width: double.infinity,

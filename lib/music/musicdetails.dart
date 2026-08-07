@@ -91,13 +91,13 @@ class LectResponsiveConfig {
   static const double verticalMargin = 12.0;
 
   // Petits écrans
-  static const double smallBrandRatio = 0.35;
-  static const double smallBrandMin = 160.0;
-  static const double smallBrandMax = 200.0;
+  static const double smallBrandRatio = 0.315; // -10%
+  static const double smallBrandMin = 144.0; // -10%
+  static const double smallBrandMax = 180.0; // -10%
 
-  static const double smallHeadRatio = 0.25;
-  static const double smallHeadMin = 120.0;
-  static const double smallHeadMax = 140.0;
+  static const double smallHeadRatio = 0.225; // -10%
+  static const double smallHeadMin = 108.0; // -10%
+  static const double smallHeadMax = 126.0; // -10%
 
   static const double smallNotesRatio = 0.50;
   static const double smallNotesMin = 160.0;
@@ -116,13 +116,13 @@ class LectResponsiveConfig {
   static const double smallNotesOffsetMax = 90.0;
 
   // Moyens écrans
-  static const double mediumBrandRatio = 0.40;
-  static const double mediumBrandMin = 180.0;
-  static const double mediumBrandMax = 340.0;
+  static const double mediumBrandRatio = 0.324; // -10% -10%
+  static const double mediumBrandMin = 145.8; // -10% -10%
+  static const double mediumBrandMax = 275.4; // -10% -10%
 
-  static const double mediumHeadRatio = 0.30;
-  static const double mediumHeadMin = 160.0;
-  static const double mediumHeadMax = 260.0;
+  static const double mediumHeadRatio = 0.243; // -10% -10%
+  static const double mediumHeadMin = 129.6; // -10% -10%
+  static const double mediumHeadMax = 210.6; // -10% -10%
 
   static const double mediumNotesRatio = 0.58;
   static const double mediumNotesMin = 260.0;
@@ -142,13 +142,13 @@ class LectResponsiveConfig {
   static const double mediumNotesOffsetMax = 150.0;
 
   // Grands écrans
-  static const double largeBrandRatio = 0.50;
-  static const double largeBrandMin = 300.0;
-  static const double largeBrandMax = 800.0;
+  static const double largeBrandRatio = 0.405; // -10% -10%
+  static const double largeBrandMin = 243.0; // -10% -10%
+  static const double largeBrandMax = 648.0; // -10% -10%
 
-  static const double largeHeadRatio = 0.35;
-  static const double largeHeadMin = 220.0;
-  static const double largeHeadMax = 420.0;
+  static const double largeHeadRatio = 0.2835; // -10% -10%
+  static const double largeHeadMin = 178.2; // -10% -10%
+  static const double largeHeadMax = 340.2; // -10% -10%
 
   static const double largeNotesRatio = 0.65;
   static const double largeNotesMin = 360.0;
@@ -445,7 +445,7 @@ class _MusicDetailsState extends State<MusicDetails>
       maxHeight: fullHeight,
       controller: miniPlayerController,
       elevation: 4,
-      // backgroundColor: homeLiveBadge,
+      // backgroundColor: homeLiveBadge(context),
       onDismissed: () async {
         printLog("onDismissed");
         currentlyPlaying.value = null;
@@ -664,7 +664,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(20),
-                                          color: homeLiveBadge.withValues(
+                                          color: homeLiveBadge(context).withValues(
                                               alpha: 0.25),
                                         ),
                                         child: Row(
@@ -713,7 +713,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(20),
-                                          color: homeLiveBadge.withValues(
+                                          color: homeLiveBadge(context).withValues(
                                               alpha: 0.25),
                                         ),
                                         child: Row(
@@ -760,10 +760,10 @@ class _MusicDetailsState extends State<MusicDetails>
                         buffered:
                             positionData?.bufferedPosition ?? Duration.zero,
                         total: positionData?.duration ?? Duration.zero,
-                        progressBarColor: homeLiveBadge,
+                        progressBarColor: homeLiveBadge(context),
                         baseBarColor: lightgray,
                         bufferedBarColor: gray,
-                        thumbColor: homeLiveBadge,
+                        thumbColor: homeLiveBadge(context),
                         barHeight: 4.0,
                         thumbRadius: 6.0,
                         timeLabelPadding: 5.0,
@@ -870,10 +870,10 @@ class _MusicDetailsState extends State<MusicDetails>
                         } else if (playing != true) {
                           return Container(
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
-                                  homeLiveBadge,
-                                  homeLiveBadge,
+                                  homeLiveBadge(context),
+                                  homeLiveBadge(context),
                                 ],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -896,10 +896,10 @@ class _MusicDetailsState extends State<MusicDetails>
                             ProcessingState.completed) {
                           return Container(
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
-                                  homeLiveBadge,
-                                  homeLiveBadge,
+                                  homeLiveBadge(context),
+                                  homeLiveBadge(context),
                                 ],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -920,9 +920,9 @@ class _MusicDetailsState extends State<MusicDetails>
                           );
                         } else {
                           return IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.replay_rounded,
-                              color: homeLiveBadge,
+                              color: homeLiveBadge(context),
                             ),
                             iconSize: 60.0,
                             onPressed: () => audioPlayer.seek(Duration.zero,
@@ -1063,10 +1063,10 @@ class _MusicDetailsState extends State<MusicDetails>
                             Icon(Icons.repeat,
                                 color: Theme.of(context).colorScheme.surface,
                                 size: 30.0),
-                            const Icon(Icons.repeat,
-                                color: homeLiveBadge, size: 30.0),
-                            const Icon(Icons.repeat_one,
-                                color: homeLiveBadge, size: 30.0),
+                            Icon(Icons.repeat,
+                                color: homeLiveBadge(context), size: 30.0),
+                            Icon(Icons.repeat_one,
+                                color: homeLiveBadge(context), size: 30.0),
                           ];
                           const cycleModes = [
                             LoopMode.off,
@@ -1092,8 +1092,8 @@ class _MusicDetailsState extends State<MusicDetails>
                           return IconButton(
                             iconSize: 30.0,
                             icon: shuffleModeEnabled
-                                ? const Icon(Icons.shuffle,
-                                    color: homeLiveBadge)
+                                ? Icon(Icons.shuffle,
+                                    color: homeLiveBadge(context))
                                 : Icon(Icons.shuffle,
                                     color:
                                         Theme.of(context).colorScheme.surface),
@@ -1127,7 +1127,7 @@ class _MusicDetailsState extends State<MusicDetails>
                         topLeft: Radius.circular(18),
                         topRight: Radius.circular(18),
                       ),
-                      color: homeLiveBadge.withValues(alpha: 0.25),
+                      color: homeLiveBadge(context).withValues(alpha: 0.25),
                     ),
                     child: Consumer<MusicDetailProvider>(
                       builder: (context, seactionprovider, child) {
@@ -1328,7 +1328,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                           musicdetailprovider
                                               .episodeList?[index].id
                                               .toString()
-                                      ? homeLiveBadge.withValues(alpha: 0.25)
+                                      ? homeLiveBadge(context).withValues(alpha: 0.25)
                                       : transparent,
                                 ),
                                 child: Row(
@@ -1399,7 +1399,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                           ),
                                           const SizedBox(height: 2),
                                           MyText(
-                                            color: homeLiveBadge,
+                                            color: homeLiveBadge(context),
                                             text: Utils.dateformat(
                                                 DateTime.parse(
                                                     musicdetailprovider
@@ -1510,7 +1510,7 @@ class _MusicDetailsState extends State<MusicDetails>
         children: [
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
                   color: black.withValues(alpha: 0.16),
@@ -1520,7 +1520,7 @@ class _MusicDetailsState extends State<MusicDetails>
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 width: double.infinity,
                 height: pubHeight,
@@ -1582,7 +1582,7 @@ class _MusicDetailsState extends State<MusicDetails>
           },
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
                   color: black.withValues(alpha: 0.16),
@@ -1592,7 +1592,7 @@ class _MusicDetailsState extends State<MusicDetails>
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               child: AnimatedSwitcher(
                 duration: _pubFadeDuration,
                 child: Image.asset(
@@ -2013,12 +2013,12 @@ class _MusicDetailsState extends State<MusicDetails>
                               final playing = snap.data?.playing ?? false;
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: homeLiveBadge.withValues(alpha: 1.0),
+                                  color: homeLiveBadge(context).withValues(alpha: 1.0),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color:
-                                          homeLiveBadge.withValues(alpha: 1.0),
+                                          homeLiveBadge(context).withValues(alpha: 1.0),
                                       blurRadius: 15,
                                       spreadRadius: 2,
                                     ),
@@ -2063,7 +2063,7 @@ class _MusicDetailsState extends State<MusicDetails>
                           //           buffered:
                           //               pos?.bufferedPosition ?? Duration.zero,
                           //           total: pos?.duration ?? Duration.zero,
-                          //           progressBarColor: homeLiveBadge,
+                          //           progressBarColor: homeLiveBadge(context),
                           //           baseBarColor: white.withValues(alpha: 0.1),
                           //           barCapShape: BarCapShape.round,
                           //           barHeight: 4,
@@ -2313,7 +2313,7 @@ class _MusicDetailsState extends State<MusicDetails>
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   MyText(
-                                                      color: homeLiveBadge,
+                                                      color: homeLiveBadge(context),
                                                       text: commentprovider
                                                                   .commentList?[
                                                                       index]

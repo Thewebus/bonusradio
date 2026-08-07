@@ -129,9 +129,9 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> checkTheme() async {
     Constant.userID = await sharedpre.read('userid');
-    Constant.isDark = await sharedpre.readBool("isdark") ?? false;
-    printLog("isDark==> ${Constant.isDark}");
-    themeProvider.changeTheme(Constant.isDark);
+    Constant.themeMode = await sharedpre.read("theme_mode") ?? "auto";
+    printLog("themeMode==> ${Constant.themeMode}");
+    themeProvider.setMode(appThemeModeFromString(Constant.themeMode));
   }
 
   Future<void> _setDefaultLanguageIfNeeded() async {

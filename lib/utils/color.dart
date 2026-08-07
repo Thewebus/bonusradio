@@ -15,17 +15,37 @@ const gray = Color(0xff878787);
 const lightgray = Color(0xffD3D3D3);
 const transparent = Colors.transparent;
 
-/* Accueil Redesign Colors (onglet Accueil uniquement) */
-const homeAccueilBg = Color(0xFFF7F1E6);
-const homeSearchBarBg = Color(0xFF5C1712);
-const homeLiveBadge = Color(0xFFE3352B);
-const List<Color> homeCategoryPalette = [
-  Color(0xFFF3B9B0),
-  Color(0xFFF6D8A8),
-  Color(0xFFD9C5EE),
-  Color(0xFFB9D6F3),
-  Color(0xFFB9E4C9),
-];
+/* Accueil Redesign Colors — day/night variants for the 7 screens that
+   don't rely on Theme.of(context) (Accueil, dock, mini/full player,
+   Podcast, Films, Profil). */
+bool _isNight(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark;
+
+Color homeAccueilBg(BuildContext context) => _isNight(context)
+    ? const Color(0xFF121212)
+    : const Color(0xFFF7F1E6);
+
+Color homeSearchBarBg(BuildContext context) => _isNight(context)
+    ? const Color(0xFF8A241A)
+    : const Color(0xFF5C1712);
+
+Color homeLiveBadge(BuildContext context) => const Color(0xFFE3352B);
+
+List<Color> homeCategoryPalette(BuildContext context) => _isNight(context)
+    ? const [
+        Color(0xFF7A3F38),
+        Color(0xFF8A6A2E),
+        Color(0xFF5C4A73),
+        Color(0xFF375873),
+        Color(0xFF3C6B4F),
+      ]
+    : const [
+        Color(0xFFF3B9B0),
+        Color(0xFFF6D8A8),
+        Color(0xFFD9C5EE),
+        Color(0xFFB9D6F3),
+        Color(0xFFB9E4C9),
+      ];
 
 /* ============================= Light Theme =============================== */
 
@@ -63,13 +83,16 @@ final ThemeData lightTheme = ThemeData(
 
 /* ============================= Dark Theme =============================== */
 
+const darkSurfaceBg = Color(0xFF121212);
+const darkCardBg = Color(0xFF1C1C1C);
+
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   /* Main Color Start */
   primaryColor: colorPrimary,
   hintColor: colorAccent,
-  secondaryHeaderColor: gray.withValues(alpha: 0.20),
-  scaffoldBackgroundColor: black,
+  secondaryHeaderColor: colorPrimary.withValues(alpha: 0.16),
+  scaffoldBackgroundColor: darkSurfaceBg,
   /* Main Color End */
   /* Text Color Start */
 
@@ -82,17 +105,17 @@ final ThemeData darkTheme = ThemeData(
   ),
   /* Text Color End */
   appBarTheme: const AppBarTheme(
-    backgroundColor: black,
+    backgroundColor: darkSurfaceBg,
     systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: black,
+        statusBarColor: darkSurfaceBg,
         statusBarBrightness: Brightness.dark,
         statusBarIconBrightness: Brightness.light),
   ),
-  cardColor: black,
+  cardColor: darkCardBg,
   bottomSheetTheme: const BottomSheetThemeData(
-    backgroundColor: black,
+    backgroundColor: darkCardBg,
   ),
   drawerTheme: const DrawerThemeData(
-    backgroundColor: black,
+    backgroundColor: darkCardBg,
   ),
 );

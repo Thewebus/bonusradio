@@ -55,7 +55,7 @@ class ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: homeAccueilBg,
+      backgroundColor: homeAccueilBg(context),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         padding: const EdgeInsets.only(bottom: 160),
