@@ -110,7 +110,10 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
       width: MediaQuery.of(context).size.width,
       constraints: const BoxConstraints(minHeight: 70),
       decoration: Utils.setBackground(
-          _checkExpiry(position) ? colorPrimary : appBgColor, 5),
+          _checkExpiry(position)
+              ? colorPrimary
+              : Theme.of(context).secondaryHeaderColor,
+          5),
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
@@ -123,7 +126,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                 children: [
                   /* Title */
                   MyText(
-                    color: _checkExpiry(position) ? black : white,
+                    color: _checkExpiry(position)
+                        ? black
+                        : Theme.of(context).colorScheme.surface,
                     text: subHistoryProvider
                             .historyModel.result?[position].packageName ??
                         "",
@@ -143,7 +148,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         MyText(
-                          color: _checkExpiry(position) ? black : appBgColor,
+                          color: _checkExpiry(position)
+                              ? black
+                              : Theme.of(context).colorScheme.surface,
                           text: "price",
                           textalign: TextAlign.center,
                           fontsize: Dimens.textMedium,
@@ -155,7 +162,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                         ),
                         const SizedBox(width: 5),
                         MyText(
-                          color: _checkExpiry(position) ? black : appBgColor,
+                          color: _checkExpiry(position)
+                              ? black
+                              : Theme.of(context).colorScheme.surface,
                           text: ":",
                           textalign: TextAlign.center,
                           fontsize: Dimens.textMedium,
@@ -168,7 +177,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                         const SizedBox(width: 5),
                         Expanded(
                           child: MyText(
-                            color: _checkExpiry(position) ? black : white,
+                            color: _checkExpiry(position)
+                        ? black
+                        : Theme.of(context).colorScheme.surface,
                             text:
                                 "${subHistoryProvider.historyModel.result?[position].currencyCode.toString()}${subHistoryProvider.historyModel.result?[position].amount.toString()}",
                             textalign: TextAlign.start,
@@ -192,7 +203,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         MyText(
-                          color: _checkExpiry(position) ? black : appBgColor,
+                          color: _checkExpiry(position)
+                              ? black
+                              : Theme.of(context).colorScheme.surface,
                           text: _checkExpiry(position)
                               ? "expired_on"
                               : "expire_on",
@@ -206,7 +219,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                         ),
                         const SizedBox(width: 5),
                         MyText(
-                          color: _checkExpiry(position) ? black : appBgColor,
+                          color: _checkExpiry(position)
+                              ? black
+                              : Theme.of(context).colorScheme.surface,
                           text: ":",
                           textalign: TextAlign.center,
                           fontsize: Dimens.textMedium,
@@ -219,7 +234,9 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
                         const SizedBox(width: 5),
                         Expanded(
                           child: MyText(
-                            color: _checkExpiry(position) ? black : white,
+                            color: _checkExpiry(position)
+                        ? black
+                        : Theme.of(context).colorScheme.surface,
                             text: (subHistoryProvider.historyModel
                                             .result?[position].expiryDate !=
                                         null ||

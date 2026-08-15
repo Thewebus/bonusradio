@@ -134,7 +134,7 @@ class SubscriptionState extends State<Subscription> {
     if (!mounted) return;
     dynamic result = await showModalBottomSheet<dynamic>(
       context: context,
-      backgroundColor: white,
+      backgroundColor: Theme.of(context).bottomSheetTheme.backgroundColor,
       isScrollControlled: true,
       isDismissible: true,
       shape: const RoundedRectangleBorder(

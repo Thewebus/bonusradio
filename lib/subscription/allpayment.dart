@@ -281,7 +281,7 @@ class AllPaymentState extends State<AllPayment> {
 
   Widget _buildPage() {
     return Scaffold(
-      backgroundColor: appBgColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: (kIsWeb)
           ? null
           : Utils.myAppBarWithBack(context, "payment_details", true),
@@ -378,7 +378,7 @@ class AllPaymentState extends State<AllPayment> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           MyText(
-            color: black,
+            color: Theme.of(context).colorScheme.surface,
             text: "payment_methods",
             fontsize: Dimens.textMedium,
             maxline: 1,
@@ -430,7 +430,7 @@ class AllPaymentState extends State<AllPayment> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           MyText(
-            color: black,
+            color: Theme.of(context).colorScheme.surface,
             text: "payment_methods",
             fontsize: Dimens.textMedium,
             maxline: 1,
@@ -630,7 +630,7 @@ class AllPaymentState extends State<AllPayment> {
         semanticContainer: true,
         clipBehavior: Clip.antiAliasWithSaveLayer,
         elevation: 5,
-        color: white,
+        color: Theme.of(context).cardColor,
         shadowColor: black.withValues(alpha: 0.2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -683,7 +683,7 @@ class AllPaymentState extends State<AllPayment> {
         semanticContainer: true,
         clipBehavior: Clip.antiAliasWithSaveLayer,
         elevation: 5,
-        color: white,
+        color: Theme.of(context).cardColor,
         shadowColor: black.withValues(alpha: 0.2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),

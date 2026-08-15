@@ -95,7 +95,7 @@ class _OTPState extends State<OTP> {
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.02),
               MyText(
-                  color: black,
+                  color: Theme.of(context).colorScheme.surface,
                   text: "verifyphonenumber",
                   multilanguage: true,
                   fontsize: Dimens.textExtralargeBig,
@@ -141,11 +141,11 @@ class _OTPState extends State<OTP> {
                   decoration: BoxDecoration(
                     border: Border.all(color: colorPrimary, width: 1),
                     shape: BoxShape.rectangle,
-                    color: appBgColor,
+                    color: Theme.of(context).secondaryHeaderColor,
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  textStyle: Utils.googleFontStyle(
-                      1, 16, FontStyle.normal, black, FontWeight.w500),
+                  textStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
+                      Theme.of(context).colorScheme.surface, FontWeight.w500),
                 ),
               ),
               SizedBox(
@@ -218,7 +218,7 @@ class _OTPState extends State<OTP> {
                   TextButton(
                     onPressed: () {},
                     child: MyText(
-                        color: black,
+                        color: Theme.of(context).colorScheme.surface,
                         text: "resend",
                         fontsize: Dimens.textMedium,
                         multilanguage: true,

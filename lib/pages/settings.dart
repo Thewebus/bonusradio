@@ -302,7 +302,7 @@ class _SettingsState extends State<Settings> {
 
   Widget divider() {
     return Container(
-      color: lightgray,
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.15),
       width: MediaQuery.of(context).size.width,
       margin: const EdgeInsets.fromLTRB(15, 0, 15, 0),
       height: 1,
@@ -548,7 +548,7 @@ class _SettingsState extends State<Settings> {
             height: MediaQuery.of(context).size.height * 0.35,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
@@ -577,7 +577,7 @@ class _SettingsState extends State<Settings> {
                   },
                 ),
                 MyText(
-                    color: black,
+                    color: Theme.of(context).colorScheme.surface,
                     text: "enjoyingmyradio",
                     textalign: TextAlign.center,
                     fontsize: Dimens.textBig,
@@ -691,12 +691,12 @@ class _SettingsState extends State<Settings> {
         return Container(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height * 0.25,
-          color: white,
+          color: Theme.of(context).bottomSheetTheme.backgroundColor,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               MyText(
-                color: black,
+                color: Theme.of(context).colorScheme.surface,
                 text: "areyousurewanttologout",
                 multilanguage: true,
                 textalign: TextAlign.center,

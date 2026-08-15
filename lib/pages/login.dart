@@ -356,7 +356,7 @@ class _LoginState extends State<Login> {
         margin: const EdgeInsets.only(bottom: 15),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: lightgray,
+          color: Theme.of(context).cardColor,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -369,7 +369,7 @@ class _LoginState extends State<Login> {
             ),
             const SizedBox(width: 25),
             MyText(
-                color: black,
+                color: Theme.of(context).colorScheme.surface,
                 text: title,
                 fontsize: Dimens.textMedium,
                 maxline: 1,

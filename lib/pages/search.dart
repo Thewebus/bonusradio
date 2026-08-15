@@ -106,9 +106,13 @@ class _SearchState extends State<Search> {
                           textAlign: TextAlign.start,
                           controller: searchController,
                           keyboardType: TextInputType.text,
-                          cursorColor: black,
+                          cursorColor: Theme.of(context).colorScheme.surface,
                           style: Utils.googleFontStyle(
-                              1, 18, FontStyle.normal, black, FontWeight.w400),
+                              1,
+                              18,
+                              FontStyle.normal,
+                              Theme.of(context).colorScheme.surface,
+                              FontWeight.w400),
                           onChanged: (value) async {
                             if (value.isNotEmpty) {
                               searchProvider.clearProvider();
@@ -146,7 +150,7 @@ class _SearchState extends State<Search> {
                             ),
                             filled: true,
                             contentPadding: const EdgeInsets.all(10),
-                            fillColor: white,
+                            fillColor: Theme.of(context).cardColor,
                           ),
                         ),
                       ),

@@ -26,7 +26,7 @@ class _IntroState extends State<Intro> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
         child: Stack(
@@ -133,7 +133,7 @@ class _IntroState extends State<Intro> {
                     );
                   },
                   child: MyText(
-                      color: black,
+                      color: Theme.of(context).colorScheme.surface,
                       text: position == (widget.introList?.length ?? 0) - 1
                           ? "finish"
                           : "skip",

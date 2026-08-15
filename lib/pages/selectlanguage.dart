@@ -114,7 +114,7 @@ class _SelectLanguageState extends State<SelectLanguage> {
                               decoration: BoxDecoration(
                                 color: selectedlanguage.contains(index)
                                     ? colorPrimary
-                                    : white,
+                                    : Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: InkWell(
@@ -152,7 +152,7 @@ class _SelectLanguageState extends State<SelectLanguage> {
                                   child: MyText(
                                     color: selectedlanguage.contains(index)
                                         ? white
-                                        : black,
+                                        : Theme.of(context).colorScheme.surface,
                                     text: languageprovider
                                             .languageModel.result?[index].name
                                             .toString() ??
