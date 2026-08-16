@@ -63,7 +63,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with TickerProviderStateMixin {
+class _HomeState extends State<Home> {
   static const int _homeTabIndex = 0;
   static const int _filmsTabIndex = 1;
   static const int _podcastTabIndex = 3;
@@ -337,7 +337,16 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingPlayer(currentTabIndex: _currentBottomNavIndex),
+          FloatingPlayer(
+            currentTabIndex: _currentBottomNavIndex,
+            onExpand: () {
+              if (_currentBottomNavIndex != radioTabIndex) {
+                setState(() {
+                  _currentBottomNavIndex = radioTabIndex;
+                });
+              }
+            },
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
             child: Row(
@@ -360,29 +369,8 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     );
   }
 
-  // Collapses the persistent full-screen player by writing directly to
-  // playerExpandProgress (same technique RadioScreen already uses reliably
-  // to expand it), instead of miniPlayerController.animateToHeight(MIN).
-  // The controller path proved unreliable here: RadioScreen expands the
-  // player with a raw value write that bypasses the miniplayer package's
-  // own animation/drag-position bookkeeping, and its controller-driven
-  // collapse doesn't reliably pick that state back up afterwards — only
-  // the package's own built-in tap gesture (which reads/writes its
-  // internal position directly) could collapse it consistently.
   void _collapseFullPlayer() {
-    final double start = playerExpandProgress.value;
-    if (start <= 0) return;
-    final controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 350),
-    );
-    final animation = Tween<double>(begin: start, end: 0).animate(
-      CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
-    );
-    animation.addListener(() {
-      playerExpandProgress.value = animation.value;
-    });
-    controller.forward().whenComplete(controller.dispose);
+    setPlayerExpansion(0);
   }
 
   Widget _buildBottomNavItem(IconData icon, String label, int index) {

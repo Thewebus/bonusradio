@@ -187,6 +187,21 @@ final ValueNotifier<double> playerExpandProgress =
 
 final MiniplayerController miniPlayerController = MiniplayerController();
 
+// Shows/hides the full-screen player instantly (no slide/height
+// animation) by writing directly to playerExpandProgress, instead of
+// going through miniPlayerController. The miniplayer package tracks its
+// own internal "_dragHeight" position separately from the shared
+// ValueNotifier, and only keeps the two in sync when height changes go
+// through its own drag/animation code — any direct external write (which
+// this app relies on, e.g. to force the player open on the Radio tab)
+// leaves "_dragHeight" stale, so animateToHeight(...) calls silently
+// animate from the wrong starting point. Jumping straight to the target
+// sidesteps that desync, and also avoids ever rendering the panel at an
+// in-between height (which previously caused a transient layout overflow).
+void setPlayerExpansion(double targetHeight) {
+  playerExpandProgress.value = targetHeight;
+}
+
 class MusicDetails extends StatefulWidget {
   final bool ishomepage;
   final double minHeight;
@@ -1733,7 +1748,13 @@ class _MusicDetailsState extends State<MusicDetails>
                     ),
                   ),
                 ],
-                // Main content
+                // Main content — only mount once there's enough room.
+                // While playerExpandProgress is animating through small/
+                // intermediate heights (collapsing or expanding), this
+                // content's minimum size can exceed what's available,
+                // causing a RenderFlex overflow. Below the same threshold
+                // already used for the background, skip it entirely.
+                if (isExpandedPlayer)
                 Padding(
                   padding: EdgeInsets.only(bottom: bottomContentClearance),
                   child: Column(

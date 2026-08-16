@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:miniplayer/miniplayer.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/utils/color.dart';
@@ -50,10 +49,12 @@ class WaveformConfig {
 
 class FloatingPlayer extends StatefulWidget {
   final int currentTabIndex;
+  final VoidCallback? onExpand;
 
   const FloatingPlayer({
     super.key,
     this.currentTabIndex = -1,
+    this.onExpand,
   });
 
   @override
@@ -253,7 +254,8 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
   }
 
   void _expandPlayer() {
-    miniPlayerController.animateToHeight(state: PanelState.MAX);
+    setPlayerExpansion(MediaQuery.of(context).size.height);
+    widget.onExpand?.call();
   }
 
   @override
