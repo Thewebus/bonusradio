@@ -9,7 +9,6 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:miniplayer/miniplayer.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/liveevent.dart';
@@ -64,7 +63,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with TickerProviderStateMixin {
   static const int _homeTabIndex = 0;
   static const int _filmsTabIndex = 1;
   static const int _podcastTabIndex = 3;
@@ -361,6 +360,31 @@ class _HomeState extends State<Home> {
     );
   }
 
+  // Collapses the persistent full-screen player by writing directly to
+  // playerExpandProgress (same technique RadioScreen already uses reliably
+  // to expand it), instead of miniPlayerController.animateToHeight(MIN).
+  // The controller path proved unreliable here: RadioScreen expands the
+  // player with a raw value write that bypasses the miniplayer package's
+  // own animation/drag-position bookkeeping, and its controller-driven
+  // collapse doesn't reliably pick that state back up afterwards — only
+  // the package's own built-in tap gesture (which reads/writes its
+  // internal position directly) could collapse it consistently.
+  void _collapseFullPlayer() {
+    final double start = playerExpandProgress.value;
+    if (start <= 0) return;
+    final controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    final animation = Tween<double>(begin: start, end: 0).animate(
+      CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
+    );
+    animation.addListener(() {
+      playerExpandProgress.value = animation.value;
+    });
+    controller.forward().whenComplete(controller.dispose);
+  }
+
   Widget _buildBottomNavItem(IconData icon, String label, int index) {
     final isSelected = _currentBottomNavIndex == index;
 
@@ -371,7 +395,7 @@ class _HomeState extends State<Home> {
           // Collapse the sliding full-screen player when leaving the Radio
           // tab, so it doesn't keep covering whichever tab is now shown.
           if (index != radioTabIndex) {
-            miniPlayerController.animateToHeight(state: PanelState.MIN);
+            _collapseFullPlayer();
           }
           setState(() {
             _currentBottomNavIndex = index;
@@ -1204,8 +1228,7 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(
                               builder: (context) => const Login()));
                     } else {
-                      miniPlayerController.animateToHeight(
-                          state: PanelState.MIN);
+                      _collapseFullPlayer();
                       setState(() {
                         _currentBottomNavIndex = _profileTabIndex;
                       });
@@ -1950,10 +1973,7 @@ class _HomeState extends State<Home> {
                                               Flexible(
                                                 child: InkWell(
                                                   onTap: () {
-                                                    miniPlayerController
-                                                        .animateToHeight(
-                                                            state: PanelState
-                                                                .MIN);
+                                                    _collapseFullPlayer();
                                                     setState(() {
                                                       _currentBottomNavIndex =
                                                           _filmsTabIndex;

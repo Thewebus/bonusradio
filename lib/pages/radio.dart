@@ -12,27 +12,15 @@ class _RadioScreenState extends State<RadioScreen> {
   @override
   void initState() {
     super.initState();
-    // Force player to expand when entering Radio screen
+    // Force player to expand once when entering Radio screen. No
+    // continuous re-forcing listener here: it used to fight the
+    // collapse-on-tab-change animation (playerExpandProgress is shared
+    // with the persistent overlay in home.dart), causing the full player
+    // to intermittently stay stuck open after switching tabs.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       playerExpandProgress.value = MediaQuery.of(context).size.height;
     });
-
-    // Keep player expanded while on Radio screen
-    playerExpandProgress.addListener(_onPlayerHeightChanged);
-  }
-
-  void _onPlayerHeightChanged() {
-    // If player is being minimized, keep it expanded
-    if (playerExpandProgress.value < MediaQuery.of(context).size.height * 0.8) {
-      playerExpandProgress.value = MediaQuery.of(context).size.height;
-    }
-  }
-
-  @override
-  void dispose() {
-    playerExpandProgress.removeListener(_onPlayerHeightChanged);
-    super.dispose();
   }
 
   @override
