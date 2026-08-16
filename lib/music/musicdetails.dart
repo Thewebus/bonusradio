@@ -167,9 +167,9 @@ class LectResponsiveConfig {
   static const double largeNotesOffsetMax = 220.0;
 
   // Hauteurs pour la zone slideshow (pub)
-  static const double pubSlideshowHeightSmall = 130.0;
-  static const double pubSlideshowHeightMedium = 180.0;
-  static const double pubSlideshowHeightLarge = 200.0;
+  static const double pubSlideshowHeightSmall = 195.0;
+  static const double pubSlideshowHeightMedium = 270.0;
+  static const double pubSlideshowHeightLarge = 300.0;
 }
 
 Stream<PositionData> get positionDataStream {
@@ -679,8 +679,8 @@ class _MusicDetailsState extends State<MusicDetails>
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(20),
-                                          color: homeLiveBadge(context).withValues(
-                                              alpha: 0.25),
+                                          color: homeLiveBadge(context)
+                                              .withValues(alpha: 0.25),
                                         ),
                                         child: Row(
                                           children: [
@@ -728,8 +728,8 @@ class _MusicDetailsState extends State<MusicDetails>
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(20),
-                                          color: homeLiveBadge(context).withValues(
-                                              alpha: 0.25),
+                                          color: homeLiveBadge(context)
+                                              .withValues(alpha: 0.25),
                                         ),
                                         child: Row(
                                           children: [
@@ -1343,7 +1343,8 @@ class _MusicDetailsState extends State<MusicDetails>
                                           musicdetailprovider
                                               .episodeList?[index].id
                                               .toString()
-                                      ? homeLiveBadge(context).withValues(alpha: 0.25)
+                                      ? homeLiveBadge(context)
+                                          .withValues(alpha: 0.25)
                                       : transparent,
                                 ),
                                 child: Row(
@@ -1755,402 +1756,449 @@ class _MusicDetailsState extends State<MusicDetails>
                 // causing a RenderFlex overflow. Below the same threshold
                 // already used for the background, skip it entirely.
                 if (isExpandedPlayer)
-                Padding(
-                  padding: EdgeInsets.only(bottom: bottomContentClearance),
-                  child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // zoneLectPub - Pub zone with customizable parameters
-                    Opacity(
-                      opacity: elementOpacity,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: _buildPubSlideshow(
-                          showIndicators: isExpandedPlayer,
+                  Padding(
+                    padding: EdgeInsets.only(bottom: bottomContentClearance),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // zoneLectPub - Pub zone with customizable parameters
+                        Opacity(
+                          opacity: elementOpacity,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                            child: _buildPubSlideshow(
+                              showIndicators: isExpandedPlayer,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    // cercleLect - Circle with image and bounce effect
-                    StreamBuilder<PlayerState>(
-                      stream: audioPlayer.playerStateStream,
-                      builder: (context, snapshot) {
-                        final playing = snapshot.data?.playing ?? false;
+                        // cercleLect - Circle with image and bounce effect
+                        StreamBuilder<PlayerState>(
+                          stream: audioPlayer.playerStateStream,
+                          builder: (context, snapshot) {
+                            final playing = snapshot.data?.playing ?? false;
 
-                        // Control animation based on playing state
-                        if (playing && !_bounceController.isAnimating) {
-                          _bounceController.repeat(reverse: true);
-                        } else if (!playing && _bounceController.isAnimating) {
-                          _bounceController.stop();
-                          _bounceController.reset();
-                        }
+                            // Control animation based on playing state
+                            if (playing && !_bounceController.isAnimating) {
+                              _bounceController.repeat(reverse: true);
+                            } else if (!playing &&
+                                _bounceController.isAnimating) {
+                              _bounceController.stop();
+                              _bounceController.reset();
+                            }
 
-                        // Control notes animation based on playing state
-                        if (playing && !_notesController.isAnimating) {
-                          _notesController.repeat(reverse: true);
-                        } else if (!playing && _notesController.isAnimating) {
-                          _notesController.stop();
-                          _notesController.reset();
-                        }
+                            // Control notes animation based on playing state
+                            if (playing && !_notesController.isAnimating) {
+                              _notesController.repeat(reverse: true);
+                            } else if (!playing &&
+                                _notesController.isAnimating) {
+                              _notesController.stop();
+                              _notesController.reset();
+                            }
 
-                        return Flexible(
-                          flex: 3,
-                          child: Center(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                // Calculate responsive sizes based on available height
-                                final availableHeight = constraints.maxHeight;
-                                final size = MediaQuery.of(context).size;
+                            return Flexible(
+                              flex: 3,
+                              child: Center(
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    // Calculate responsive sizes based on available height
+                                    final availableHeight =
+                                        constraints.maxHeight;
+                                    final size = MediaQuery.of(context).size;
 
-                                // Ratios pour chaque zone (ajustables)
-                                // Définition de breakpoints par diagonale d'écran (pouces):
-                                // petit < LectResponsiveConfig.smallDiagonalInches
-                                // moyen entre smallDiagonalInches et largeDiagonalInches
-                                // grand > LectResponsiveConfig.largeDiagonalInches
-                                final diagonalLogical = math.sqrt(
-                                    size.width * size.width +
-                                        size.height * size.height);
-                                // Approximation pouces: baseline mdpi = 160 logical px/inch
-                                final diagonalInches = diagonalLogical / 160.0;
+                                    // Ratios pour chaque zone (ajustables)
+                                    // Définition de breakpoints par diagonale d'écran (pouces):
+                                    // petit < LectResponsiveConfig.smallDiagonalInches
+                                    // moyen entre smallDiagonalInches et largeDiagonalInches
+                                    // grand > LectResponsiveConfig.largeDiagonalInches
+                                    final diagonalLogical = math.sqrt(
+                                        size.width * size.width +
+                                            size.height * size.height);
+                                    // Approximation pouces: baseline mdpi = 160 logical px/inch
+                                    final diagonalInches =
+                                        diagonalLogical / 160.0;
 
-                                double brandSize;
-                                double headSize;
-                                double notesSize;
-                                double brandOffsetY;
-                                double headOffsetY;
-                                double notesOffsetY;
+                                    double brandSize;
+                                    double headSize;
+                                    double notesSize;
+                                    double brandOffsetY;
+                                    double headOffsetY;
+                                    double notesOffsetY;
 
-                                if (diagonalInches <
-                                    LectResponsiveConfig.smallDiagonalInches) {
-                                  // Petit écran (mobile)
-                                  brandSize = (availableHeight *
-                                          LectResponsiveConfig.smallBrandRatio)
-                                      .clamp(LectResponsiveConfig.smallBrandMin,
-                                          LectResponsiveConfig.smallBrandMax);
-                                  headSize = (availableHeight *
-                                          LectResponsiveConfig.smallHeadRatio)
-                                      .clamp(LectResponsiveConfig.smallHeadMin,
-                                          LectResponsiveConfig.smallHeadMax);
-                                  notesSize = (availableHeight *
-                                          LectResponsiveConfig.smallNotesRatio)
-                                      .clamp(LectResponsiveConfig.smallNotesMin,
-                                          LectResponsiveConfig.smallNotesMax);
+                                    if (diagonalInches <
+                                        LectResponsiveConfig
+                                            .smallDiagonalInches) {
+                                      // Petit écran (mobile)
+                                      brandSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .smallBrandRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .smallBrandMin,
+                                              LectResponsiveConfig
+                                                  .smallBrandMax);
+                                      headSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .smallHeadRatio)
+                                          .clamp(
+                                              LectResponsiveConfig.smallHeadMin,
+                                              LectResponsiveConfig
+                                                  .smallHeadMax);
+                                      notesSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .smallNotesRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .smallNotesMin,
+                                              LectResponsiveConfig
+                                                  .smallNotesMax);
 
-                                  brandOffsetY = -(availableHeight *
-                                          LectResponsiveConfig
-                                              .smallBrandOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .smallBrandOffsetMin,
-                                          LectResponsiveConfig
-                                              .smallBrandOffsetMax);
-                                  headOffsetY = (availableHeight *
-                                          LectResponsiveConfig
-                                              .smallHeadOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .smallHeadOffsetMin,
-                                          LectResponsiveConfig
-                                              .smallHeadOffsetMax);
-                                  notesOffsetY = (availableHeight *
-                                          LectResponsiveConfig
-                                              .smallNotesOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .smallNotesOffsetMin,
-                                          LectResponsiveConfig
-                                              .smallNotesOffsetMax);
-                                } else if (diagonalInches <
-                                    LectResponsiveConfig.largeDiagonalInches) {
-                                  // Écran moyen (tablette / laptop)
-                                  brandSize = (availableHeight *
-                                          LectResponsiveConfig.mediumBrandRatio)
-                                      .clamp(
-                                          LectResponsiveConfig.mediumBrandMin,
-                                          LectResponsiveConfig.mediumBrandMax);
-                                  headSize = (availableHeight *
-                                          LectResponsiveConfig.mediumHeadRatio)
-                                      .clamp(LectResponsiveConfig.mediumHeadMin,
-                                          LectResponsiveConfig.mediumHeadMax);
-                                  notesSize = (availableHeight *
-                                          LectResponsiveConfig.mediumNotesRatio)
-                                      .clamp(
-                                          LectResponsiveConfig.mediumNotesMin,
-                                          LectResponsiveConfig.mediumNotesMax);
+                                      brandOffsetY = -(availableHeight *
+                                              LectResponsiveConfig
+                                                  .smallBrandOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .smallBrandOffsetMin,
+                                              LectResponsiveConfig
+                                                  .smallBrandOffsetMax);
+                                      headOffsetY = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .smallHeadOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .smallHeadOffsetMin,
+                                              LectResponsiveConfig
+                                                  .smallHeadOffsetMax);
+                                      notesOffsetY = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .smallNotesOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .smallNotesOffsetMin,
+                                              LectResponsiveConfig
+                                                  .smallNotesOffsetMax);
+                                    } else if (diagonalInches <
+                                        LectResponsiveConfig
+                                            .largeDiagonalInches) {
+                                      // Écran moyen (tablette / laptop)
+                                      brandSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .mediumBrandRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .mediumBrandMin,
+                                              LectResponsiveConfig
+                                                  .mediumBrandMax);
+                                      headSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .mediumHeadRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .mediumHeadMin,
+                                              LectResponsiveConfig
+                                                  .mediumHeadMax);
+                                      notesSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .mediumNotesRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .mediumNotesMin,
+                                              LectResponsiveConfig
+                                                  .mediumNotesMax);
 
-                                  brandOffsetY = -(availableHeight *
-                                          LectResponsiveConfig
-                                              .mediumBrandOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .mediumBrandOffsetMin,
-                                          LectResponsiveConfig
-                                              .mediumBrandOffsetMax);
-                                  headOffsetY = (availableHeight *
-                                          LectResponsiveConfig
-                                              .mediumHeadOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .mediumHeadOffsetMin,
-                                          LectResponsiveConfig
-                                              .mediumHeadOffsetMax);
-                                  notesOffsetY = (availableHeight *
-                                          LectResponsiveConfig
-                                              .mediumNotesOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .mediumNotesOffsetMin,
-                                          LectResponsiveConfig
-                                              .mediumNotesOffsetMax);
-                                } else {
-                                  // Grand écran (desktop large)
-                                  brandSize = (availableHeight *
-                                          LectResponsiveConfig.largeBrandRatio)
-                                      .clamp(LectResponsiveConfig.largeBrandMin,
-                                          LectResponsiveConfig.largeBrandMax);
-                                  headSize = (availableHeight *
-                                          LectResponsiveConfig.largeHeadRatio)
-                                      .clamp(LectResponsiveConfig.largeHeadMin,
-                                          LectResponsiveConfig.largeHeadMax);
-                                  notesSize = (availableHeight *
-                                          LectResponsiveConfig.largeNotesRatio)
-                                      .clamp(LectResponsiveConfig.largeNotesMin,
-                                          LectResponsiveConfig.largeNotesMax);
+                                      brandOffsetY = -(availableHeight *
+                                              LectResponsiveConfig
+                                                  .mediumBrandOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .mediumBrandOffsetMin,
+                                              LectResponsiveConfig
+                                                  .mediumBrandOffsetMax);
+                                      headOffsetY = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .mediumHeadOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .mediumHeadOffsetMin,
+                                              LectResponsiveConfig
+                                                  .mediumHeadOffsetMax);
+                                      notesOffsetY = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .mediumNotesOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .mediumNotesOffsetMin,
+                                              LectResponsiveConfig
+                                                  .mediumNotesOffsetMax);
+                                    } else {
+                                      // Grand écran (desktop large)
+                                      brandSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .largeBrandRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .largeBrandMin,
+                                              LectResponsiveConfig
+                                                  .largeBrandMax);
+                                      headSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .largeHeadRatio)
+                                          .clamp(
+                                              LectResponsiveConfig.largeHeadMin,
+                                              LectResponsiveConfig
+                                                  .largeHeadMax);
+                                      notesSize = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .largeNotesRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .largeNotesMin,
+                                              LectResponsiveConfig
+                                                  .largeNotesMax);
 
-                                  brandOffsetY = -(availableHeight *
-                                          LectResponsiveConfig
-                                              .largeBrandOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .largeBrandOffsetMin,
-                                          LectResponsiveConfig
-                                              .largeBrandOffsetMax);
-                                  headOffsetY = (availableHeight *
-                                          LectResponsiveConfig
-                                              .largeHeadOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .largeHeadOffsetMin,
-                                          LectResponsiveConfig
-                                              .largeHeadOffsetMax);
-                                  notesOffsetY = (availableHeight *
-                                          LectResponsiveConfig
-                                              .largeNotesOffsetRatio)
-                                      .clamp(
-                                          LectResponsiveConfig
-                                              .largeNotesOffsetMin,
-                                          LectResponsiveConfig
-                                              .largeNotesOffsetMax);
-                                }
+                                      brandOffsetY = -(availableHeight *
+                                              LectResponsiveConfig
+                                                  .largeBrandOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .largeBrandOffsetMin,
+                                              LectResponsiveConfig
+                                                  .largeBrandOffsetMax);
+                                      headOffsetY = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .largeHeadOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .largeHeadOffsetMin,
+                                              LectResponsiveConfig
+                                                  .largeHeadOffsetMax);
+                                      notesOffsetY = (availableHeight *
+                                              LectResponsiveConfig
+                                                  .largeNotesOffsetRatio)
+                                          .clamp(
+                                              LectResponsiveConfig
+                                                  .largeNotesOffsetMin,
+                                              LectResponsiveConfig
+                                                  .largeNotesOffsetMax);
+                                    }
 
-                                return Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // notesLect - Notes image with animation (fade in/out when playing)
-                                    AnimatedOpacity(
-                                      opacity: playing ? 1.0 : 0.0,
-                                      duration:
-                                          const Duration(milliseconds: 500),
-                                      child: _buildAnimatedNotesLect(
-                                        size: notesSize,
-                                        offsetY: notesOffsetY,
-                                      ),
-                                    ),
-                                    // Background brand image (non-animated)
-                                    Transform.translate(
-                                      offset: Offset(0, brandOffsetY),
-                                      child: Opacity(
-                                        opacity: 1.0,
-                                        child: Image.asset(
-                                          'assets/images/lect-brand.png',
-                                          width: brandSize,
-                                          height: brandSize,
-                                          fit: BoxFit.contain,
+                                    return Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        // notesLect - Notes image with animation (fade in/out when playing)
+                                        AnimatedOpacity(
+                                          opacity: playing ? 1.0 : 0.0,
+                                          duration:
+                                              const Duration(milliseconds: 500),
+                                          child: _buildAnimatedNotesLect(
+                                            size: notesSize,
+                                            offsetY: notesOffsetY,
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    // Animated circle on top
-                                    ScaleTransition(
-                                      scale:
-                                          Tween<double>(begin: 0.98, end: 1.0)
-                                              .animate(
-                                        CurvedAnimation(
-                                          parent: _bounceController,
-                                          curve: Curves.easeInOut,
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding:
-                                            EdgeInsets.only(top: headOffsetY),
-                                        child: Opacity(
-                                          opacity: elementOpacity * 1.0,
-                                          child: Container(
-                                            width: headSize,
-                                            height: headSize,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: const Color.fromARGB(
-                                                          255, 245, 177, 4)
-                                                      .withValues(alpha: 0.2),
-                                                  blurRadius: 20,
-                                                ),
-                                              ],
+                                        // Background brand image (non-animated)
+                                        Transform.translate(
+                                          offset: Offset(0, brandOffsetY),
+                                          child: Opacity(
+                                            opacity: 1.0,
+                                            child: Image.asset(
+                                              'assets/images/lect-brand.png',
+                                              width: brandSize,
+                                              height: brandSize,
+                                              fit: BoxFit.contain,
                                             ),
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                      headSize / 2),
-                                              child: Image.asset(
-                                                'assets/images/lect-head.png',
+                                          ),
+                                        ),
+                                        // Animated circle on top
+                                        ScaleTransition(
+                                          scale: Tween<double>(
+                                                  begin: 0.98, end: 1.0)
+                                              .animate(
+                                            CurvedAnimation(
+                                              parent: _bounceController,
+                                              curve: Curves.easeInOut,
+                                            ),
+                                          ),
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                                top: headOffsetY),
+                                            child: Opacity(
+                                              opacity: elementOpacity * 1.0,
+                                              child: Container(
                                                 width: headSize,
                                                 height: headSize,
-                                                fit: BoxFit.cover,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color:
+                                                          const Color.fromARGB(
+                                                                  255,
+                                                                  245,
+                                                                  177,
+                                                                  4)
+                                                              .withValues(
+                                                                  alpha: 0.2),
+                                                      blurRadius: 20,
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          headSize / 2),
+                                                  child: Image.asset(
+                                                    'assets/images/lect-head.png',
+                                                    width: headSize,
+                                                    height: headSize,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    // Play/Pause button below circle
-                    Opacity(
-                      opacity: elementOpacity,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                            16, 8, 16, 8), // Top padding réglable (30)
-                        child: Center(
-                          child: StreamBuilder<PlayerState>(
-                            stream: audioPlayer.playerStateStream,
-                            builder: (context, snap) {
-                              final playing = snap.data?.playing ?? false;
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: homeLiveBadge(context).withValues(alpha: 1.0),
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          homeLiveBadge(context).withValues(alpha: 1.0),
-                                      blurRadius: 15,
-                                      spreadRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    playing
-                                        ? Icons.pause_rounded
-                                        : Icons.play_arrow_rounded,
-                                    color: white,
-                                    size: 60,
-                                  ),
-                                  iconSize: 80,
-                                  onPressed: () {
-                                    _checkPremiumPlayPause();
+                                      ],
+                                    );
                                   },
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    ),
-                    // Progress bar + Title
-                    Flexible(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          // Progress bar désactivée
-                          // Opacity(
-                          //   opacity: elementOpacity,
-                          //   child: StreamBuilder<PositionData>(
-                          //     stream: positionDataStream,
-                          //     builder: (context, snap) {
-                          //       final pos = snap.data;
-                          //       return Padding(
-                          //         padding:
-                          //             const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                          //         child: ProgressBar(
-                          //           progress: pos?.position ?? Duration.zero,
-                          //           buffered:
-                          //               pos?.bufferedPosition ?? Duration.zero,
-                          //           total: pos?.duration ?? Duration.zero,
-                          //           progressBarColor: homeLiveBadge(context),
-                          //           baseBarColor: white.withValues(alpha: 0.1),
-                          //           barCapShape: BarCapShape.round,
-                          //           barHeight: 4,
-                          //           thumbRadius: 6,
-                          //           timeLabelLocation: TimeLabelLocation.below,
-                          //         ),
-                          //       );
-                          //     },
-                          //   ),
-                          // ),
-                          // Title & artist
-                          Opacity(
-                            opacity: elementOpacity,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        // Play/Pause button below circle
+                        Opacity(
+                          opacity: elementOpacity,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                                16, 8, 16, 8), // Top padding réglable (30)
+                            child: Center(
                               child: StreamBuilder<PlayerState>(
                                 stream: audioPlayer.playerStateStream,
-                                builder: (context, snapshot) {
-                                  final processingState =
-                                      snapshot.data?.processingState;
-                                  final isLoading = processingState ==
-                                          ProcessingState.loading ||
-                                      processingState ==
-                                          ProcessingState.buffering;
-
-                                  return Column(
-                                    children: [
-                                      Text(
-                                        isLoading
-                                            ? 'Chargement...'
-                                            : (mediaItem?.title ?? ''),
-                                        style: const TextStyle(
-                                          color: white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
+                                builder: (context, snap) {
+                                  final playing = snap.data?.playing ?? false;
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: homeLiveBadge(context)
+                                          .withValues(alpha: 1.0),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: homeLiveBadge(context)
+                                              .withValues(alpha: 1.0),
+                                          blurRadius: 15,
+                                          spreadRadius: 2,
                                         ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      ],
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        playing
+                                            ? Icons.pause_rounded
+                                            : Icons.play_arrow_rounded,
+                                        color: white,
+                                        size: 60,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        isLoading
-                                            ? 'Merci de patienter...'
-                                            : (mediaItem?.displayDescription ??
-                                                ''),
-                                        style: TextStyle(
-                                          color: white.withValues(alpha: 0.7),
-                                          fontSize: 12,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                      iconSize: 80,
+                                      onPressed: () {
+                                        _checkPremiumPlayPause();
+                                      },
+                                    ),
                                   );
                                 },
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        // Progress bar + Title
+                        Flexible(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              // Progress bar désactivée
+                              // Opacity(
+                              //   opacity: elementOpacity,
+                              //   child: StreamBuilder<PositionData>(
+                              //     stream: positionDataStream,
+                              //     builder: (context, snap) {
+                              //       final pos = snap.data;
+                              //       return Padding(
+                              //         padding:
+                              //             const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                              //         child: ProgressBar(
+                              //           progress: pos?.position ?? Duration.zero,
+                              //           buffered:
+                              //               pos?.bufferedPosition ?? Duration.zero,
+                              //           total: pos?.duration ?? Duration.zero,
+                              //           progressBarColor: homeLiveBadge(context),
+                              //           baseBarColor: white.withValues(alpha: 0.1),
+                              //           barCapShape: BarCapShape.round,
+                              //           barHeight: 4,
+                              //           thumbRadius: 6,
+                              //           timeLabelLocation: TimeLabelLocation.below,
+                              //         ),
+                              //       );
+                              //     },
+                              //   ),
+                              // ),
+                              // Title & artist
+                              Opacity(
+                                opacity: elementOpacity,
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                                  child: StreamBuilder<PlayerState>(
+                                    stream: audioPlayer.playerStateStream,
+                                    builder: (context, snapshot) {
+                                      final processingState =
+                                          snapshot.data?.processingState;
+                                      final isLoading = processingState ==
+                                              ProcessingState.loading ||
+                                          processingState ==
+                                              ProcessingState.buffering;
+
+                                      return Column(
+                                        children: [
+                                          Text(
+                                            isLoading
+                                                ? 'Chargement...'
+                                                : (mediaItem?.title ?? ''),
+                                            style: const TextStyle(
+                                              color: white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            isLoading
+                                                ? 'Merci de patienter...'
+                                                : (mediaItem
+                                                        ?.displayDescription ??
+                                                    ''),
+                                            style: TextStyle(
+                                              color:
+                                                  white.withValues(alpha: 0.7),
+                                              fontSize: 12,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                ),
+                  ),
               ],
             ),
           );
@@ -2334,7 +2382,8 @@ class _MusicDetailsState extends State<MusicDetails>
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   MyText(
-                                                      color: homeLiveBadge(context),
+                                                      color: homeLiveBadge(
+                                                          context),
                                                       text: commentprovider
                                                                   .commentList?[
                                                                       index]

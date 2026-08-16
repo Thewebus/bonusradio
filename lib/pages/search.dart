@@ -53,15 +53,16 @@ class _SearchState extends State<Search> {
     return Stack(
       children: [
         Scaffold(
+          backgroundColor: homeAccueilBg(context),
           body: Consumer<SearchProvider>(
               builder: (context, searchprovider, child) {
             return Column(
               children: [
                 Container(
                   constraints: const BoxConstraints(minHeight: 0),
-                  decoration: const BoxDecoration(
-                    color: colorPrimary,
-                    borderRadius: BorderRadius.only(
+                  decoration: BoxDecoration(
+                    color: homeSearchBarBg(context),
+                    borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(25),
                       bottomRight: Radius.circular(25),
                     ),
@@ -73,13 +74,17 @@ class _SearchState extends State<Search> {
                         elevation: 0,
                         automaticallyImplyLeading: false,
                         titleSpacing: 10,
-                        systemOverlayStyle: const SystemUiOverlayStyle(
-                          statusBarColor: colorPrimary,
+                        systemOverlayStyle: SystemUiOverlayStyle(
+                          statusBarColor: homeSearchBarBg(context),
                           statusBarBrightness: Brightness.light,
                         ),
                         leading: InkWell(
                           onTap: () {
-                            widget.onBack?.call();
+                            if (widget.onBack != null) {
+                              widget.onBack!.call();
+                            } else {
+                              Navigator.pop(context);
+                            }
                           },
                           child: MyImage(
                               width: 15, height: 15, imagePath: "back.png"),

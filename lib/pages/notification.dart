@@ -36,7 +36,7 @@ class NotificationPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: appBgColor,
+      backgroundColor: homeAccueilBg(context),
       body: Column(
         children: [
           MyAppbar(
@@ -44,6 +44,7 @@ class NotificationPageState extends State<NotificationPage> {
             icon: "back.png",
             isSimpleappbar: 1,
             isMultiLang: true,
+            useAccueilTheme: true,
             onBack: () {
               Navigator.pop(context);
             },

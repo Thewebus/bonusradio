@@ -175,14 +175,14 @@ class SubscriptionState extends State<Subscription> {
   Widget build(BuildContext context) {
     if (kIsWeb) {
       return Scaffold(
-        // backgroundColor: white,
+        backgroundColor: homeAccueilBg(context),
         body: SingleChildScrollView(
           child: _buildSubscription(),
         ),
       );
     } else {
       return Scaffold(
-        // backgroundColor: white,
+        backgroundColor: homeAccueilBg(context),
         appBar: (widget.openFrom == 'player')
             ? Utils.myAppBarWithoutBack(context, "subsciption", true)
             : Utils.myAppBarWithBack(context, "subsciption", true),

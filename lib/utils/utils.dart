@@ -626,10 +626,10 @@ class Utils {
       BuildContext context, String appBarTitle, bool multilanguage) {
     return AppBar(
       elevation: 5,
-      backgroundColor: colorPrimary,
+      backgroundColor: homeSearchBarBg(context),
       centerTitle: true,
       systemOverlayStyle:
-          const SystemUiOverlayStyle(statusBarColor: colorPrimary),
+          SystemUiOverlayStyle(statusBarColor: homeSearchBarBg(context)),
       leading: IconButton(
         autofocus: true,
         focusColor: white.withValues(alpha: 0.5),
@@ -659,10 +659,10 @@ class Utils {
       BuildContext context, String appBarTitle, bool multilanguage) {
     return AppBar(
       elevation: 5,
-      backgroundColor: colorPrimary,
+      backgroundColor: homeSearchBarBg(context),
       centerTitle: true,
-      systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: colorPrimary,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: homeSearchBarBg(context),
       ),
       automaticallyImplyLeading: false,
       title: MyText(

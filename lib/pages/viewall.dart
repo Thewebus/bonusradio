@@ -85,6 +85,7 @@ class _ViewAllState extends State<ViewAll> {
     return Stack(
       children: [
         Scaffold(
+          backgroundColor: homeAccueilBg(context),
           body: Column(
             children: [
               MyAppbar(
@@ -92,6 +93,7 @@ class _ViewAllState extends State<ViewAll> {
                 isSimpleappbar: 1,
                 isMultiLang: widget.isTitleMultiLang,
                 icon: "back.png",
+                useAccueilTheme: true,
                 onBack: () {
                   Navigator.pop(context);
                 },

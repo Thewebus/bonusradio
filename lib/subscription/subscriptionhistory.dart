@@ -39,7 +39,7 @@ class _SubscriptionHistoryState extends State<SubscriptionHistory> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: appBgColor,
+      backgroundColor: homeAccueilBg(context),
       appBar: Utils.myAppBarWithBack(context, "transactions", true),
       body: SafeArea(
         child: Column(

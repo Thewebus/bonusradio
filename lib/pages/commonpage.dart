@@ -67,15 +67,15 @@ class CommonPageState extends State<CommonPage> {
     if (kIsWeb) {
       return Scaffold(
         resizeToAvoidBottomInset: true,
-        backgroundColor: colorAccent,
+        backgroundColor: homeAccueilBg(context),
         body: setWebView(),
       );
     } else {
       return Scaffold(
         resizeToAvoidBottomInset: true,
-        backgroundColor: colorAccent,
+        backgroundColor: homeAccueilBg(context),
         appBar: AppBar(
-          backgroundColor: colorAccent,
+          backgroundColor: homeSearchBarBg(context),
           surfaceTintColor: transparent,
           elevation: 20,
           leading: InkWell(
@@ -89,7 +89,7 @@ class CommonPageState extends State<CommonPage> {
             maxline: 1,
             overflow: TextOverflow.ellipsis,
             fontsize: Dimens.textBig,
-            color: colorPrimaryDark,
+            color: white,
             fontwaight: FontWeight.w600,
           ),
         ),

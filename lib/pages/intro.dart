@@ -26,7 +26,7 @@ class _IntroState extends State<Intro> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: homeAccueilBg(context),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
         child: Stack(

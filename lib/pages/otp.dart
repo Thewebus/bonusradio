@@ -67,7 +67,7 @@ class _OTPState extends State<OTP> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: white,
+      backgroundColor: homeAccueilBg(context),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         // backgroundColor: white,

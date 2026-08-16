@@ -35,6 +35,7 @@ class _NormalLoginState extends State<NormalLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: homeAccueilBg(context),
       body: SafeArea(
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,

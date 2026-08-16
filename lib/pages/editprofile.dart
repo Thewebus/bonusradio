@@ -59,6 +59,7 @@ class _EditProfileState extends State<EditProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: homeAccueilBg(context),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(
@@ -70,6 +71,7 @@ class _EditProfileState extends State<EditProfile> {
                   isSimpleappbar: 2,
                   title: "editprofile",
                   isMultiLang: true,
+                  useAccueilTheme: true,
                   onBack: () {
                     Navigator.of(context).pop(false);
                     getApi();

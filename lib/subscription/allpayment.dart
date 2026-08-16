@@ -281,7 +281,7 @@ class AllPaymentState extends State<AllPayment> {
 
   Widget _buildPage() {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: homeAccueilBg(context),
       appBar: (kIsWeb)
           ? null
           : Utils.myAppBarWithBack(context, "payment_details", true),

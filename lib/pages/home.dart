@@ -1898,62 +1898,169 @@ class _HomeState extends State<Home> {
                                             mainAxisAlignment:
                                                 MainAxisAlignment.end,
                                             children: [
-                                              // Bouton "Ecouter" - Actif
+                                              // Bouton "Ecouter" / "Arrêter" - reflète l'état de lecture
                                               Flexible(
-                                                child: Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    gradient:
-                                                        const LinearGradient(
-                                                      colors: [
-                                                        colorAccent,
-                                                        colorPrimary
-                                                      ],
-                                                      begin: Alignment.topLeft,
-                                                      end:
-                                                          Alignment.bottomRight,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: colorPrimary
-                                                            .withOpacity(0.3),
-                                                        blurRadius: 8,
-                                                        offset:
-                                                            const Offset(0, 2),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.play_arrow,
-                                                        color: white,
-                                                        size: 16,
-                                                      ),
-                                                      const SizedBox(width: 3),
-                                                      Flexible(
-                                                        child: MyText(
-                                                          color: white,
-                                                          text: "Écouter",
-                                                          fontsize: Dimens
-                                                              .textExtraSmall,
-                                                          fontwaight:
-                                                              FontWeight.w600,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
+                                                child: StreamBuilder<bool>(
+                                                  stream: audioPlayer
+                                                      .playingStream,
+                                                  builder:
+                                                      (context, snapshot) {
+                                                    final isPlaying =
+                                                        snapshot.data ??
+                                                            audioPlayer
+                                                                .playing;
+                                                    return InkWell(
+                                                      focusColor: transparent,
+                                                      splashColor: transparent,
+                                                      hoverColor: transparent,
+                                                      highlightColor:
+                                                          transparent,
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(20),
+                                                      onTap: () {
+                                                        if (isPlaying) {
+                                                          audioPlayer.pause();
+                                                        } else {
+                                                          Utils.playAudio(
+                                                              context,
+                                                              "radio",
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .isPremium ??
+                                                                  0,
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .isBuy ??
+                                                                  0,
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .image
+                                                                      .toString() ??
+                                                                  "",
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .name
+                                                                      .toString() ??
+                                                                  "",
+                                                              'homebanner',
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .songUrl
+                                                                      .toString() ??
+                                                                  "",
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .name
+                                                                      .toString() ??
+                                                                  "",
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .name
+                                                                      .toString() ??
+                                                                  "",
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result?[
+                                                                          index]
+                                                                      .id
+                                                                      .toString() ??
+                                                                  "",
+                                                              "",
+                                                              index,
+                                                              homeprovider
+                                                                      .bannerModel
+                                                                      .result
+                                                                      ?.toList() ??
+                                                                  []);
+                                                        }
+                                                      },
+                                                      child: Container(
+                                                        padding: const EdgeInsets
+                                                            .symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8,
+                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          gradient:
+                                                              const LinearGradient(
+                                                            colors: [
+                                                              colorAccent,
+                                                              colorPrimary
+                                                            ],
+                                                            begin: Alignment
+                                                                .topLeft,
+                                                            end: Alignment
+                                                                .bottomRight,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: colorPrimary
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.3),
+                                                              blurRadius: 8,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              isPlaying
+                                                                  ? Icons.stop
+                                                                  : Icons
+                                                                      .play_arrow,
+                                                              color: white,
+                                                              size: 16,
+                                                            ),
+                                                            const SizedBox(
+                                                                width: 3),
+                                                            Flexible(
+                                                              child: MyText(
+                                                                color: white,
+                                                                text: isPlaying
+                                                                    ? "Arrêter"
+                                                                    : "Écouter",
+                                                                multilanguage:
+                                                                    false,
+                                                                fontsize: Dimens
+                                                                    .textExtraSmall,
+                                                                fontwaight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
-                                                    ],
-                                                  ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                               const SizedBox(width: 6),

@@ -83,6 +83,7 @@ class PodcastViewAllState extends State<PodcastViewAll> {
     return Stack(
       children: [
         Scaffold(
+          backgroundColor: homeAccueilBg(context),
           body: Column(
             children: [
               MyAppbar(
@@ -90,6 +91,7 @@ class PodcastViewAllState extends State<PodcastViewAll> {
                 isSimpleappbar: 1,
                 isMultiLang: widget.isTitleMultiLang,
                 icon: "back.png",
+                useAccueilTheme: true,
                 onBack: () {
                   Navigator.pop(context);
                 },

@@ -126,6 +126,7 @@ class _RadioByIdState extends State<RadioById> {
     return Stack(
       children: [
         Scaffold(
+          backgroundColor: homeAccueilBg(context),
           body: Column(
             children: [
               MyAppbar(
@@ -133,6 +134,7 @@ class _RadioByIdState extends State<RadioById> {
                 title: widget.title.toString(),
                 isMultiLang: false,
                 icon: "back.png",
+                useAccueilTheme: true,
                 onBack: () {
                   Navigator.pop(context);
                 },

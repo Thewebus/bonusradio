@@ -42,9 +42,9 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: homeAccueilBg(context),
       appBar: AppBar(
-        backgroundColor: colorPrimary,
+        backgroundColor: homeSearchBarBg(context),
         elevation: 0,
         title: MyText(
           color: white,
@@ -87,10 +87,14 @@ class _SettingsState extends State<Settings> {
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isActive ? colorPrimary : transparent,
+                          color: isActive
+                              ? homeSearchBarBg(context)
+                              : transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isActive ? colorPrimary : gray,
+                            color: isActive
+                                ? homeSearchBarBg(context)
+                                : gray,
                           ),
                         ),
                         child: Icon(
