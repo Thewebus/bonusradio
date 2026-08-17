@@ -20,7 +20,7 @@
 
     <!-- If Use Stripe :======> android:enableOnBackInvokedCallback="false" 
         If NOT Use Stripe :==> android:enableOnBackInvokedCallback="true" -->
-    <application android:label="Bonus Radio" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true" android:largeHeap="true" android:enableOnBackInvokedCallback="false" android:hardwareAccelerated="true" tools:replace="android:label">
+    <application android:label="myBonus" android:name="${applicationName}" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true" android:largeHeap="true" android:enableOnBackInvokedCallback="false" android:hardwareAccelerated="true" tools:replace="android:label">
 
         <!-- <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

@@ -3,7 +3,7 @@
     <!-- Example: Sets all OneSignal notification's accent color to Green by default.  -->
     <!-- Color format is in ARGB. -->
     <string name="onesignal_notification_accent_color">00000000</string>
-    <string name="app_name">yourappname</string>
+    <string name="app_name">myBonus</string>
 
     <string name="facebook_app_id" translatable="false">983695575596881</string>
     <string name="fb_login_protocol_scheme" translatable="false">fb983695575596881</string>

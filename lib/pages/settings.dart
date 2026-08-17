@@ -87,14 +87,11 @@ class _SettingsState extends State<Settings> {
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isActive
-                              ? homeSearchBarBg(context)
-                              : transparent,
+                          color:
+                              isActive ? homeSearchBarBg(context) : transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isActive
-                                ? homeSearchBarBg(context)
-                                : gray,
+                            color: isActive ? homeSearchBarBg(context) : gray,
                           ),
                         ),
                         child: Icon(
@@ -119,7 +116,7 @@ class _SettingsState extends State<Settings> {
                         Icon(
                           Icons.dark_mode_rounded,
                           size: 25,
-                          color: colorPrimary,
+                          color: homeSearchBarBg(context),
                         ),
                         SizedBox(
                             width: MediaQuery.of(context).size.width * 0.05),
@@ -140,13 +137,10 @@ class _SettingsState extends State<Settings> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
+                        modeButton(Icons.settings, AppThemeMode.auto, "Auto"),
+                        modeButton(Icons.wb_sunny, AppThemeMode.day, "Jour"),
                         modeButton(
-                            Icons.settings, AppThemeMode.auto, "Auto"),
-                        modeButton(
-                            Icons.wb_sunny, AppThemeMode.day, "Jour"),
-                        modeButton(
-                            Icons.nightlight_round, AppThemeMode.night,
-                            "Nuit"),
+                            Icons.nightlight_round, AppThemeMode.night, "Nuit"),
                       ],
                     ),
                   ],
@@ -224,8 +218,10 @@ class _SettingsState extends State<Settings> {
                 width: MediaQuery.of(context).size.width * 0.50,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [colorAccent, colorPrimary],
+                    gradient: LinearGradient(
+                      colors: Theme.of(context).brightness == Brightness.dark
+                          ? const [colorAccent, colorPrimary]
+                          : [colorPrimary, homeSearchBarBg(context)],
                       begin: Alignment.bottomLeft,
                       end: Alignment.topRight,
                     ),
@@ -274,20 +270,21 @@ class _SettingsState extends State<Settings> {
                 shape: BoxShape.circle,
                 color: transparent,
               ),
-              child: isNetworkIcon
-                  ? MyNetworkImage(
-                      imgWidth: 30,
-                      imgHeight: 30,
-                      fit: BoxFit.cover,
-                      imageUrl: icon,
-                    )
-                  : materialIcon != null
-                      ? Icon(materialIcon, size: 28, color: colorPrimary)
+              child: materialIcon != null
+                  ? Icon(materialIcon,
+                      size: 28, color: homeSearchBarBg(context))
+                  : isNetworkIcon
+                      ? MyNetworkImage(
+                          imgWidth: 30,
+                          imgHeight: 30,
+                          fit: BoxFit.cover,
+                          imageUrl: icon,
+                        )
                       : MyImage(
                           width: 30,
                           height: 30,
                           imagePath: icon,
-                          color: colorPrimary,
+                          color: homeSearchBarBg(context),
                         ),
             ),
             SizedBox(width: MediaQuery.of(context).size.width * 0.05),
@@ -846,6 +843,7 @@ class _SettingsState extends State<Settings> {
                     );
                   },
                   isNetworkIcon: true,
+                  materialIcon: Icons.menu_book_rounded,
                 ),
                 divider(),
               ],

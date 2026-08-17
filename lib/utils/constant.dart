@@ -1,7 +1,7 @@
 class Constant {
   final String baseurl = "https://admin.mybonusmultimedia.com/public/api/";
 
-  static String appName = "Bonus Radio";
+  static String appName = "myBonus";
   static String? appPackageName = "com.bonusmultimedia.mybonus";
   static String? appleAppId = "";
   static String? appVersion = "1";
