@@ -46,10 +46,10 @@ Future<void> main() async {
   );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Locales.init([
+    'fr',
     'en',
     'ar',
     'hi',
-    'fr',
     'gu',
     'pt',
     'af',

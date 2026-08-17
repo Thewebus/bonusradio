@@ -137,7 +137,8 @@ class _SettingsState extends State<Settings> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        modeButton(Icons.settings, AppThemeMode.auto, "Auto"),
+                        modeButton(
+                            Icons.brightness_auto, AppThemeMode.auto, "Auto"),
                         modeButton(Icons.wb_sunny, AppThemeMode.day, "Jour"),
                         modeButton(
                             Icons.nightlight_round, AppThemeMode.night, "Nuit"),
@@ -218,13 +219,7 @@ class _SettingsState extends State<Settings> {
                 width: MediaQuery.of(context).size.width * 0.50,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: Theme.of(context).brightness == Brightness.dark
-                          ? const [colorAccent, colorPrimary]
-                          : [colorPrimary, homeSearchBarBg(context)],
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                    ),
+                    color: homeSearchBarBg(context),
                     borderRadius: BorderRadius.circular(50)),
                 child: MyText(
                   color: white,
