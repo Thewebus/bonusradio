@@ -76,6 +76,11 @@ class _PodcastState extends State<Podcast> {
       backgroundColor: homeAccueilBg(context),
       body: Stack(
         children: [
+          Positioned.fill(
+            child: Container(
+              decoration: homeAccueilBackgroundDecoration(context),
+            ),
+          ),
           Column(
             children: [
               MyAppbar(

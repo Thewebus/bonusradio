@@ -242,7 +242,7 @@ class RegisterState extends State<Register> {
               fontSize: Dimens.textMedium,
               fontStyle: FontStyle.normal,
               letterSpacing: 1.0,
-              color: black,
+              color: Theme.of(context).colorScheme.surface,
               fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             prefixIcon: Icon(icon),

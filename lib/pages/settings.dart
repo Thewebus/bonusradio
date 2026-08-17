@@ -116,10 +116,9 @@ class _SettingsState extends State<Settings> {
                   children: [
                     Row(
                       children: [
-                        MyImage(
-                          width: 25,
-                          height: 25,
-                          imagePath: "ic_darkmode.png",
+                        Icon(
+                          Icons.dark_mode_rounded,
+                          size: 25,
                           color: colorPrimary,
                         ),
                         SizedBox(
@@ -164,6 +163,7 @@ class _SettingsState extends State<Settings> {
               () {
                 _languageChangeDialog();
               },
+              materialIcon: Icons.translate,
             ),
             divider(),
 
@@ -174,6 +174,7 @@ class _SettingsState extends State<Settings> {
               () {
                 _showRatingDialog();
               },
+              materialIcon: Icons.star_rate_rounded,
             ),
             divider(),
 
@@ -186,6 +187,7 @@ class _SettingsState extends State<Settings> {
                     ? Constant.iosAppShareUrlDesc
                     : Constant.androidAppShareUrlDesc);
               },
+              materialIcon: Icons.share_rounded,
             ),
             divider(),
 
@@ -253,6 +255,7 @@ class _SettingsState extends State<Settings> {
     String name,
     Function() onTap, {
     bool isNetworkIcon = false,
+    IconData? materialIcon,
   }) {
     return InkWell(
       focusColor: transparent,
@@ -278,19 +281,26 @@ class _SettingsState extends State<Settings> {
                       fit: BoxFit.cover,
                       imageUrl: icon,
                     )
-                  : MyImage(
-                      width: 30,
-                      height: 30,
-                      imagePath: icon,
-                      color: colorPrimary,
-                    ),
+                  : materialIcon != null
+                      ? Icon(materialIcon, size: 28, color: colorPrimary)
+                      : MyImage(
+                          width: 30,
+                          height: 30,
+                          imagePath: icon,
+                          color: colorPrimary,
+                        ),
             ),
             SizedBox(width: MediaQuery.of(context).size.width * 0.05),
             MyText(
               color: Theme.of(context).colorScheme.surface,
               text: name,
               textalign: TextAlign.center,
-              multilanguage: true,
+              // Network-icon items come from the backend (About, social
+              // links...) and are already display-ready text, not
+              // translation keys — treating them as keys via
+              // multilanguage:true made LocaleText show "$name" whenever
+              // that exact string wasn't also a key in the locale files.
+              multilanguage: !isNetworkIcon,
               fontsize: Dimens.textTitle,
               inter: 1,
               maxline: 2,

@@ -70,42 +70,51 @@ class _LiveEventState extends State<LiveEvent> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
-      body: Column(
+      body: Stack(
         children: [
-          MyAppbar(
-            title: "liveevents",
-            icon: "back.png",
-            isSimpleappbar: 1,
-            isMultiLang: true,
-            useAccueilTheme: true,
-            onBack: () {
-              widget.onBack?.call();
-            },
+          Positioned.fill(
+            child: Container(
+              decoration: homeAccueilBackgroundDecoration(context),
+            ),
           ),
-          Expanded(
-            child: RefreshIndicator(
-              backgroundColor: white,
-              color: colorAccent,
-              displacement: 70,
-              edgeOffset: 1.0,
-              triggerMode: RefreshIndicatorTriggerMode.anywhere,
-              strokeWidth: 3,
-              onRefresh: () async {
-                liveEventProvider.clearProvider();
-                _fetchData(0);
-              },
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(0, 15, 0, 160),
-                scrollDirection: Axis.vertical,
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    buildLiveEventList(),
-                  ],
+          Column(
+            children: [
+              MyAppbar(
+                title: "liveevents",
+                icon: "back.png",
+                isSimpleappbar: 1,
+                isMultiLang: true,
+                useAccueilTheme: true,
+                onBack: () {
+                  widget.onBack?.call();
+                },
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  backgroundColor: white,
+                  color: colorAccent,
+                  displacement: 70,
+                  edgeOffset: 1.0,
+                  triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                  strokeWidth: 3,
+                  onRefresh: () async {
+                    liveEventProvider.clearProvider();
+                    _fetchData(0);
+                  },
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(0, 15, 0, 160),
+                    scrollDirection: Axis.vertical,
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        buildLiveEventList(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

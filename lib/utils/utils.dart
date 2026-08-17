@@ -75,7 +75,7 @@ class Utils {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MyText(
-                    color: black,
+                    color: Theme.of(context).colorScheme.surface,
                     text: "update_profile",
                     multilanguage: true,
                     textalign: TextAlign.start,
@@ -105,6 +105,7 @@ class Utils {
             const SizedBox(height: 30),
             if (isNameReq)
               _buildTextFormField(
+                context: context,
                 controller: nameController,
                 hintText: "full_name",
                 inputType: TextInputType.name,
@@ -114,6 +115,7 @@ class Utils {
             /* Email */
             if (isEmailReq)
               _buildTextFormField(
+                context: context,
                 controller: emailController,
                 hintText: "email_address",
                 inputType: TextInputType.emailAddress,
@@ -123,6 +125,7 @@ class Utils {
             /* Mobile */
             if (isMobileReq)
               _buildTextFormField(
+                context: context,
                 controller: mobileController,
                 hintText: "mobile_number",
                 inputType: const TextInputType.numberWithOptions(
@@ -309,6 +312,7 @@ class Utils {
   }
 
   static Widget _buildTextFormField({
+    required BuildContext context,
     required TextEditingController controller,
     required String hintText,
     required TextInputType inputType,
@@ -362,9 +366,9 @@ class Utils {
         textAlign: TextAlign.start,
         textAlignVertical: TextAlignVertical.center,
         style: GoogleFonts.inter(
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontSize: 14,
-            color: black,
+            color: Theme.of(context).colorScheme.surface,
             fontWeight: FontWeight.w600,
             fontStyle: FontStyle.normal,
           ),

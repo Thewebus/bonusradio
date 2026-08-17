@@ -56,57 +56,66 @@ class ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        padding: const EdgeInsets.only(bottom: 160),
-        child: Column(
-          children: [
-            // AppBar
-            Stack(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: homeAccueilBackgroundDecoration(context),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            padding: const EdgeInsets.only(bottom: 160),
+            child: Column(
               children: [
-                MyAppbar(
-                  isSimpleappbar: 2,
-                  title: "profile",
-                  isMultiLang: true,
-                  useAccueilTheme: true,
-                  onBack: () {
-                    widget.onBack?.call();
-                  },
-                  icon: "back,png",
+                // AppBar
+                Stack(
+                  children: [
+                    MyAppbar(
+                      isSimpleappbar: 2,
+                      title: "profile",
+                      isMultiLang: true,
+                      useAccueilTheme: true,
+                      onBack: () {
+                        widget.onBack?.call();
+                      },
+                      icon: "back,png",
+                    ),
+                    // Profile Image
+                    Consumer<ProfileProvider>(
+                        builder: (context, profileprovider, child) {
+                      if (profileprovider.loading) {
+                        return Utils.pageLoader();
+                      } else if (profileprovider.profileModel.result != null &&
+                          profileprovider.profileModel.result!.isNotEmpty) {
+                        return Positioned.fill(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child: MyNetworkImage(
+                                  fit: BoxFit.cover,
+                                  imgWidth: 110,
+                                  imgHeight: 110,
+                                  imageUrl: profileprovider
+                                          .profileModel.result?[0].image
+                                          .toString() ??
+                                      ""),
+                            ),
+                          ),
+                        );
+                      } else {
+                        return const SizedBox.shrink();
+                      }
+                    }),
+                  ],
                 ),
-                // Profile Image
-                Consumer<ProfileProvider>(
-                    builder: (context, profileprovider, child) {
-                  if (profileprovider.loading) {
-                    return Utils.pageLoader();
-                  } else if (profileprovider.profileModel.result != null &&
-                      profileprovider.profileModel.result!.isNotEmpty) {
-                    return Positioned.fill(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: MyNetworkImage(
-                              fit: BoxFit.cover,
-                              imgWidth: 110,
-                              imgHeight: 110,
-                              imageUrl: profileprovider
-                                      .profileModel.result?[0].image
-                                      .toString() ??
-                                  ""),
-                        ),
-                      ),
-                    );
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                }),
+                // Body
+                profilebody(),
               ],
             ),
-            // Body
-            profilebody(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -260,18 +269,17 @@ class ProfileState extends State<Profile> {
               Theme.of(context).colorScheme.surface, FontWeight.w500),
           showCountryFlag: true,
           showDropdownIcon: true,
-          initialCountryCode:
-              (profileProvider.profileModel.result != null &&
-                          profileProvider.profileModel.result!.isNotEmpty &&
-                          profileProvider.profileModel.result![0].countryName !=
-                              "") ==
-                      false
-                  ? Constant.initialCountryCode
-                  : (profileProvider.profileModel.result != null &&
-                          profileProvider.profileModel.result!.isNotEmpty)
-                      ? profileProvider.profileModel.result![0].countryName
-                          .toString()
-                      : Constant.initialCountryCode,
+          initialCountryCode: (profileProvider.profileModel.result != null &&
+                      profileProvider.profileModel.result!.isNotEmpty &&
+                      profileProvider.profileModel.result![0].countryName !=
+                          "") ==
+                  false
+              ? Constant.initialCountryCode
+              : (profileProvider.profileModel.result != null &&
+                      profileProvider.profileModel.result!.isNotEmpty)
+                  ? profileProvider.profileModel.result![0].countryName
+                      .toString()
+                  : Constant.initialCountryCode,
           dropdownTextStyle: Utils.googleFontStyle(
               1, 16, FontStyle.normal, black, FontWeight.w600),
           keyboardType: TextInputType.number,
@@ -293,18 +301,18 @@ class ProfileState extends State<Profile> {
             contentPadding: const EdgeInsets.all(12.0),
             focusedBorder: OutlineInputBorder(
               borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide:
-                  BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
+              borderSide: BorderSide(
+                  width: 1, color: lightgray.withValues(alpha: 0.80)),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide:
-                  BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
+              borderSide: BorderSide(
+                  width: 1, color: lightgray.withValues(alpha: 0.80)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide:
-                  BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
+              borderSide: BorderSide(
+                  width: 1, color: lightgray.withValues(alpha: 0.80)),
             ),
             border: OutlineInputBorder(
                 borderRadius: const BorderRadius.all(Radius.circular(7)),

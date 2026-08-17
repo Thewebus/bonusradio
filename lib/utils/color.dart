@@ -31,6 +31,25 @@ Color homeSearchBarBg(BuildContext context) => _isNight(context)
 
 Color homeLiveBadge(BuildContext context) => const Color(0xFFE3352B);
 
+/* Night-mode page background: red-to-black gradient instead of a flat
+   near-black fill, matching the reference design. Day mode stays the flat
+   cream fill. */
+BoxDecoration homeAccueilBackgroundDecoration(BuildContext context) =>
+    _isNight(context)
+        ? const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF3D0F0C),
+                Color(0xFF1F0806),
+                Color(0xFF000000),
+              ],
+              stops: [0.0, 0.45, 1.0],
+            ),
+          )
+        : BoxDecoration(color: homeAccueilBg(context));
+
 List<Color> homeCategoryPalette(BuildContext context) => _isNight(context)
     ? const [
         Color(0xFF7A3F38),

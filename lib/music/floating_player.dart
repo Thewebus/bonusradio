@@ -24,8 +24,8 @@ class WaveformConfig {
   ];
 
   // Opacité
-  static const double baseOpacity = 0.1; // Opacité de base (0.0 à 1.0)
-  static const double peakOpacity = 0.1; // Opacité maximale lors des pics
+  static const double baseOpacity = 0.35; // Opacité de base (0.0 à 1.0)
+  static const double peakOpacity = 1.0; // Opacité maximale lors des pics
 
   // Animation
   static const int animationSpeed =
@@ -308,8 +308,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
             InkWell(
               onTap: _expandPlayer,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Row(
                   children: [
                     IconButton(
@@ -318,8 +317,8 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                         height: 32,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: homeSearchBarBg(context)
-                              .withValues(alpha: 0.1),
+                          color:
+                              homeSearchBarBg(context).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -363,7 +362,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                               ),
                             ),
                           MyText(
-                            color: black,
+                            color: Theme.of(context).colorScheme.surface,
                             text: title,
                             multilanguage: false,
                             fontsize: 14,
@@ -373,7 +372,10 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                           ),
                           const SizedBox(height: 2),
                           MyText(
-                            color: black.withValues(alpha: 0.6),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surface
+                                .withValues(alpha: 0.6),
                             text: subtitle,
                             multilanguage: false,
                             fontsize: 12,
@@ -427,8 +429,8 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close,
-                          color: Colors.grey, size: 18),
+                      icon:
+                          const Icon(Icons.close, color: Colors.grey, size: 18),
                       onPressed: _stopPlayer,
                     ),
                   ],
@@ -437,10 +439,12 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
             ),
             Divider(
               height: 1,
-              thickness: 1,
+              thickness: 1.5,
               indent: 16,
               endIndent: 16,
-              color: black.withValues(alpha: 0.08),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? white.withValues(alpha: 0.10)
+                  : black.withValues(alpha: 0.08),
             ),
           ],
         );

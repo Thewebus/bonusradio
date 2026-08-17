@@ -289,14 +289,17 @@ class _HomeState extends State<Home> {
               Scaffold(
                 key: drawerkey,
                 backgroundColor: homeAccueilBg(context),
-                body: Column(
-                  children: [
-                    // Only show appBar for Home page
-                    if (_currentBottomNavIndex == _homeTabIndex) appBar(),
-                    Expanded(
-                      child: _buildPageContent(),
-                    ),
-                  ],
+                body: Container(
+                  decoration: homeAccueilBackgroundDecoration(context),
+                  child: Column(
+                    children: [
+                      // Only show appBar for Home page
+                      if (_currentBottomNavIndex == _homeTabIndex) appBar(),
+                      Expanded(
+                        child: _buildPageContent(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // Persistent sliding full-screen player, expanded via the
@@ -328,10 +331,16 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildDockCard() {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
     return Material(
       elevation: 5,
       shadowColor: black.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: isNight
+            ? const BorderSide(color: white, width: 0.3)
+            : BorderSide.none,
+      ),
       color: homeAccueilBg(context),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -406,7 +415,12 @@ class _HomeState extends State<Home> {
                 child: Icon(
                   icon,
                   size: 22,
-                  color: isSelected ? white : black.withValues(alpha: 0.55),
+                  color: isSelected
+                      ? white
+                      : Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withValues(alpha: 0.55),
                 ),
               ),
               const SizedBox(height: 4),
@@ -415,7 +429,12 @@ class _HomeState extends State<Home> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? black : black.withValues(alpha: 0.65),
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.surface
+                      : Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withValues(alpha: 0.65),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1137,7 +1156,6 @@ class _HomeState extends State<Home> {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 0),
-      color: homeAccueilBg(context),
       child: Column(
         children: [
           AppBar(
@@ -1154,7 +1172,8 @@ class _HomeState extends State<Home> {
                         : Brightness.dark),
             titleSpacing: 10,
             leading: IconButton(
-              icon: const Icon(Icons.settings, color: black),
+              icon: Icon(Icons.settings,
+                  color: Theme.of(context).colorScheme.surface),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -1169,7 +1188,7 @@ class _HomeState extends State<Home> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 MyText(
-                  color: black,
+                  color: Theme.of(context).colorScheme.surface,
                   multilanguage: true,
                   text: "discover",
                   textalign: TextAlign.center,
@@ -1197,9 +1216,9 @@ class _HomeState extends State<Home> {
                       );
                     }
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.notifications_outlined,
-                    color: black,
+                    color: Theme.of(context).colorScheme.surface,
                     size: 30,
                   ),
                 ),
@@ -1288,7 +1307,7 @@ class _HomeState extends State<Home> {
                 hintStyle: Utils.googleFontStyle(
                     1, 16, FontStyle.normal, white, FontWeight.w400),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(
                     width: 0,
                     style: BorderStyle.none,
@@ -1901,14 +1920,12 @@ class _HomeState extends State<Home> {
                                               // Bouton "Ecouter" / "Arrêter" - reflète l'état de lecture
                                               Flexible(
                                                 child: StreamBuilder<bool>(
-                                                  stream: audioPlayer
-                                                      .playingStream,
-                                                  builder:
-                                                      (context, snapshot) {
+                                                  stream:
+                                                      audioPlayer.playingStream,
+                                                  builder: (context, snapshot) {
                                                     final isPlaying =
                                                         snapshot.data ??
-                                                            audioPlayer
-                                                                .playing;
+                                                            audioPlayer.playing;
                                                     return InkWell(
                                                       focusColor: transparent,
                                                       splashColor: transparent,
@@ -1916,8 +1933,8 @@ class _HomeState extends State<Home> {
                                                       highlightColor:
                                                           transparent,
                                                       borderRadius:
-                                                          BorderRadius
-                                                              .circular(20),
+                                                          BorderRadius.circular(
+                                                              20),
                                                       onTap: () {
                                                         if (isPlaying) {
                                                           audioPlayer.pause();
@@ -1990,8 +2007,9 @@ class _HomeState extends State<Home> {
                                                         }
                                                       },
                                                       child: Container(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
                                                           horizontal: 12,
                                                           vertical: 8,
                                                         ),
@@ -3063,7 +3081,8 @@ class _HomeState extends State<Home> {
                               Container(
                                 padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
                                 child: MyText(
-                                    color: black,
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
                                     text: sectionList?[sectionindex]
                                             .data?[index]
                                             .name
@@ -3771,7 +3790,8 @@ class _HomeState extends State<Home> {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height * 0.28,
             decoration: BoxDecoration(
-                color: white, borderRadius: BorderRadius.circular(20)),
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(8)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -3785,10 +3805,10 @@ class _HomeState extends State<Home> {
                 ),
                 const SizedBox(height: 15),
                 MyText(
-                  color: black,
-                  text: "areyousurewanttoexit",
+                  color: Theme.of(context).colorScheme.surface,
+                  text: "Souhaitez-vous quitter ?",
                   maxline: 1,
-                  multilanguage: true,
+                  multilanguage: false,
                   fontwaight: FontWeight.w500,
                   fontsize: Dimens.textTitle,
                   overflow: TextOverflow.ellipsis,
@@ -3813,10 +3833,10 @@ class _HomeState extends State<Home> {
                         height: 40,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [
-                                colorPrimary,
-                                colorPrimary,
+                                homeSearchBarBg(context),
+                                homeSearchBarBg(context),
                               ],
                               end: Alignment.bottomLeft,
                               begin: Alignment.bottomRight,
@@ -3824,8 +3844,8 @@ class _HomeState extends State<Home> {
                             borderRadius: BorderRadius.circular(50)),
                         child: MyText(
                           color: white,
-                          text: "done",
-                          multilanguage: true,
+                          text: "Quitter",
+                          multilanguage: false,
                           maxline: 1,
                           fontwaight: FontWeight.w500,
                           fontsize: Dimens.textMedium,
@@ -3848,10 +3868,10 @@ class _HomeState extends State<Home> {
                         height: 40,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [
-                                colorPrimary,
-                                colorPrimary,
+                                homeSearchBarBg(context),
+                                homeSearchBarBg(context),
                               ],
                               end: Alignment.bottomLeft,
                               begin: Alignment.bottomRight,
@@ -3859,8 +3879,8 @@ class _HomeState extends State<Home> {
                             borderRadius: BorderRadius.circular(50)),
                         child: MyText(
                           color: white,
-                          text: "cancel",
-                          multilanguage: true,
+                          text: "Rester",
+                          multilanguage: false,
                           maxline: 1,
                           fontwaight: FontWeight.w500,
                           fontsize: Dimens.textMedium,
