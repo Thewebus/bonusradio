@@ -1821,8 +1821,18 @@ class _HomeState extends State<Home> {
                                         padding: const EdgeInsets.fromLTRB(
                                             5, 1, 5, 1),
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [colorAccent, colorPrimary],
+                                          gradient: LinearGradient(
+                                            colors:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? const [
+                                                        colorAccent,
+                                                        colorPrimary
+                                                      ]
+                                                    : [
+                                                        colorPrimary,
+                                                        homeSearchBarBg(context)
+                                                      ],
                                             end: Alignment.bottomLeft,
                                             begin: Alignment.bottomRight,
                                           ),
@@ -2016,11 +2026,21 @@ class _HomeState extends State<Home> {
                                                         decoration:
                                                             BoxDecoration(
                                                           gradient:
-                                                              const LinearGradient(
-                                                            colors: [
-                                                              colorAccent,
-                                                              colorPrimary
-                                                            ],
+                                                              LinearGradient(
+                                                            colors: Theme.of(
+                                                                            context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
+                                                                ? const [
+                                                                    colorAccent,
+                                                                    colorPrimary
+                                                                  ]
+                                                                : [
+                                                                    colorPrimary,
+                                                                    homeSearchBarBg(
+                                                                        context)
+                                                                  ],
                                                             begin: Alignment
                                                                 .topLeft,
                                                             end: Alignment
@@ -2099,12 +2119,20 @@ class _HomeState extends State<Home> {
                                                       vertical: 8,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      gradient:
-                                                          const LinearGradient(
-                                                        colors: [
-                                                          colorAccent,
-                                                          colorPrimary
-                                                        ],
+                                                      gradient: LinearGradient(
+                                                        colors: Theme.of(
+                                                                        context)
+                                                                    .brightness ==
+                                                                Brightness.dark
+                                                            ? const [
+                                                                colorAccent,
+                                                                colorPrimary
+                                                              ]
+                                                            : [
+                                                                colorPrimary,
+                                                                homeSearchBarBg(
+                                                                    context)
+                                                              ],
                                                         begin:
                                                             Alignment.topLeft,
                                                         end: Alignment
