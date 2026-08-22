@@ -76,29 +76,34 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).whenComplete(
-    () => runApp(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => GeneralProvider()),
-          ChangeNotifierProvider(create: (_) => LanguageProvider()),
-          ChangeNotifierProvider(create: (_) => HomeProvider()),
-          ChangeNotifierProvider(create: (_) => ProfileProvider()),
-          ChangeNotifierProvider(create: (_) => NotificationProvider()),
-          ChangeNotifierProvider(create: (_) => UpdateProfileProvider()),
-          ChangeNotifierProvider(create: (_) => SearchProvider()),
-          ChangeNotifierProvider(create: (_) => RadioByIdProvider()),
-          ChangeNotifierProvider(create: (_) => AddFavouriteProvider()),
-          ChangeNotifierProvider(create: (_) => ViewAllProvider()),
-          ChangeNotifierProvider(create: (_) => PaymentProvider()),
-          ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
-          ChangeNotifierProvider(create: (_) => SubHistoryProvider()),
-          ChangeNotifierProvider(create: (_) => PodcatsProvider()),
-          ChangeNotifierProvider(create: (_) => LiveEventProvider()),
-          ChangeNotifierProvider(create: (_) => MusicDetailProvider()),
-          ChangeNotifierProvider(create: (_) => PodcatViewAllProvider()),
-          ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ],
-        child: const MyApp(),
+    // Native splash logo stays on screen until Flutter draws its first
+    // frame — on fast phones that happens almost instantly, so the logo
+    // barely shows. This short extra wait keeps it visible a bit longer.
+    () => Future.delayed(const Duration(milliseconds: 800)).then(
+      (_) => runApp(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => GeneralProvider()),
+            ChangeNotifierProvider(create: (_) => LanguageProvider()),
+            ChangeNotifierProvider(create: (_) => HomeProvider()),
+            ChangeNotifierProvider(create: (_) => ProfileProvider()),
+            ChangeNotifierProvider(create: (_) => NotificationProvider()),
+            ChangeNotifierProvider(create: (_) => UpdateProfileProvider()),
+            ChangeNotifierProvider(create: (_) => SearchProvider()),
+            ChangeNotifierProvider(create: (_) => RadioByIdProvider()),
+            ChangeNotifierProvider(create: (_) => AddFavouriteProvider()),
+            ChangeNotifierProvider(create: (_) => ViewAllProvider()),
+            ChangeNotifierProvider(create: (_) => PaymentProvider()),
+            ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+            ChangeNotifierProvider(create: (_) => SubHistoryProvider()),
+            ChangeNotifierProvider(create: (_) => PodcatsProvider()),
+            ChangeNotifierProvider(create: (_) => LiveEventProvider()),
+            ChangeNotifierProvider(create: (_) => MusicDetailProvider()),
+            ChangeNotifierProvider(create: (_) => PodcatViewAllProvider()),
+            ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ],
+          child: const MyApp(),
+        ),
       ),
     ),
   );
@@ -117,7 +122,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    if (!kIsWeb) Utils.enableScreenCapture();
+    // if (!kIsWeb) Utils.enableScreenCapture();
     if (!kIsWeb) _getPackage();
     musicManager = MusicManager(context);
     super.initState();
