@@ -483,16 +483,23 @@ class _MusicDetailsState extends State<MusicDetails>
           const elementOpacity = 1.0;
           const progressIndicatorHeight = 2.0;
 
-          return Scaffold(
-            // widget.minHeight == 0 marks the persistent Home overlay,
-            // which sits behind the always-on-top floating dock — shift the
-            // content up so the dock doesn't cover the bottom controls,
-            // while the background stays full-bleed behind it. Other
-            // callers (ViewAll/Search/RadioById/PodcastViewAll) have no
-            // such dock and keep their current full-bleed layout.
-            body: buildMusicPanel(
-                height, elementOpacity, progressIndicatorHeight,
-                bottomContentClearance: widget.minHeight == 0 ? 150 : 0),
+          return GestureDetector(
+            // Absorbs generic taps so they don't fall through to the
+            // Miniplayer package's own GestureDetector, which otherwise
+            // animates a MIN/MAX toggle on any tap inside the panel.
+            behavior: HitTestBehavior.opaque,
+            onTap: () {},
+            child: Scaffold(
+              // widget.minHeight == 0 marks the persistent Home overlay,
+              // which sits behind the always-on-top floating dock — shift the
+              // content up so the dock doesn't cover the bottom controls,
+              // while the background stays full-bleed behind it. Other
+              // callers (ViewAll/Search/RadioById/PodcastViewAll) have no
+              // such dock and keep their current full-bleed layout.
+              body: buildMusicPanel(
+                  height, elementOpacity, progressIndicatorHeight,
+                  bottomContentClearance: widget.minHeight == 0 ? 150 : 0),
+            ),
           );
         }
 

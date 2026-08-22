@@ -92,6 +92,7 @@ class CommonPageState extends State<CommonPage> {
             color: white,
             fontwaight: FontWeight.w600,
           ),
+          actions: settingsAppBarAction(context),
         ),
         body: setWebView(),
       );

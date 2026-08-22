@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/dimens.dart';
+import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mytext.dart';
 
@@ -81,6 +82,7 @@ class MyAppbar extends StatelessWidget {
                     fontstyle: FontStyle.normal,
                   ),
                   centerTitle: true,
+                  actions: settingsAppBarAction(context),
                 ),
               ],
             ),
@@ -137,6 +139,7 @@ class MyAppbar extends StatelessWidget {
                     fontstyle: FontStyle.normal,
                   ),
                   centerTitle: true,
+                  actions: settingsAppBarAction(context),
                 ),
               ],
             ),

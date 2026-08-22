@@ -101,6 +101,7 @@ class _SearchState extends State<Search> {
                             overflow: TextOverflow.ellipsis,
                             fontstyle: FontStyle.normal),
                         centerTitle: true,
+                        actions: settingsAppBarAction(context),
                       ),
                       const SizedBox(height: 5),
                       Container(

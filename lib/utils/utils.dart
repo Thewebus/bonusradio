@@ -13,6 +13,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/login.dart';
+import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/players/player_video.dart';
 import 'package:myBonus/players/player_vimeo.dart';
@@ -35,6 +36,20 @@ void printLog(String message) {
     return print(message);
   }
 }
+
+// Settings shortcut shown at the far right of the title on every screen's
+// header (the full-screen player has its own header and doesn't get one).
+List<Widget> settingsAppBarAction(BuildContext context) => [
+      IconButton(
+        icon: const Icon(Icons.settings, color: white),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Settings()),
+          );
+        },
+      ),
+    ];
 
 class Utils {
   ProgressDialog? prDialog;
@@ -656,6 +671,7 @@ class Utils {
         textalign: TextAlign.center,
         color: white,
       ),
+      actions: settingsAppBarAction(context),
     );
   }
 
@@ -678,6 +694,7 @@ class Utils {
         textalign: TextAlign.center,
         color: white,
       ),
+      actions: settingsAppBarAction(context),
     );
   }
 

@@ -73,8 +73,8 @@ class ProfileState extends State<Profile> {
                   children: [
                     MyAppbar(
                       isSimpleappbar: 2,
-                      title: "profile",
-                      isMultiLang: true,
+                      title: "Compte",
+                      isMultiLang: false,
                       useAccueilTheme: true,
                       onBack: () {
                         widget.onBack?.call();
