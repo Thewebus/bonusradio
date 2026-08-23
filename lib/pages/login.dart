@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/countries.dart' as intl_countries;
+import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/home.dart';
@@ -201,8 +203,27 @@ class _LoginState extends State<Login> {
           showCountryFlag: true,
           showDropdownIcon: true,
           initialCountryCode: Constant.initialCountryCode,
-          dropdownTextStyle: Utils.googleFontStyle(
-              1, 16, FontStyle.normal, black, FontWeight.w600),
+          // Only Côte d'Ivoire numbers are allowed for now.
+          countries: intl_countries.countries
+              .where((c) => c.code == 'CI')
+              .toList(),
+          dropdownTextStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
+              Theme.of(context).colorScheme.surface, FontWeight.w600),
+          pickerDialogStyle: PickerDialogStyle(
+            backgroundColor: Theme.of(context).cardColor,
+            countryNameStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.surface),
+            countryCodeStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.surface),
+            searchFieldCursorColor: Theme.of(context).colorScheme.surface,
+            searchFieldInputDecoration: const InputDecoration(
+              suffixIcon: Icon(Icons.search),
+              labelText: "Rechercher un pays",
+            ),
+          ),
+          invalidNumberMessage: "Numéro de téléphone invalide",
           keyboardType: TextInputType.number,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
@@ -241,6 +262,11 @@ class _LoginState extends State<Login> {
     );
   }
 
+  List<Color> _loginButtonGradientColors(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const [colorAccent, colorPrimary]
+          : [colorPrimary, homeSearchBarBg(context)];
+
   Consumer<GeneralProvider> loginbutton() {
     return Consumer<GeneralProvider>(
         builder: (context, generalprovider, child) {
@@ -250,8 +276,8 @@ class _LoginState extends State<Login> {
           height: MediaQuery.of(context).size.height * 0.07,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [colorAccent, colorPrimary],
+            gradient: LinearGradient(
+              colors: _loginButtonGradientColors(context),
               end: Alignment.topRight,
               begin: Alignment.topLeft,
             ),
@@ -290,8 +316,8 @@ class _LoginState extends State<Login> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: const LinearGradient(
-                colors: [colorAccent, colorPrimary],
+              gradient: LinearGradient(
+                colors: _loginButtonGradientColors(context),
                 end: Alignment.topRight,
                 begin: Alignment.topLeft,
               ),

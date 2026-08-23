@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/countries.dart' as intl_countries;
+import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/editprofile.dart';
 import 'package:myBonus/provider/profileprovider.dart';
@@ -73,8 +75,8 @@ class ProfileState extends State<Profile> {
                   children: [
                     MyAppbar(
                       isSimpleappbar: 2,
-                      title: "Compte",
-                      isMultiLang: false,
+                      title: "profile",
+                      isMultiLang: true,
                       useAccueilTheme: true,
                       onBack: () {
                         widget.onBack?.call();
@@ -280,8 +282,27 @@ class ProfileState extends State<Profile> {
                   ? profileProvider.profileModel.result![0].countryName
                       .toString()
                   : Constant.initialCountryCode,
-          dropdownTextStyle: Utils.googleFontStyle(
-              1, 16, FontStyle.normal, black, FontWeight.w600),
+          // Only Côte d'Ivoire numbers are allowed for now.
+          countries: intl_countries.countries
+              .where((c) => c.code == 'CI')
+              .toList(),
+          dropdownTextStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
+              Theme.of(context).colorScheme.surface, FontWeight.w600),
+          pickerDialogStyle: PickerDialogStyle(
+            backgroundColor: Theme.of(context).cardColor,
+            countryNameStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.surface),
+            countryCodeStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.surface),
+            searchFieldCursorColor: Theme.of(context).colorScheme.surface,
+            searchFieldInputDecoration: const InputDecoration(
+              suffixIcon: Icon(Icons.search),
+              labelText: "Rechercher un pays",
+            ),
+          ),
+          invalidNumberMessage: "Numéro de téléphone invalide",
           keyboardType: TextInputType.number,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(

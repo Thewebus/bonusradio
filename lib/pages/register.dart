@@ -1,6 +1,8 @@
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/countries.dart' as intl_countries;
+import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/normallogin.dart';
 import 'package:myBonus/utils/constant.dart';
@@ -238,12 +240,31 @@ class RegisterState extends State<Register> {
           showCountryFlag: true,
           showDropdownIcon: true,
           initialCountryCode: Constant.initialCountryCode,
+          // Only Côte d'Ivoire numbers are allowed for now.
+          countries: intl_countries.countries
+              .where((c) => c.code == 'CI')
+              .toList(),
           dropdownTextStyle: GoogleFonts.inter(
               fontSize: Dimens.textMedium,
               fontStyle: FontStyle.normal,
               letterSpacing: 1.0,
               color: Theme.of(context).colorScheme.surface,
               fontWeight: FontWeight.w600),
+          pickerDialogStyle: PickerDialogStyle(
+            backgroundColor: Theme.of(context).cardColor,
+            countryNameStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.surface),
+            countryCodeStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.surface),
+            searchFieldCursorColor: Theme.of(context).colorScheme.surface,
+            searchFieldInputDecoration: const InputDecoration(
+              suffixIcon: Icon(Icons.search),
+              labelText: "Rechercher un pays",
+            ),
+          ),
+          invalidNumberMessage: "Numéro de téléphone invalide",
           decoration: InputDecoration(
             prefixIcon: Icon(icon),
             suffixIcon: isPassword == true
@@ -382,6 +403,11 @@ class RegisterState extends State<Register> {
     );
   }
 
+  List<Color> _loginButtonGradientColors(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const [colorAccent, colorPrimary]
+          : [colorPrimary, homeSearchBarBg(context)];
+
   Consumer<GeneralProvider> loginButton() {
     return Consumer<GeneralProvider>(
         builder: (context, generalprovider, child) {
@@ -391,8 +417,8 @@ class RegisterState extends State<Register> {
           height: MediaQuery.of(context).size.height * 0.07,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [colorAccent, colorPrimary],
+            gradient: LinearGradient(
+              colors: _loginButtonGradientColors(context),
               end: Alignment.topRight,
               begin: Alignment.topLeft,
             ),
@@ -467,8 +493,8 @@ class RegisterState extends State<Register> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: const LinearGradient(
-                colors: [colorAccent, colorPrimary],
+              gradient: LinearGradient(
+                colors: _loginButtonGradientColors(context),
                 end: Alignment.topRight,
                 begin: Alignment.topLeft,
               ),

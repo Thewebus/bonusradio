@@ -337,9 +337,10 @@ class _HomeState extends State<Home> {
       shadowColor: black.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: isNight
-            ? const BorderSide(color: white, width: 0.3)
-            : BorderSide.none,
+        side: BorderSide(
+          color: isNight ? white : lightgray,
+          width: 0.3,
+        ),
       ),
       color: homeAccueilBg(context),
       clipBehavior: Clip.antiAlias,
@@ -368,8 +369,8 @@ class _HomeState extends State<Home> {
                 _buildBottomNavItem(Icons.radio, 'Radios', radioTabIndex),
                 _buildBottomNavItem(
                     Icons.podcasts_outlined, 'Podcasts', _podcastTabIndex),
-                _buildBottomNavItem(
-                    Icons.person_outline, 'Compte', _profileTabIndex),
+                _buildBottomNavItem(Icons.person_outline,
+                    Locales.string(context, "profile"), _profileTabIndex),
               ],
             ),
           ),
@@ -389,6 +390,13 @@ class _HomeState extends State<Home> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
+          // Compte requires being logged in — otherwise the profile screen
+          // has nothing to show (empty header, empty fields).
+          if (index == _profileTabIndex && Constant.userID == null) {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const Login()));
+            return;
+          }
           // Collapse the sliding full-screen player when leaving the Radio
           // tab, so it doesn't keep covering whichever tab is now shown.
           if (index != radioTabIndex) {

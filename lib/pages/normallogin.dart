@@ -194,6 +194,11 @@ class _NormalLoginState extends State<NormalLogin> {
     );
   }
 
+  List<Color> _loginButtonGradientColors(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const [colorAccent, colorPrimary]
+          : [colorPrimary, homeSearchBarBg(context)];
+
   Consumer<GeneralProvider> loginButton() {
     return Consumer<GeneralProvider>(
         builder: (context, generalprovider, child) {
@@ -203,8 +208,8 @@ class _NormalLoginState extends State<NormalLogin> {
           height: MediaQuery.of(context).size.height * 0.07,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [colorAccent, colorPrimary],
+            gradient: LinearGradient(
+              colors: _loginButtonGradientColors(context),
               end: Alignment.topRight,
               begin: Alignment.topLeft,
             ),
@@ -245,8 +250,8 @@ class _NormalLoginState extends State<NormalLogin> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: const LinearGradient(
-                colors: [colorAccent, colorPrimary],
+              gradient: LinearGradient(
+                colors: _loginButtonGradientColors(context),
                 end: Alignment.topRight,
                 begin: Alignment.topLeft,
               ),

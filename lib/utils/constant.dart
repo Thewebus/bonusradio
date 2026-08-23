@@ -42,7 +42,7 @@ class Constant {
   static String interstialAdType = "interstialAd";
 
   /* Show Ad By Type */
-  static String initialCountryCode = "IN";
+  static String initialCountryCode = "CI";
   static String otpLoginType = "1";
   static String googleLoginType = "2";
   static String appleLoginType = "3";
