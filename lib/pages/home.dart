@@ -238,11 +238,14 @@ class _HomeState extends State<Home> {
 
   void _autoPlayFirstRadio() {
     try {
-      if (homeProvider.bannerModel.result != null &&
-          (homeProvider.bannerModel.result?.length ?? 0) > 0) {
-        final firstRadio = homeProvider.bannerModel.result?[0];
-        if (firstRadio != null && firstRadio.type == 1) {
-          // Type 1 = Radio
+      final banner = homeProvider.bannerModel.result;
+      if (banner != null && banner.isNotEmpty) {
+        // The banner mixes radios (type 1) and other content (podcasts,
+        // etc.) — its order isn't guaranteed, so find the first actual
+        // radio rather than assuming it's at index 0.
+        final radioIndex = banner.indexWhere((item) => item.type == 1);
+        if (radioIndex != -1) {
+          final firstRadio = banner[radioIndex];
           printLog("Auto playing first radio: ${firstRadio.name}");
           Utils.playAudio(
             context,
@@ -257,8 +260,8 @@ class _HomeState extends State<Home> {
             firstRadio.name.toString(),
             firstRadio.id.toString(),
             "",
-            0,
-            homeProvider.bannerModel.result?.toList() ?? [],
+            radioIndex,
+            banner.toList(),
           );
         }
       }
@@ -3675,33 +3678,34 @@ class _HomeState extends State<Home> {
                                 "",
                             fit: BoxFit.cover),
                       ),
-                      Positioned.fill(
-                        top: 5,
-                        left: 5,
-                        right: 5,
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Container(
-                            width: 70,
-                            height: 25,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(50),
-                              color: colorPrimary,
-                            ),
-                            child: MyText(
-                                color: white,
-                                multilanguage: true,
-                                text: "live",
-                                textalign: TextAlign.left,
-                                fontsize: Dimens.textSmall,
-                                maxline: 2,
-                                fontwaight: FontWeight.w600,
-                                overflow: TextOverflow.ellipsis,
-                                fontstyle: FontStyle.normal),
-                          ),
-                        ),
-                      )
+                      // "EN DIRECT" badge — disabled per request.
+                      // Positioned.fill(
+                      //   top: 5,
+                      //   left: 5,
+                      //   right: 5,
+                      //   child: Align(
+                      //     alignment: Alignment.topLeft,
+                      //     child: Container(
+                      //       width: 70,
+                      //       height: 25,
+                      //       alignment: Alignment.center,
+                      //       decoration: BoxDecoration(
+                      //         borderRadius: BorderRadius.circular(50),
+                      //         color: colorPrimary,
+                      //       ),
+                      //       child: MyText(
+                      //           color: white,
+                      //           multilanguage: true,
+                      //           text: "live",
+                      //           textalign: TextAlign.left,
+                      //           fontsize: Dimens.textSmall,
+                      //           maxline: 2,
+                      //           fontwaight: FontWeight.w600,
+                      //           overflow: TextOverflow.ellipsis,
+                      //           fontstyle: FontStyle.normal),
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                   const SizedBox(height: 8),

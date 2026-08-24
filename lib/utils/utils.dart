@@ -914,6 +914,13 @@ class Utils {
     }
   }
 
+  // Catches both full youtube.com links and shortened youtu.be links (the
+  // form most people get from the share button), case-insensitively.
+  static bool isYoutubeUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.contains('youtube') || lower.contains('youtu.be');
+  }
+
   static void openPlayer({
     required BuildContext context,
     required String videoId,
@@ -937,7 +944,7 @@ class Utils {
           ),
         );
       } else if (vUploadType == "external") {
-        if (videoUrl.contains('youtube')) {
+        if (isYoutubeUrl(videoUrl)) {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -972,15 +979,11 @@ class Utils {
     } else {
       /* Better, Youtube & Vimeo Players */
       if (vUploadType == "youtube") {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return PlayerYoutube(videoId, videoUrl, vUploadType, videoThumb,
-                  stoptime, iscontinueWatching);
-            },
-          ),
-        );
+        // The in-app WebView-based YouTube player fails to load playback on
+        // both iOS (WKWebView Referer bug, WebKit #206521) and Android.
+        // Open the video in the native YouTube app / browser instead, where
+        // playback always works.
+        redirectToUrl(videoUrl);
       } else if (vUploadType == "vimeo") {
         Navigator.push(
           context,
@@ -991,16 +994,8 @@ class Utils {
           ),
         );
       } else if (vUploadType == "external") {
-        if (videoUrl.contains('youtube')) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) {
-                return PlayerYoutube(videoId, videoUrl, vUploadType, videoThumb,
-                    stoptime, iscontinueWatching);
-              },
-            ),
-          );
+        if (isYoutubeUrl(videoUrl)) {
+          redirectToUrl(videoUrl);
         } else {
           Navigator.push(
             context,

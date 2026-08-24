@@ -785,33 +785,34 @@ class _ViewAllState extends State<ViewAll> {
                                     "",
                                 fit: BoxFit.cover),
                           ),
-                          Positioned.fill(
-                            top: 5,
-                            left: 5,
-                            right: 5,
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Container(
-                                width: 70,
-                                height: 25,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50),
-                                  color: colorPrimary,
-                                ),
-                                child: MyText(
-                                    color: white,
-                                    multilanguage: true,
-                                    text: "live",
-                                    textalign: TextAlign.left,
-                                    fontsize: Dimens.textSmall,
-                                    maxline: 2,
-                                    fontwaight: FontWeight.w600,
-                                    overflow: TextOverflow.ellipsis,
-                                    fontstyle: FontStyle.normal),
-                              ),
-                            ),
-                          )
+                          // "EN DIRECT" badge — disabled per request.
+                          // Positioned.fill(
+                          //   top: 5,
+                          //   left: 5,
+                          //   right: 5,
+                          //   child: Align(
+                          //     alignment: Alignment.topLeft,
+                          //     child: Container(
+                          //       width: 70,
+                          //       height: 25,
+                          //       alignment: Alignment.center,
+                          //       decoration: BoxDecoration(
+                          //         borderRadius: BorderRadius.circular(50),
+                          //         color: colorPrimary,
+                          //       ),
+                          //       child: MyText(
+                          //           color: white,
+                          //           multilanguage: true,
+                          //           text: "live",
+                          //           textalign: TextAlign.left,
+                          //           fontsize: Dimens.textSmall,
+                          //           maxline: 2,
+                          //           fontwaight: FontWeight.w600,
+                          //           overflow: TextOverflow.ellipsis,
+                          //           fontstyle: FontStyle.normal),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                       const SizedBox(height: 8),
