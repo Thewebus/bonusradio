@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_locales/flutter_locales.dart';
-import 'package:intl_phone_field/intl_phone_field.dart';
-import 'package:intl_phone_field/countries.dart' as intl_countries;
-import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/editprofile.dart';
 import 'package:myBonus/pages/settings.dart';
@@ -11,15 +7,13 @@ import 'package:myBonus/provider/subscriptionprovider.dart';
 import 'package:myBonus/subscription/subscription.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
-import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/abidjan_stat_pill.dart';
-import 'package:myBonus/widget/myappbar.dart';
-import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/liveneon_header.dart';
+import 'package:myBonus/widget/liveneon_stat_pill.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
-import 'package:myBonus/widget/mytext.dart';
 
 class Profile extends StatefulWidget {
   final VoidCallback? onBack;
@@ -32,12 +26,8 @@ class Profile extends StatefulWidget {
 
 class ProfileState extends State<Profile> {
   SharedPref sharedpre = SharedPref();
-  final usernameController = TextEditingController();
-  final emailController = TextEditingController();
-  final numberController = TextEditingController();
   late ProfileProvider profileProvider;
   late SubscriptionProvider subscriptionProvider;
-  String mobilenumber = "", countrycode = "", countryname = "";
 
   @override
   void initState() {
@@ -51,86 +41,315 @@ class ProfileState extends State<Profile> {
 
   Future<void> getApi() async {
     await profileProvider.getProfile(context);
-
-    if (profileProvider.profileModel.result != null &&
-        profileProvider.profileModel.result!.isNotEmpty) {
-      usernameController.text =
-          profileProvider.profileModel.result?[0].fullName.toString() ?? "";
-      emailController.text =
-          profileProvider.profileModel.result?[0].email.toString() ?? "";
-      numberController.text =
-          profileProvider.profileModel.result?[0].mobileNumber.toString() ?? "";
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
-    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+    return isNight ? _buildLiveNeonScaffold() : _buildAbidjanScaffold();
   }
 
-  // Night mode — unchanged from before the ABIDJAN redesign.
-  Widget _buildNightScaffold() {
+  // LIVE NEON (night theme): same structure as ABIDJAN (flat header +
+  // settings shortcut, profile card, stat row, subscription promo, list
+  // card) recolored for the neon palette. Every handler (getApi, EditProfile
+  // navigation, favourite/download placeholders, Réglages navigation) is
+  // shared with day.
+  Widget _buildLiveNeonScaffold() {
     return Scaffold(
-      backgroundColor: homeAccueilBg(context),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: homeAccueilBackgroundDecoration(context),
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            padding: const EdgeInsets.only(bottom: 160),
-            child: Column(
-              children: [
-                // AppBar
-                Stack(
-                  children: [
-                    MyAppbar(
-                      isSimpleappbar: 2,
-                      title: "profile",
-                      isMultiLang: true,
-                      useAccueilTheme: true,
-                      onBack: () {
-                        widget.onBack?.call();
-                      },
-                      icon: "back,png",
-                    ),
-                    // Profile Image
-                    Consumer<ProfileProvider>(
-                        builder: (context, profileprovider, child) {
+      backgroundColor: liveNeonBg,
+      body: SafeArea(
+        child: Container(
+          decoration: liveNeonBackgroundDecoration(),
+          child: Column(
+            children: [
+              LiveNeonHeader(
+                title: "profile",
+                actions: [
+                  LiveNeonCircleIconButton(
+                    icon: Icons.settings,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const Settings()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                  child: Consumer<ProfileProvider>(
+                    builder: (context, profileprovider, child) {
                       if (profileprovider.loading) {
                         return Utils.pageLoader();
-                      } else if (profileprovider.profileModel.result != null &&
-                          profileprovider.profileModel.result!.isNotEmpty) {
-                        return Positioned.fill(
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(100),
-                              child: MyNetworkImage(
-                                  fit: BoxFit.cover,
-                                  imgWidth: 110,
-                                  imgHeight: 110,
-                                  imageUrl: profileprovider
-                                          .profileModel.result?[0].image
-                                          .toString() ??
-                                      ""),
-                            ),
-                          ),
-                        );
-                      } else {
-                        return const SizedBox.shrink();
                       }
-                    }),
-                  ],
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLiveNeonProfileCard(profileprovider),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: liveNeonCardBg,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: liveNeonBorder),
+                            ),
+                            child: const LiveNeonStatRow(stats: [
+                              LiveNeonStat(value: "--", label: "Écoutes"),
+                              LiveNeonStat(value: "--", label: "Favoris"),
+                              LiveNeonStat(value: "--", label: "Hors ligne"),
+                            ]),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildLiveNeonSubscriptionPromo(),
+                          const SizedBox(height: 20),
+                          _buildLiveNeonListCard(),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-                // Body
-                profilebody(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonProfileCard(ProfileProvider profileprovider) {
+    final hasProfile = profileprovider.profileModel.result != null &&
+        profileprovider.profileModel.result!.isNotEmpty;
+    final item = hasProfile ? profileprovider.profileModel.result![0] : null;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: liveNeonCardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: liveNeonBorder),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(35),
+            child: MyNetworkImage(
+              fit: BoxFit.cover,
+              imgWidth: 70,
+              imgHeight: 70,
+              imageUrl: item?.image?.toString() ?? "",
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item?.fullName?.toString() ?? "",
+                  style: const TextStyle(
+                    color: white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item?.mobileNumber?.toString() ?? "",
+                  style: const TextStyle(
+                    color: liveNeonTextSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
+          ),
+          InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return const EditProfile();
+                  },
+                ),
+              );
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: liveNeonIconChipBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.edit, size: 16, color: white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonSubscriptionPromo() {
+    return Consumer<SubscriptionProvider>(
+      builder: (context, subscriptionprovider, child) {
+        final packages = subscriptionprovider.subscriptionModel.result ?? [];
+        String? price;
+        String? time;
+        double? bestValue;
+        for (final p in packages) {
+          final parsed = double.tryParse(p.price?.toString() ?? "");
+          if (parsed == null) continue;
+          if (bestValue == null || parsed < bestValue) {
+            bestValue = parsed;
+            price = p.price?.toString();
+            time = p.time?.toString();
+          }
+        }
+        if (price == null) return const SizedBox.shrink();
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const Subscription(openFrom: ''),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: liveNeonGradient),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Passez à l'offre premium",
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${Constant.currencySymbol}$price${time != null && time.isNotEmpty ? ' / $time' : ''}",
+                        style: TextStyle(
+                          color: white.withValues(alpha: 0.9),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, color: white, size: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLiveNeonListCard() {
+    Widget row({
+      required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: liveNeonIconChipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: white),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right,
+                  color: liveNeonTextSecondary, size: 20),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget divider() => Container(
+          height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          color: liveNeonBorder,
+        );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: liveNeonCardBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: liveNeonBorder),
+      ),
+      child: Column(
+        children: [
+          row(
+            icon: Icons.favorite_border,
+            label: "Mes favoris",
+            // Visual-only — there is no favourites-listing screen yet.
+            onTap: () => Utils.showToast("Bientôt disponible"),
+          ),
+          divider(),
+          row(
+            icon: Icons.download_outlined,
+            label: "Téléchargements",
+            // Visual-only — there is no offline-downloads feature yet.
+            onTap: () => Utils.showToast("Bientôt disponible"),
+          ),
+          divider(),
+          row(
+            icon: Icons.settings_outlined,
+            label: "Réglages",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Settings(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -429,238 +648,4 @@ class ProfileState extends State<Profile> {
     );
   }
 
-  Widget profilebody() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(height: MediaQuery.of(context).size.height * 0.060),
-          // Enter Username
-          profileTextFields(
-              Locales.string(context, "username"),
-              "ic_user.png",
-              usernameController,
-              TextInputType.text,
-              TextInputAction.next,
-              false),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-          // Enter Email
-          profileTextFields(Locales.string(context, "email"), "ic_email.png",
-              emailController, TextInputType.text, TextInputAction.next, false),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-          // Enter MobileNumber
-          profileTextFields(
-              Locales.string(context, "mobile"),
-              "ic_mobile.png",
-              numberController,
-              TextInputType.number,
-              TextInputAction.done,
-              true),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.20),
-          // EditButton
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return const EditProfile();
-                  },
-                ),
-              );
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.065,
-              width: MediaQuery.of(context).size.width * 0.50,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [colorAccent, colorPrimary],
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                  ),
-                  borderRadius: BorderRadius.circular(50)),
-              child: MyText(
-                color: white,
-                multilanguage: true,
-                text: "edit",
-                fontwaight: FontWeight.w600,
-                fontsize: Dimens.textBig,
-                inter: 1,
-                fontstyle: FontStyle.normal,
-                maxline: 1,
-                overflow: TextOverflow.ellipsis,
-                textalign: TextAlign.center,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-// Username,Email And Number Common TextField
-  Widget profileTextFields(String hinttext, String icon, dynamic controller,
-      dynamic keyboardtype, dynamic textinputAction, bool isMobile) {
-    if (isMobile == false) {
-      return TextFormField(
-        keyboardType: keyboardtype,
-        textInputAction: textinputAction,
-        controller: controller,
-        cursorColor: Theme.of(context).colorScheme.surface,
-        readOnly: true,
-        style: Utils.googleFontStyle(1, 16, FontStyle.normal,
-            Theme.of(context).colorScheme.surface, FontWeight.w500),
-        decoration: InputDecoration(
-          prefixIcon: Container(
-            width: 15,
-            height: 15,
-            alignment: Alignment.center,
-            child: MyImage(
-              width: 20,
-              height: 20,
-              imagePath: icon,
-              color: gray,
-            ),
-          ),
-          filled: true,
-          fillColor: Theme.of(context).secondaryHeaderColor,
-          contentPadding: const EdgeInsets.all(12.0),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(7)),
-            borderSide:
-                BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
-          ),
-          disabledBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(7)),
-            borderSide:
-                BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(7)),
-            borderSide:
-                BorderSide(width: 1, color: lightgray.withValues(alpha: 0.80)),
-          ),
-          border: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide: BorderSide(
-                  width: 1, color: lightgray.withValues(alpha: 0.80))),
-          hintText: hinttext,
-          hintStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
-              Theme.of(context).colorScheme.surface, FontWeight.w500),
-        ),
-      );
-    } else {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          dropdownMenuTheme: DropdownMenuThemeData(
-            menuStyle: MenuStyle(
-              backgroundColor: MaterialStateProperty.all(white),
-              surfaceTintColor: MaterialStateProperty.all(transparent),
-              elevation: MaterialStateProperty.all(8),
-              shape: MaterialStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ),
-        child: IntlPhoneField(
-          disableLengthCheck: true,
-          textAlignVertical: TextAlignVertical.center,
-          autovalidateMode: AutovalidateMode.disabled,
-          controller: numberController,
-          cursorColor: Theme.of(context).colorScheme.surface,
-          style: Utils.googleFontStyle(1, 16, FontStyle.normal,
-              Theme.of(context).colorScheme.surface, FontWeight.w500),
-          showCountryFlag: true,
-          showDropdownIcon: true,
-          initialCountryCode: (profileProvider.profileModel.result != null &&
-                      profileProvider.profileModel.result!.isNotEmpty &&
-                      profileProvider.profileModel.result![0].countryName !=
-                          "") ==
-                  false
-              ? Constant.initialCountryCode
-              : (profileProvider.profileModel.result != null &&
-                      profileProvider.profileModel.result!.isNotEmpty)
-                  ? profileProvider.profileModel.result![0].countryName
-                      .toString()
-                  : Constant.initialCountryCode,
-          // Only Côte d'Ivoire numbers are allowed for now.
-          countries: intl_countries.countries
-              .where((c) => c.code == 'CI')
-              .toList(),
-          dropdownTextStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
-              Theme.of(context).colorScheme.surface, FontWeight.w600),
-          pickerDialogStyle: PickerDialogStyle(
-            backgroundColor: Theme.of(context).cardColor,
-            countryNameStyle: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.surface),
-            countryCodeStyle: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.surface),
-            searchFieldCursorColor: Theme.of(context).colorScheme.surface,
-            searchFieldInputDecoration: const InputDecoration(
-              suffixIcon: Icon(Icons.search),
-              labelText: "Rechercher un pays",
-            ),
-          ),
-          invalidNumberMessage: "Numéro de téléphone invalide",
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            prefixIcon: Container(
-              width: 15,
-              height: 15,
-              alignment: Alignment.center,
-              child: MyImage(
-                width: 23,
-                height: 23,
-                imagePath: icon,
-                color: gray,
-              ),
-            ),
-            filled: true,
-            fillColor: Theme.of(context).secondaryHeaderColor,
-            contentPadding: const EdgeInsets.all(12.0),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide: BorderSide(
-                  width: 1, color: lightgray.withValues(alpha: 0.80)),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide: BorderSide(
-                  width: 1, color: lightgray.withValues(alpha: 0.80)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(7)),
-              borderSide: BorderSide(
-                  width: 1, color: lightgray.withValues(alpha: 0.80)),
-            ),
-            border: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(Radius.circular(7)),
-                borderSide: BorderSide(
-                    width: 1, color: lightgray.withValues(alpha: 0.80))),
-            hintText: hinttext,
-            hintStyle: Utils.googleFontStyle(1, 16, FontStyle.normal,
-                Theme.of(context).colorScheme.surface, FontWeight.w500),
-          ),
-          onChanged: (phone) {
-            mobilenumber = phone.completeNumber;
-            countryname = phone.countryISOCode;
-            countrycode = phone.countryCode;
-          },
-          onCountryChanged: (country) {
-            countryname = country.code.replaceAll('+', '');
-            countrycode = "+${country.dialCode.toString()}";
-          },
-        ),
-      );
-    }
-  }
 }
