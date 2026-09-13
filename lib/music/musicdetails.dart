@@ -602,15 +602,15 @@ class _MusicDetailsState extends State<MusicDetails>
                 ),
                 const SizedBox(height: 24),
                 Container(
-                  width: 176,
-                  height: 176,
+                  width: 118,
+                  height: 118,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
                         color: colorPrimary.withValues(alpha: 0.45),
-                        blurRadius: 50,
-                        spreadRadius: 4,
+                        blurRadius: 33,
+                        spreadRadius: 3,
                       ),
                     ],
                   ),
@@ -623,13 +623,13 @@ class _MusicDetailsState extends State<MusicDetails>
                                 Container(
                               color: abidjanIconChipBg,
                               child: const Icon(Icons.radio,
-                                  color: black, size: 56),
+                                  color: black, size: 38),
                             ),
                           )
                         : Container(
                             color: abidjanIconChipBg,
                             child:
-                                const Icon(Icons.radio, color: black, size: 56),
+                                const Icon(Icons.radio, color: black, size: 38),
                           ),
                   ),
                 ),
@@ -964,15 +964,15 @@ class _MusicDetailsState extends State<MusicDetails>
                 ),
                 const SizedBox(height: 24),
                 Container(
-                  width: 176,
-                  height: 176,
+                  width: 118,
+                  height: 118,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
                         color: liveNeonGradient.first.withValues(alpha: 0.5),
-                        blurRadius: 60,
-                        spreadRadius: 6,
+                        blurRadius: 40,
+                        spreadRadius: 4,
                       ),
                     ],
                   ),
@@ -985,13 +985,13 @@ class _MusicDetailsState extends State<MusicDetails>
                                 Container(
                               color: liveNeonIconChipBg,
                               child: const Icon(Icons.radio,
-                                  color: white, size: 56),
+                                  color: white, size: 38),
                             ),
                           )
                         : Container(
                             color: liveNeonIconChipBg,
                             child:
-                                const Icon(Icons.radio, color: white, size: 56),
+                                const Icon(Icons.radio, color: white, size: 38),
                           ),
                   ),
                 ),

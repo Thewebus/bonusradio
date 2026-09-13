@@ -35,25 +35,10 @@ class _SettingsState extends State<Settings> {
 
   late GeneralProvider generalProvider;
 
-  // ABIDJAN (day theme) "LECTURE" card — visual toggles, cheap to persist.
-  bool _wifiOnly = false;
-  bool _liveAlerts = true;
-
   @override
   void initState() {
     super.initState();
     generalProvider = Provider.of<GeneralProvider>(context, listen: false);
-    _loadPlaybackPrefs();
-  }
-
-  Future<void> _loadPlaybackPrefs() async {
-    final wifiOnly = await sharedpre.readBool("wifi_only") ?? false;
-    final liveAlerts = await sharedpre.readBool("live_alerts") ?? true;
-    if (!mounted) return;
-    setState(() {
-      _wifiOnly = wifiOnly;
-      _liveAlerts = liveAlerts;
-    });
   }
 
   Future<void> _selectThemeMode(
@@ -95,23 +80,19 @@ class _SettingsState extends State<Settings> {
                       const SizedBox(height: 8),
                       _buildLiveNeonCard(children: [
                         _buildLiveNeonToggleRow(
-                          icon: Icons.wifi,
-                          label: "Wi-Fi uniquement",
-                          value: _wifiOnly,
-                          onChanged: (v) async {
-                            setState(() => _wifiOnly = v);
-                            await sharedpre.saveBool("wifi_only", v);
-                          },
+                          icon: Icons.signal_cellular_alt,
+                          label: "Données Mobiles",
+                          value: true,
+                          onChanged: null,
+                          comingSoon: true,
                         ),
                         _liveNeonDivider(),
                         _buildLiveNeonToggleRow(
                           icon: Icons.notifications_active_outlined,
                           label: "Alertes en direct",
-                          value: _liveAlerts,
-                          onChanged: (v) async {
-                            setState(() => _liveAlerts = v);
-                            await sharedpre.saveBool("live_alerts", v);
-                          },
+                          value: true,
+                          onChanged: null,
+                          comingSoon: true,
                         ),
                         _liveNeonDivider(),
                         _buildLiveNeonStaticRow(
@@ -240,30 +221,54 @@ class _SettingsState extends State<Settings> {
     required IconData icon,
     required String label,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
+    bool comingSoon = false,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildLiveNeonIconChip(Icon(icon, size: 18, color: white)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: white,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+          Opacity(
+            opacity: comingSoon ? 0.45 : 1.0,
+            child: Row(
+              children: [
+                _buildLiveNeonIconChip(Icon(icon, size: 18, color: white)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IgnorePointer(
+                  ignoring: onChanged == null,
+                  child: Switch(
+                    value: value,
+                    onChanged: onChanged ?? (_) {},
+                    activeThumbColor: white,
+                    activeTrackColor: colorPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: white,
-            activeTrackColor: colorPrimary,
-          ),
+          if (comingSoon)
+            Padding(
+              padding: const EdgeInsets.only(left: 52, top: 4),
+              child: Text(
+                "Fonctionnalité bientôt disponible",
+                style: TextStyle(
+                  color: liveNeonTextSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -421,23 +426,19 @@ class _SettingsState extends State<Settings> {
                     const SizedBox(height: 8),
                     _buildAbidjanCard(children: [
                       _buildAbidjanToggleRow(
-                        icon: Icons.wifi,
-                        label: "Wi-Fi uniquement",
-                        value: _wifiOnly,
-                        onChanged: (v) async {
-                          setState(() => _wifiOnly = v);
-                          await sharedpre.saveBool("wifi_only", v);
-                        },
+                        icon: Icons.signal_cellular_alt,
+                        label: "Données Mobiles",
+                        value: true,
+                        onChanged: null,
+                        comingSoon: true,
                       ),
                       _abidjanDivider(),
                       _buildAbidjanToggleRow(
                         icon: Icons.notifications_active_outlined,
                         label: "Alertes en direct",
-                        value: _liveAlerts,
-                        onChanged: (v) async {
-                          setState(() => _liveAlerts = v);
-                          await sharedpre.saveBool("live_alerts", v);
-                        },
+                        value: true,
+                        onChanged: null,
+                        comingSoon: true,
                       ),
                       _abidjanDivider(),
                       _buildAbidjanStaticRow(
@@ -564,30 +565,54 @@ class _SettingsState extends State<Settings> {
     required IconData icon,
     required String label,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
+    bool comingSoon = false,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildAbidjanIconChip(Icon(icon, size: 18, color: black)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: black,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+          Opacity(
+            opacity: comingSoon ? 0.45 : 1.0,
+            child: Row(
+              children: [
+                _buildAbidjanIconChip(Icon(icon, size: 18, color: black)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: black,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IgnorePointer(
+                  ignoring: onChanged == null,
+                  child: Switch(
+                    value: value,
+                    onChanged: onChanged ?? (_) {},
+                    activeThumbColor: white,
+                    activeTrackColor: black,
+                  ),
+                ),
+              ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: white,
-            activeTrackColor: black,
-          ),
+          if (comingSoon)
+            Padding(
+              padding: const EdgeInsets.only(left: 52, top: 4),
+              child: Text(
+                "Fonctionnalité bientôt disponible",
+                style: TextStyle(
+                  color: gray,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
         ],
       ),
     );
