@@ -298,7 +298,9 @@ class _HomeState extends State<Home> {
                 key: drawerkey,
                 backgroundColor: homeAccueilBg(context),
                 body: Container(
-                  decoration: homeAccueilBackgroundDecoration(context),
+                  decoration: Theme.of(context).brightness == Brightness.dark
+                      ? liveNeonBackgroundDecoration()
+                      : BoxDecoration(color: homeAccueilBg(context)),
                   child: Column(
                     children: [
                       // Only show appBar for Home page
