@@ -335,50 +335,77 @@ class _HomeState extends State<Home> {
 
   Widget _buildDockCard() {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      elevation: 5,
-      shadowColor: black.withValues(alpha: 0.5),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: isNight ? white : lightgray,
-          width: 0.3,
+    final floatingPlayer = FloatingPlayer(
+      currentTabIndex: _currentBottomNavIndex,
+      onExpand: () {
+        if (_currentBottomNavIndex != radioTabIndex) {
+          setState(() {
+            _currentBottomNavIndex = radioTabIndex;
+          });
+        }
+      },
+    );
+    final navRow = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildBottomNavItem(Icons.home_outlined, 'Accueil', _homeTabIndex),
+        _buildBottomNavItem(Icons.live_tv_outlined, 'Films', _filmsTabIndex),
+        _buildBottomNavItem(Icons.radio, 'Radios', radioTabIndex),
+        _buildBottomNavItem(
+            Icons.podcasts_outlined, 'Podcasts', _podcastTabIndex),
+        _buildBottomNavItem(Icons.person_outline,
+            Locales.string(context, "profile"), _profileTabIndex),
+      ],
+    );
+
+    if (isNight) {
+      return Material(
+        elevation: 5,
+        shadowColor: black.withValues(alpha: 0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: white, width: 0.3),
         ),
-      ),
-      color: homeAccueilBg(context),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingPlayer(
-            currentTabIndex: _currentBottomNavIndex,
-            onExpand: () {
-              if (_currentBottomNavIndex != radioTabIndex) {
-                setState(() {
-                  _currentBottomNavIndex = radioTabIndex;
-                });
-              }
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildBottomNavItem(
-                    Icons.home_outlined, 'Accueil', _homeTabIndex),
-                _buildBottomNavItem(
-                    Icons.live_tv_outlined, 'Films', _filmsTabIndex),
-                _buildBottomNavItem(Icons.radio, 'Radios', radioTabIndex),
-                _buildBottomNavItem(
-                    Icons.podcasts_outlined, 'Podcasts', _podcastTabIndex),
-                _buildBottomNavItem(Icons.person_outline,
-                    Locales.string(context, "profile"), _profileTabIndex),
-              ],
+        color: homeAccueilBg(context),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            floatingPlayer,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+              child: navRow,
             ),
+          ],
+        ),
+      );
+    }
+
+    // ABIDJAN (day theme): the mini-player is its own black rounded-top bar
+    // sitting directly above the (separate) white nav card, instead of
+    // sharing one cream card with the nav row.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Container(color: black, child: floatingPlayer),
+        ),
+        Material(
+          elevation: 5,
+          shadowColor: black.withValues(alpha: 0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: lightgray, width: 0.3),
           ),
-        ],
-      ),
+          color: homeAccueilBg(context),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+            child: navRow,
+          ),
+        ),
+      ],
     );
   }
 
@@ -388,10 +415,11 @@ class _HomeState extends State<Home> {
 
   Widget _buildBottomNavItem(IconData icon, String label, int index) {
     final isSelected = _currentBottomNavIndex == index;
+    final isNight = Theme.of(context).brightness == Brightness.dark;
 
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         onTap: () {
           // Compte requires being logged in — otherwise the profile screen
           // has nothing to show (empty header, empty fields).
@@ -409,51 +437,101 @@ class _HomeState extends State<Home> {
             _currentBottomNavIndex = index;
           });
         },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 40,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isSelected ? homeSearchBarBg(context) : transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  size: 22,
-                  color: isSelected
-                      ? white
-                      : Theme.of(context)
-                          .colorScheme
-                          .surface
-                          .withValues(alpha: 0.55),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.surface
-                      : Theme.of(context)
-                          .colorScheme
-                          .surface
-                          .withValues(alpha: 0.65),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
+        child: isNight
+            ? _buildNightNavItemContent(icon, label, isSelected)
+            : _buildAbidjanNavItemContent(icon, label, isSelected),
       ),
+    );
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightNavItemContent(
+      IconData icon, String label, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 40,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected ? homeSearchBarBg(context) : transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: isSelected
+                  ? white
+                  : Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withValues(alpha: 0.55),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.surface
+                  : Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withValues(alpha: 0.65),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ABIDJAN (day theme): icon stays above the label in both states, as in
+  // the reference design — the active tab just gets a solid pill wrapped
+  // around that same vertical stack, no side-by-side layout.
+  Widget _buildAbidjanNavItemContent(
+      IconData icon, String label, bool isSelected) {
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: isSelected ? white : black.withValues(alpha: 0.45),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? white : black.withValues(alpha: 0.5),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+      child: isSelected
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: dockActivePillBg(context),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: content,
+            )
+          : content,
     );
   }
 

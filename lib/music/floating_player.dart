@@ -301,154 +301,260 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
           } catch (_) {}
         }
         final bool isLive = playType == Constant.radioType;
+        final bool isNight = Theme.of(context).brightness == Brightness.dark;
+        final String? artUri = tag is MediaItem ? tag.artUri?.toString() : null;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            InkWell(
-              onTap: _expandPlayer,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Container(
-                        width: 32,
-                        height: 32,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color:
-                              homeSearchBarBg(context).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.keyboard_arrow_up,
-                          color: homeSearchBarBg(context),
-                          size: 20,
-                        ),
-                      ),
-                      onPressed: _expandPlayer,
+        return isNight
+            ? _buildNightContent(effectivePlayer, title, subtitle, isLive)
+            : _buildAbidjanContent(
+                effectivePlayer, title, subtitle, isLive, artUri);
+      },
+    );
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightContent(
+      AudioPlayer effectivePlayer, String title, String subtitle, bool isLive) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: _expandPlayer,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: homeSearchBarBg(context).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
                     ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isLive)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 2),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: homeLiveBadge(context),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  MyText(
-                                    color: homeLiveBadge(context),
-                                    text: "EN DIRECT",
-                                    multilanguage: false,
-                                    fontsize: 10,
-                                    fontwaight: FontWeight.w700,
-                                    maxline: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          MyText(
-                            color: Theme.of(context).colorScheme.surface,
-                            text: title,
-                            multilanguage: false,
-                            fontsize: 14,
-                            fontwaight: FontWeight.w600,
-                            maxline: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          MyText(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surface
-                                .withValues(alpha: 0.6),
-                            text: subtitle,
-                            multilanguage: false,
-                            fontsize: 12,
-                            fontwaight: FontWeight.w500,
-                            maxline: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                    child: Icon(
+                      Icons.keyboard_arrow_up,
+                      color: homeSearchBarBg(context),
+                      size: 20,
                     ),
-                    StreamBuilder<bool>(
-                      stream: effectivePlayer.playingStream,
-                      builder: (context, snapshot) {
-                        final isPlaying =
-                            snapshot.data ?? effectivePlayer.playing;
-                        return SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: _WaveAnimation(
-                              isPlaying: isPlaying,
-                              player: effectivePlayer,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    StreamBuilder<bool>(
-                      stream: effectivePlayer.playingStream,
-                      builder: (context, snapshot) {
-                        final isPlaying =
-                            snapshot.data ?? effectivePlayer.playing;
-                        return IconButton(
-                          icon: Icon(
-                            isPlaying
-                                ? Icons.pause_circle_filled
-                                : Icons.play_circle_fill,
-                            color: homeSearchBarBg(context),
-                            size: 34,
-                          ),
-                          onPressed: () {
-                            if (isPlaying) {
-                              effectivePlayer.pause();
-                            } else {
-                              effectivePlayer.play();
-                            }
-                            setState(() {});
-                          },
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon:
-                          const Icon(Icons.close, color: Colors.grey, size: 18),
-                      onPressed: _stopPlayer,
-                    ),
-                  ],
+                  ),
+                  onPressed: _expandPlayer,
                 ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isLive)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: homeLiveBadge(context),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              MyText(
+                                color: homeLiveBadge(context),
+                                text: "EN DIRECT",
+                                multilanguage: false,
+                                fontsize: 10,
+                                fontwaight: FontWeight.w700,
+                                maxline: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      MyText(
+                        color: Theme.of(context).colorScheme.surface,
+                        text: title,
+                        multilanguage: false,
+                        fontsize: 14,
+                        fontwaight: FontWeight.w600,
+                        maxline: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      MyText(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withValues(alpha: 0.6),
+                        text: subtitle,
+                        multilanguage: false,
+                        fontsize: 12,
+                        fontwaight: FontWeight.w500,
+                        maxline: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                StreamBuilder<bool>(
+                  stream: effectivePlayer.playingStream,
+                  builder: (context, snapshot) {
+                    final isPlaying = snapshot.data ?? effectivePlayer.playing;
+                    return SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: _WaveAnimation(
+                          isPlaying: isPlaying,
+                          player: effectivePlayer,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                StreamBuilder<bool>(
+                  stream: effectivePlayer.playingStream,
+                  builder: (context, snapshot) {
+                    final isPlaying = snapshot.data ?? effectivePlayer.playing;
+                    return IconButton(
+                      icon: Icon(
+                        isPlaying
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_fill,
+                        color: homeSearchBarBg(context),
+                        size: 34,
+                      ),
+                      onPressed: () {
+                        if (isPlaying) {
+                          effectivePlayer.pause();
+                        } else {
+                          effectivePlayer.play();
+                        }
+                        setState(() {});
+                      },
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.grey, size: 18),
+                  onPressed: _stopPlayer,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Divider(
+          height: 1,
+          thickness: 1.5,
+          indent: 16,
+          endIndent: 16,
+          color: white.withValues(alpha: 0.10),
+        ),
+      ],
+    );
+  }
+
+  // ABIDJAN (day theme) — solid black bar, thumbnail, filled red play/pause
+  // button, matching the mockups. No waveform/chevron/close clutter — the
+  // whole row expands the player on tap, same _expandPlayer as before.
+  Widget _buildAbidjanContent(AudioPlayer effectivePlayer, String title,
+      String subtitle, bool isLive, String? artUri) {
+    final String displaySubtitle =
+        isLive && subtitle.isNotEmpty ? "En direct · $subtitle" : subtitle;
+
+    return InkWell(
+      onTap: _expandPlayer,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: artUri != null && artUri.isNotEmpty
+                  ? Image.network(
+                      artUri,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 40,
+                        height: 40,
+                        color: white.withValues(alpha: 0.15),
+                        child: const Icon(Icons.radio, color: white, size: 20),
+                      ),
+                    )
+                  : Container(
+                      width: 40,
+                      height: 40,
+                      color: white.withValues(alpha: 0.15),
+                      child: const Icon(Icons.radio, color: white, size: 20),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MyText(
+                    color: white,
+                    text: title,
+                    multilanguage: false,
+                    fontsize: 14,
+                    fontwaight: FontWeight.w700,
+                    maxline: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  MyText(
+                    color: white.withValues(alpha: 0.6),
+                    text: displaySubtitle,
+                    multilanguage: false,
+                    fontsize: 12,
+                    fontwaight: FontWeight.w500,
+                    maxline: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            Divider(
-              height: 1,
-              thickness: 1.5,
-              indent: 16,
-              endIndent: 16,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? white.withValues(alpha: 0.10)
-                  : black.withValues(alpha: 0.08),
+            StreamBuilder<bool>(
+              stream: effectivePlayer.playingStream,
+              builder: (context, snapshot) {
+                final isPlaying = snapshot.data ?? effectivePlayer.playing;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    if (isPlaying) {
+                      effectivePlayer.pause();
+                    } else {
+                      effectivePlayer.play();
+                    }
+                    setState(() {});
+                  },
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: colorPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: white,
+                      size: 20,
+                    ),
+                  ),
+                );
+              },
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
