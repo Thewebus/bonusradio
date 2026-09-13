@@ -522,11 +522,12 @@ class _MusicDetailsState extends State<MusicDetails>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 16),
+                        _buildPubSlideshow(showIndicators: true),
+                        const SizedBox(height: 20),
                         _buildAbidjanNowPlayingCard(stations),
                         const SizedBox(height: 24),
                         _buildAbidjanStationsSection(stations),
-                        const SizedBox(height: 20),
-                        _buildPubSlideshow(showIndicators: true),
                       ],
                     ),
                   );
@@ -554,144 +555,140 @@ class _MusicDetailsState extends State<MusicDetails>
         return Container(
           width: double.infinity,
           margin: const EdgeInsets.only(top: 16),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
           decoration: BoxDecoration(
             color: black,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Column(
+          child: Row(
             children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: colorPrimary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                            color: white, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        "EN DIRECT",
-                        style: TextStyle(
-                          color: white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
               ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(14),
                 child: artUri != null && artUri.isNotEmpty
                     ? Image.network(
                         artUri,
-                        width: 160,
-                        height: 160,
+                        width: 64,
+                        height: 64,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             Container(
-                          width: 160,
-                          height: 160,
+                          width: 64,
+                          height: 64,
                           color: white.withValues(alpha: 0.1),
                           child:
-                              const Icon(Icons.radio, color: white, size: 48),
+                              const Icon(Icons.radio, color: white, size: 26),
                         ),
                       )
                     : Container(
-                        width: 160,
-                        height: 160,
+                        width: 64,
+                        height: 64,
                         color: white.withValues(alpha: 0.1),
-                        child: const Icon(Icons.radio, color: white, size: 48),
+                        child: const Icon(Icons.radio, color: white, size: 26),
                       ),
               ),
-              const SizedBox(height: 20),
-              MyText(
-                color: white,
-                text: title,
-                multilanguage: false,
-                inter: 4,
-                fontsize: Dimens.textlargeBig,
-                fontwaight: FontWeight.w700,
-                maxline: 1,
-                textalign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                fontstyle: FontStyle.normal,
-              ),
-              if (subtitle.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: white.withValues(alpha: 0.6),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 20),
-              const _AbidjanWaveformBars(),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () => _onFavouriteStation(current),
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child:
-                          Icon(Icons.favorite_border, color: white, size: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colorPrimary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                                color: white, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            "EN DIRECT",
+                            style: TextStyle(
+                              color: white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  StreamBuilder<bool>(
-                    stream: audioPlayer.playingStream,
-                    builder: (context, snap) {
-                      final isPlaying = snap.data ?? audioPlayer.playing;
-                      return InkWell(
-                        onTap: _checkPremiumPlayPause,
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: colorPrimary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: white,
-                            size: 32,
-                          ),
+                    const SizedBox(height: 6),
+                    MyText(
+                      color: white,
+                      text: title,
+                      multilanguage: false,
+                      inter: 4,
+                      fontsize: Dimens.textTitle,
+                      fontwaight: FontWeight.w700,
+                      maxline: 1,
+                      textalign: TextAlign.left,
+                      overflow: TextOverflow.ellipsis,
+                      fontstyle: FontStyle.normal,
+                    ),
+                    if (subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: white.withValues(alpha: 0.6),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                         ),
-                      );
-                    },
-                  ),
-                  // Visual-only — no casting feature exists in the app.
-                  InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () {},
-                    child: const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Icon(Icons.cast, color: white, size: 26),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => _onFavouriteStation(current),
+                child: const Padding(
+                  padding: EdgeInsets.all(6.0),
+                  child: Icon(Icons.favorite_border, color: white, size: 20),
+                ),
+              ),
+              StreamBuilder<bool>(
+                stream: audioPlayer.playingStream,
+                builder: (context, snap) {
+                  final isPlaying = snap.data ?? audioPlayer.playing;
+                  return InkWell(
+                    onTap: _checkPremiumPlayPause,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: colorPrimary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: white,
+                        size: 22,
+                      ),
                     ),
-                  ),
-                ],
+                  );
+                },
+              ),
+              // Visual-only — no casting feature exists in the app.
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {},
+                child: const Padding(
+                  padding: EdgeInsets.all(6.0),
+                  child: Icon(Icons.cast, color: white, size: 20),
+                ),
               ),
             ],
           ),
@@ -3150,86 +3147,5 @@ class _MusicDetailsState extends State<MusicDetails>
       default:
         return notesBase;
     }
-  }
-}
-
-// Small decorative animated waveform used only by the ABIDJAN (day theme)
-// Radios tab's now-playing card. Self-contained (owns its own
-// AnimationController) so it doesn't interact with _MusicDetailsState's
-// _bounceController/_notesController, which stay reserved for the
-// night/immersive player's own effects.
-class _AbidjanWaveformBars extends StatefulWidget {
-  const _AbidjanWaveformBars();
-
-  @override
-  State<_AbidjanWaveformBars> createState() => _AbidjanWaveformBarsState();
-}
-
-class _AbidjanWaveformBarsState extends State<_AbidjanWaveformBars>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  static const List<double> _peakHeights = [
-    10,
-    22,
-    16,
-    28,
-    14,
-    24,
-    18,
-    12,
-    20,
-    15
-  ];
-  static const List<Color> _barColors = [colorPrimary, colorAccent];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 30,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_peakHeights.length, (i) {
-              final phase = i / _peakHeights.length;
-              final t = (math.sin(
-                          (_controller.value * 2 * math.pi) +
-                              (phase * 2 * math.pi)) +
-                      1) /
-                  2;
-              final barHeight = 6 + (_peakHeights[i] * t);
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Container(
-                  width: 3,
-                  height: barHeight,
-                  decoration: BoxDecoration(
-                    color: _barColors[i % _barColors.length],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              );
-            }),
-          );
-        },
-      ),
-    );
   }
 }
