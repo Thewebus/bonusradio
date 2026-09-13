@@ -27,6 +27,7 @@ import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/musicutils.dart';
+import 'package:myBonus/widget/waveform_animation.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -551,148 +552,170 @@ class _MusicDetailsState extends State<MusicDetails>
         final String title =
             mediaItem?.title ?? current?.name?.toString() ?? "";
         final String subtitle = mediaItem?.artist ?? "";
-        final String? artUri = mediaItem?.artUri?.toString();
+        final String artUri =
+            mediaItem?.artUri?.toString() ?? current?.image?.toString() ?? "";
 
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(top: 16),
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          decoration: BoxDecoration(
-            color: black,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: artUri != null && artUri.isNotEmpty
-                    ? Image.network(
-                        artUri,
-                        width: 64,
-                        height: 64,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
-                          width: 64,
-                          height: 64,
-                          color: white.withValues(alpha: 0.1),
-                          child:
-                              const Icon(Icons.radio, color: white, size: 26),
-                        ),
-                      )
-                    : Container(
-                        width: 64,
-                        height: 64,
-                        color: white.withValues(alpha: 0.1),
-                        child: const Icon(Icons.radio, color: white, size: 26),
+        return StreamBuilder<bool>(
+          stream: audioPlayer.playingStream,
+          builder: (context, snap) {
+            final isPlaying = snap.data ?? audioPlayer.playing;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                            color: white, shape: BoxShape.circle),
                       ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: colorPrimary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: const BoxDecoration(
-                                color: white, shape: BoxShape.circle),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "EN DIRECT",
-                            style: TextStyle(
-                              color: white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    MyText(
-                      color: white,
-                      text: title,
-                      multilanguage: false,
-                      inter: 4,
-                      fontsize: Dimens.textTitle,
-                      fontwaight: FontWeight.w700,
-                      maxline: 1,
-                      textalign: TextAlign.left,
-                      overflow: TextOverflow.ellipsis,
-                      fontstyle: FontStyle.normal,
-                    ),
-                    if (subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
+                      const SizedBox(width: 6),
+                      const Text(
+                        "EN DIRECT",
                         style: TextStyle(
-                          color: white.withValues(alpha: 0.6),
+                          color: white,
                           fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w700,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 8),
+                      // Visual-only — no listener-count data exists in the app.
+                      Text(
+                        "-- à l'écoute",
+                        style: TextStyle(
+                          color: white.withValues(alpha: 0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => _onFavouriteStation(current),
-                child: const Padding(
-                  padding: EdgeInsets.all(6.0),
-                  child: Icon(Icons.favorite_border, color: white, size: 20),
-                ),
-              ),
-              StreamBuilder<bool>(
-                stream: audioPlayer.playingStream,
-                builder: (context, snap) {
-                  final isPlaying = snap.data ?? audioPlayer.playing;
-                  return InkWell(
-                    onTap: _checkPremiumPlayPause,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: colorPrimary,
-                        shape: BoxShape.circle,
+                const SizedBox(height: 24),
+                Container(
+                  width: 176,
+                  height: 176,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorPrimary.withValues(alpha: 0.45),
+                        blurRadius: 50,
+                        spreadRadius: 4,
                       ),
-                      child: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: white,
-                        size: 22,
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: artUri.isNotEmpty
+                        ? Image.network(
+                            artUri,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: abidjanIconChipBg,
+                              child: const Icon(Icons.radio,
+                                  color: black, size: 56),
+                            ),
+                          )
+                        : Container(
+                            color: abidjanIconChipBg,
+                            child:
+                                const Icon(Icons.radio, color: black, size: 56),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                MyText(
+                  color: black,
+                  text: title,
+                  multilanguage: false,
+                  inter: 4,
+                  fontsize: Dimens.textExtraBig,
+                  fontwaight: FontWeight.w700,
+                  maxline: 1,
+                  textalign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  fontstyle: FontStyle.normal,
+                ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: gray,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 32,
+                  width: 220,
+                  child: WaveAnimation(isPlaying: isPlaying, player: audioPlayer),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => _onFavouriteStation(current),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.favorite_border,
+                            color: black, size: 24),
                       ),
                     ),
-                  );
-                },
-              ),
-              // Visual-only — no casting feature exists in the app.
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {},
-                child: const Padding(
-                  padding: EdgeInsets.all(6.0),
-                  child: Icon(Icons.cast, color: white, size: 20),
+                    const SizedBox(width: 28),
+                    InkWell(
+                      onTap: _checkPremiumPlayPause,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          color: colorPrimary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: white,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 28),
+                    // Visual-only — no casting feature exists in the app.
+                    InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () {},
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.cast, color: black, size: 24),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         );
       },
     );
@@ -726,7 +749,7 @@ class _MusicDetailsState extends State<MusicDetails>
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         if (stations.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -736,12 +759,15 @@ class _MusicDetailsState extends State<MusicDetails>
             ),
           )
         else
-          ...List.generate(stations.length, (index) {
-            final item = stations[index];
-            final isLast = index == stations.length - 1;
-            return Column(
-              children: [
-                StreamBuilder<SequenceState?>(
+          SizedBox(
+            height: 96,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: stations.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 14),
+              itemBuilder: (context, index) {
+                final item = stations[index];
+                return StreamBuilder<SequenceState?>(
                   stream: audioPlayer.sequenceStateStream,
                   builder: (context, snapshot) {
                     final currentId =
@@ -754,6 +780,7 @@ class _MusicDetailsState extends State<MusicDetails>
                         final bool isPlayingThis = isCurrent &&
                             (playingSnap.data ?? audioPlayer.playing);
                         return InkWell(
+                          borderRadius: BorderRadius.circular(14),
                           onTap: () {
                             if (isCurrent) {
                               _checkPremiumPlayPause();
@@ -761,97 +788,52 @@ class _MusicDetailsState extends State<MusicDetails>
                               _playStation(stations, index);
                             }
                           },
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 10),
-                            child: Row(
+                          child: SizedBox(
+                            width: 72,
+                            child: Column(
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(14),
                                   child: MyNetworkImage(
-                                    imgWidth: 48,
-                                    imgHeight: 48,
+                                    imgWidth: 64,
+                                    imgHeight: 64,
                                     fit: BoxFit.cover,
                                     imageUrl: item.image?.toString() ?? "",
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        item.name?.toString() ?? "",
-                                        style: const TextStyle(
-                                          color: black,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isCurrent) ...[
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: isPlayingThis
+                                              ? colorPrimary
+                                              : gray,
+                                          shape: BoxShape.circle,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        [item.artistName, item.languageName]
-                                            .where((s) =>
-                                                s != null &&
-                                                s.toString().trim().isNotEmpty)
-                                            .join(" · "),
-                                        style: TextStyle(
-                                          color: gray,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                      const SizedBox(width: 4),
                                     ],
-                                  ),
+                                    Flexible(
+                                      child: Text(
+                                        item.name?.toString() ?? "",
+                                        style: TextStyle(
+                                          color: isCurrent
+                                              ? colorPrimary
+                                              : black,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                if (isCurrent)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: colorPrimary,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: const BoxDecoration(
-                                              color: white,
-                                              shape: BoxShape.circle),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          isPlayingThis ? "LIVE" : "PAUSE",
-                                          style: const TextStyle(
-                                            color: white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    width: 34,
-                                    height: 34,
-                                    alignment: Alignment.center,
-                                    decoration: const BoxDecoration(
-                                      color: abidjanIconChipBg,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.play_arrow,
-                                        color: black, size: 18),
-                                  ),
                               ],
                             ),
                           ),
@@ -859,12 +841,10 @@ class _MusicDetailsState extends State<MusicDetails>
                       },
                     );
                   },
-                ),
-                if (!isLast)
-                  Container(height: 1, color: lightgray),
-              ],
-            );
-          }),
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -934,149 +914,170 @@ class _MusicDetailsState extends State<MusicDetails>
         final String title =
             mediaItem?.title ?? current?.name?.toString() ?? "";
         final String subtitle = mediaItem?.artist ?? "";
-        final String? artUri = mediaItem?.artUri?.toString();
+        final String artUri =
+            mediaItem?.artUri?.toString() ?? current?.image?.toString() ?? "";
 
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(top: 16),
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          decoration: BoxDecoration(
-            color: liveNeonCardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: liveNeonBorder),
-          ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: artUri != null && artUri.isNotEmpty
-                    ? Image.network(
-                        artUri,
-                        width: 64,
-                        height: 64,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
-                          width: 64,
-                          height: 64,
-                          color: liveNeonIconChipBg,
-                          child:
-                              const Icon(Icons.radio, color: white, size: 26),
-                        ),
-                      )
-                    : Container(
-                        width: 64,
-                        height: 64,
-                        color: liveNeonIconChipBg,
-                        child: const Icon(Icons.radio, color: white, size: 26),
+        return StreamBuilder<bool>(
+          stream: audioPlayer.playingStream,
+          builder: (context, snap) {
+            final isPlaying = snap.data ?? audioPlayer.playing;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                            color: white, shape: BoxShape.circle),
                       ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: colorPrimary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: const BoxDecoration(
-                                color: white, shape: BoxShape.circle),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "EN DIRECT",
-                            style: TextStyle(
-                              color: white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    MyText(
-                      color: white,
-                      text: title,
-                      multilanguage: false,
-                      inter: 4,
-                      fontsize: Dimens.textTitle,
-                      fontwaight: FontWeight.w700,
-                      maxline: 1,
-                      textalign: TextAlign.left,
-                      overflow: TextOverflow.ellipsis,
-                      fontstyle: FontStyle.normal,
-                    ),
-                    if (subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
+                      const SizedBox(width: 6),
+                      const Text(
+                        "EN DIRECT",
                         style: TextStyle(
-                          color: liveNeonTextSecondary,
+                          color: white,
                           fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w700,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 8),
+                      // Visual-only — no listener-count data exists in the app.
+                      Text(
+                        "-- à l'écoute",
+                        style: TextStyle(
+                          color: white.withValues(alpha: 0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => _onFavouriteStation(current),
-                child: const Padding(
-                  padding: EdgeInsets.all(6.0),
-                  child: Icon(Icons.favorite_border, color: white, size: 20),
-                ),
-              ),
-              StreamBuilder<bool>(
-                stream: audioPlayer.playingStream,
-                builder: (context, snap) {
-                  final isPlaying = snap.data ?? audioPlayer.playing;
-                  return InkWell(
-                    onTap: _checkPremiumPlayPause,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(colors: liveNeonGradient),
-                        shape: BoxShape.circle,
+                const SizedBox(height: 24),
+                Container(
+                  width: 176,
+                  height: 176,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: liveNeonGradient.first.withValues(alpha: 0.5),
+                        blurRadius: 60,
+                        spreadRadius: 6,
                       ),
-                      child: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: white,
-                        size: 22,
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: artUri.isNotEmpty
+                        ? Image.network(
+                            artUri,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                              color: liveNeonIconChipBg,
+                              child: const Icon(Icons.radio,
+                                  color: white, size: 56),
+                            ),
+                          )
+                        : Container(
+                            color: liveNeonIconChipBg,
+                            child:
+                                const Icon(Icons.radio, color: white, size: 56),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                MyText(
+                  color: white,
+                  text: title,
+                  multilanguage: false,
+                  inter: 4,
+                  fontsize: Dimens.textExtraBig,
+                  fontwaight: FontWeight.w700,
+                  maxline: 1,
+                  textalign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  fontstyle: FontStyle.normal,
+                ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: liveNeonTextSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 32,
+                  width: 220,
+                  child: WaveAnimation(isPlaying: isPlaying, player: audioPlayer),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => _onFavouriteStation(current),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.favorite_border,
+                            color: white, size: 24),
                       ),
                     ),
-                  );
-                },
-              ),
-              // Visual-only — no casting feature exists in the app.
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {},
-                child: const Padding(
-                  padding: EdgeInsets.all(6.0),
-                  child: Icon(Icons.cast, color: white, size: 20),
+                    const SizedBox(width: 28),
+                    InkWell(
+                      onTap: _checkPremiumPlayPause,
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(colors: liveNeonGradient),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: white,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 28),
+                    // Visual-only — no casting feature exists in the app.
+                    InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () {},
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.cast, color: white, size: 24),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         );
       },
     );
@@ -1110,7 +1111,7 @@ class _MusicDetailsState extends State<MusicDetails>
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         if (stations.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1120,12 +1121,15 @@ class _MusicDetailsState extends State<MusicDetails>
             ),
           )
         else
-          ...List.generate(stations.length, (index) {
-            final item = stations[index];
-            final isLast = index == stations.length - 1;
-            return Column(
-              children: [
-                StreamBuilder<SequenceState?>(
+          SizedBox(
+            height: 96,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: stations.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 14),
+              itemBuilder: (context, index) {
+                final item = stations[index];
+                return StreamBuilder<SequenceState?>(
                   stream: audioPlayer.sequenceStateStream,
                   builder: (context, snapshot) {
                     final currentId =
@@ -1138,6 +1142,7 @@ class _MusicDetailsState extends State<MusicDetails>
                         final bool isPlayingThis = isCurrent &&
                             (playingSnap.data ?? audioPlayer.playing);
                         return InkWell(
+                          borderRadius: BorderRadius.circular(14),
                           onTap: () {
                             if (isCurrent) {
                               _checkPremiumPlayPause();
@@ -1145,97 +1150,52 @@ class _MusicDetailsState extends State<MusicDetails>
                               _playStation(stations, index);
                             }
                           },
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 10),
-                            child: Row(
+                          child: SizedBox(
+                            width: 72,
+                            child: Column(
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(14),
                                   child: MyNetworkImage(
-                                    imgWidth: 48,
-                                    imgHeight: 48,
+                                    imgWidth: 64,
+                                    imgHeight: 64,
                                     fit: BoxFit.cover,
                                     imageUrl: item.image?.toString() ?? "",
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        item.name?.toString() ?? "",
-                                        style: const TextStyle(
-                                          color: white,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isCurrent) ...[
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: isPlayingThis
+                                              ? colorPrimary
+                                              : liveNeonTextSecondary,
+                                          shape: BoxShape.circle,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        [item.artistName, item.languageName]
-                                            .where((s) =>
-                                                s != null &&
-                                                s.toString().trim().isNotEmpty)
-                                            .join(" · "),
-                                        style: TextStyle(
-                                          color: liveNeonTextSecondary,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                      const SizedBox(width: 4),
                                     ],
-                                  ),
+                                    Flexible(
+                                      child: Text(
+                                        item.name?.toString() ?? "",
+                                        style: TextStyle(
+                                          color: isCurrent
+                                              ? colorPrimary
+                                              : white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                if (isCurrent)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: colorPrimary,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: const BoxDecoration(
-                                              color: white,
-                                              shape: BoxShape.circle),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          isPlayingThis ? "LIVE" : "PAUSE",
-                                          style: const TextStyle(
-                                            color: white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    width: 34,
-                                    height: 34,
-                                    alignment: Alignment.center,
-                                    decoration: const BoxDecoration(
-                                      color: liveNeonIconChipBg,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.play_arrow,
-                                        color: white, size: 18),
-                                  ),
                               ],
                             ),
                           ),
@@ -1243,12 +1203,10 @@ class _MusicDetailsState extends State<MusicDetails>
                       },
                     );
                   },
-                ),
-                if (!isLast)
-                  Container(height: 1, color: liveNeonBorder),
-              ],
-            );
-          }),
+                );
+              },
+            ),
+          ),
       ],
     );
   }
