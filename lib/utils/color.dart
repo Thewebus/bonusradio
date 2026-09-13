@@ -66,6 +66,28 @@ List<Color> homeCategoryPalette(BuildContext context) => _isNight(context)
         Color(0xFFB9E4C9),
       ];
 
+/* ===================== ABIDJAN (day theme) tokens =========================
+   Additive only — every function above keeps both its branches untouched.
+   dockActivePillBg is the one shared/always-mounted widget (dock) that
+   needs a brightness branch; its night arm simply delegates to the
+   existing homeSearchBarBg so night's dock pill is provably unchanged. */
+
+Color dockActivePillBg(BuildContext context) =>
+    _isNight(context) ? homeSearchBarBg(context) : colorPrimary;
+
+/* Everything below is day-only: only ever referenced from a render branch
+   already gated on "not night" by the caller, so it deliberately does not
+   take a BuildContext / branch on brightness itself. */
+const abidjanPillBorder = Color(0xFFE0D8C8);
+const abidjanIconChipBg = Color(0xFFF1E9DA);
+
+const List<List<Color>> abidjanBokehGradients = [
+  [Color(0xFFFF6B4A), Color(0xFFB8241A)],
+  [Color(0xFF3FA34D), Color(0xFF1B5E2A)],
+  [Color(0xFF7B5CFA), Color(0xFF3A1F8A)],
+  [Color(0xFF3B82C4), Color(0xFF1B3F6B)],
+];
+
 /* ============================= Light Theme =============================== */
 
 final ThemeData lightTheme = ThemeData(

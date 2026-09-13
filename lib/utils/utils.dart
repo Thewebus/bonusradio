@@ -39,17 +39,45 @@ void printLog(String message) {
 
 // Settings shortcut shown at the far right of the title on every screen's
 // header (the full-screen player has its own header and doesn't get one).
-List<Widget> settingsAppBarAction(BuildContext context) => [
+// `light: true` renders it as a white circle with a black gear instead of a
+// bare white icon, for use on flat light (ABIDJAN) headers instead of the
+// colored/dark gradient headers this was originally built for.
+List<Widget> settingsAppBarAction(BuildContext context, {bool light = false}) {
+  void onPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const Settings()),
+    );
+  }
+
+  if (!light) {
+    return [
       IconButton(
         icon: const Icon(Icons.settings, color: white),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const Settings()),
-          );
-        },
+        onPressed: onPressed,
       ),
     ];
+  }
+
+  return [
+    IconButton(
+      icon: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: Color(0x1A000000), blurRadius: 6, offset: Offset(0, 2)),
+          ],
+        ),
+        child: const Icon(Icons.settings, color: black, size: 20),
+      ),
+      onPressed: onPressed,
+    ),
+  ];
+}
 
 class Utils {
   ProgressDialog? prDialog;
@@ -544,6 +572,12 @@ class Utils {
           fontWeight: fontwaight);
     } else if (inter == 3) {
       return GoogleFonts.rubik(
+          fontSize: fontsize,
+          fontStyle: fontstyle,
+          color: color,
+          fontWeight: fontwaight);
+    } else if (inter == 4) {
+      return GoogleFonts.playfairDisplay(
           fontSize: fontsize,
           fontStyle: fontstyle,
           color: color,

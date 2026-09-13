@@ -50,6 +50,7 @@ class MyText extends StatelessWidget {
   // Font = 1 => poppins
   // Font = 2 => Lobster
   // Font = 3 => Rubik
+  // Font = 4 => Playfair Display (ABIDJAN display/serif headings)
   // Font = (Any Other Number) => inter
 
   TextStyle googleFontStyle() {
@@ -67,6 +68,12 @@ class MyText extends StatelessWidget {
           fontWeight: fontwaight);
     } else if (inter == 3) {
       return GoogleFonts.rubik(
+          fontSize: fontsize,
+          fontStyle: fontstyle,
+          color: color,
+          fontWeight: fontwaight);
+    } else if (inter == 4) {
+      return GoogleFonts.playfairDisplay(
           fontSize: fontsize,
           fontStyle: fontstyle,
           color: color,
