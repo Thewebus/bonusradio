@@ -366,25 +366,33 @@ class _HomeState extends State<Home> {
     );
 
     if (isNight) {
-      return Material(
-        elevation: 5,
-        shadowColor: black.withValues(alpha: 0.5),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: white, width: 0.3),
-        ),
-        color: homeAccueilBg(context),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            floatingPlayer,
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+      // LIVE NEON (night theme): same two-element structure as ABIDJAN
+      // (separate mini-player bar + gap + nav card), dark/glow colors and a
+      // matching radius instead of black/cream.
+      const double liveNeonDockRadius = 16;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(liveNeonDockRadius),
+            child: Container(color: liveNeonCardBg, child: floatingPlayer),
+          ),
+          const SizedBox(height: 10),
+          Material(
+            elevation: 5,
+            shadowColor: black.withValues(alpha: 0.5),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(liveNeonDockRadius),
+              side: const BorderSide(color: liveNeonBorder),
+            ),
+            color: liveNeonCardBg,
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
               child: navRow,
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
@@ -456,51 +464,45 @@ class _HomeState extends State<Home> {
   }
 
   // Night mode — unchanged from before the ABIDJAN redesign.
+  // LIVE NEON (night theme): same vertical icon-above-label layout as
+  // ABIDJAN — the active tab gets a pink-to-blue gradient pill wrapped
+  // around that stack instead of a solid color.
   Widget _buildNightNavItemContent(
       IconData icon, String label, bool isSelected) {
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: isSelected ? white : liveNeonTextSecondary,
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? white : liveNeonTextSecondary,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 40,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isSelected ? homeSearchBarBg(context) : transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 22,
-              color: isSelected
-                  ? white
-                  : Theme.of(context)
-                      .colorScheme
-                      .surface
-                      .withValues(alpha: 0.55),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected
-                  ? Theme.of(context).colorScheme.surface
-                  : Theme.of(context)
-                      .colorScheme
-                      .surface
-                      .withValues(alpha: 0.65),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+      child: isSelected
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: liveNeonGradient),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: content,
+            )
+          : content,
     );
   }
 
