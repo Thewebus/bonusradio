@@ -4,7 +4,9 @@ import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/podcastviewall.dart';
+import 'package:myBonus/provider/addfavouriteprovider.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
 import 'package:myBonus/provider/podcastprovider.dart';
 import 'package:myBonus/utils/adhelper.dart';
@@ -13,6 +15,8 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/customwidget.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
+import 'package:myBonus/widget/abidjan_pill_filter.dart';
 import 'package:myBonus/widget/myappbar.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -31,6 +35,8 @@ class _PodcastState extends State<Podcast> {
   CarouselSliderController bannerController = CarouselSliderController();
   late PodcatsProvider podcatsProvider;
   late ScrollController _scrollController;
+  static const String _allCategoriesOption = "Tous";
+  String _selectedCategory = _allCategoriesOption;
 
   @override
   void initState() {
@@ -72,6 +78,12 @@ class _PodcastState extends State<Podcast> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightScaffold() {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
       body: Stack(
@@ -124,6 +136,326 @@ class _PodcastState extends State<Podcast> {
     );
   }
 
+  // ABIDJAN (day theme): flat header, real category-pill filter, featured
+  // card. Business logic (playback, favourites, pagination) is shared with
+  // night via the unchanged provider/section helpers below.
+  Widget _buildAbidjanScaffold() {
+    return Scaffold(
+      backgroundColor: homeAccueilBg(context),
+      body: Column(
+        children: [
+          AbidjanHeader(
+            title: "podcast",
+            showBack: true,
+            onBack: () => widget.onBack?.call(),
+          ),
+          Consumer<PodcatsProvider>(
+            builder: (context, podcastprovider, child) {
+              final options = _availableCategoryOptions();
+              if (options.length <= 1) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: AbidjanPillFilterRow(
+                  options: options,
+                  selected: _selectedCategory,
+                  onSelected: (value) =>
+                      setState(() => _selectedCategory = value),
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              backgroundColor: white,
+              color: colorAccent,
+              displacement: 70,
+              edgeOffset: 1.0,
+              triggerMode: RefreshIndicatorTriggerMode.anywhere,
+              strokeWidth: 3,
+              onRefresh: () async {
+                podcatsProvider.clearProvider();
+                _fetchData(0);
+              },
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
+                child: Consumer<PodcatsProvider>(
+                  builder: (context, podcastprovider, child) {
+                    if (podcastprovider.loading && !podcastprovider.loadmore) {
+                      return shimmer();
+                    }
+                    final filtered = _filteredSections();
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          _buildAbidjanFeaturedCard(filtered),
+                          setSectioByType(overrideSections: filtered),
+                          if (podcastprovider.loadmore)
+                            SizedBox(
+                              height: 50,
+                              child: Utils.pageLoader(),
+                            )
+                          else
+                            const SizedBox.shrink(),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _availableCategoryOptions() {
+    final names = <String>{};
+    for (final section
+        in podcatsProvider.sectionList ?? <podcastsection.Result>[]) {
+      for (final d in section.data ?? <podcastsection.Datum>[]) {
+        final name = d.categoryName?.trim();
+        if (name != null && name.isNotEmpty) names.add(name);
+      }
+    }
+    final sorted = names.toList()..sort();
+    return [_allCategoriesOption, ...sorted];
+  }
+
+  List<podcastsection.Result> _filteredSections() {
+    final sections = podcatsProvider.sectionList ?? <podcastsection.Result>[];
+    if (_selectedCategory == _allCategoriesOption) return sections;
+    return sections
+        .map((s) {
+          final filteredData = (s.data ?? <podcastsection.Datum>[])
+              .where((d) => d.categoryName == _selectedCategory)
+              .toList();
+          return podcastsection.Result(
+            id: s.id,
+            title: s.title,
+            subTitle: s.subTitle,
+            categoryId: s.categoryId,
+            languageId: s.languageId,
+            screenLayout: s.screenLayout,
+            isPremium: s.isPremium,
+            orderByUpload: s.orderByUpload,
+            orderByPlay: s.orderByPlay,
+            noOfContent: s.noOfContent,
+            viewAll: s.viewAll,
+            sortable: s.sortable,
+            status: s.status,
+            createdAt: s.createdAt,
+            updatedAt: s.updatedAt,
+            data: filteredData,
+          );
+        })
+        .where((s) => (s.data?.length ?? 0) > 0)
+        .toList();
+  }
+
+  Future<void> _playPodcastEpisode(podcastsection.Datum item) async {
+    final musicdetailProvider =
+        Provider.of<MusicDetailProvider>(context, listen: false);
+    await musicdetailProvider.getEpisodebyPodcastList(
+        item.id.toString(), 0);
+
+    if (!musicdetailProvider.loading) {
+      if (musicdetailProvider.getEpisodeByPodcstModel.status == 200 &&
+          ((musicdetailProvider.getEpisodeByPodcstModel.result?.length ?? 0) >
+              0)) {
+        if (!context.mounted) return;
+        Utils.playAudio(
+            context,
+            "podcast",
+            item.isPremium ?? 0,
+            item.isBuy ?? 0,
+            item.landscapeImg?.toString() ?? "",
+            item.title?.toString() ?? "",
+            '',
+            musicdetailProvider.episodeList?[0].episodeAudio.toString() ?? "",
+            "",
+            item.description?.toString() ?? "",
+            musicdetailProvider.episodeList?[0].id.toString() ?? "",
+            item.id.toString(),
+            0,
+            musicdetailProvider.episodeList?.toList() ?? []);
+      }
+    }
+  }
+
+  Widget _buildAbidjanFeaturedCard(List<podcastsection.Result> sections) {
+    podcastsection.Datum? item;
+    for (final s in sections) {
+      final data = s.data ?? [];
+      if (data.isNotEmpty) {
+        item = data.first;
+        break;
+      }
+    }
+    if (item == null) return const SizedBox.shrink();
+    final featured = item;
+    final bool isPremiumLocked =
+        featured.isPremium == 1 && featured.isBuy == 0;
+
+    void onFavourite() {
+      if (Constant.userID == null) {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Login()));
+        return;
+      }
+      Provider.of<AddFavouriteProvider>(context, listen: false)
+          .getAddFavourite(Constant.userID ?? "", featured.id.toString());
+      Utils.showToast("Ajouté aux favoris");
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 10, 15, 20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () => _playPodcastEpisode(featured),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: SizedBox(
+            height: 210,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                MyNetworkImage(
+                  fit: BoxFit.cover,
+                  imgWidth: double.infinity,
+                  imgHeight: double.infinity,
+                  imageUrl: featured.landscapeImg?.toString() ??
+                      featured.portraitImg?.toString() ??
+                      "",
+                ),
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [transparent, Color(0xB3000000)],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: colorPrimary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "Épisode de la semaine",
+                      style: TextStyle(
+                        color: white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                if (isPremiumLocked)
+                  const Positioned(
+                    top: 14,
+                    right: 14,
+                    child: Icon(Icons.lock, color: white, size: 18),
+                  ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MyText(
+                        color: white,
+                        text: featured.title?.toString() ?? "",
+                        multilanguage: false,
+                        inter: 4,
+                        fontsize: Dimens.textlargeBig,
+                        fontwaight: FontWeight.w700,
+                        maxline: 2,
+                        textalign: TextAlign.left,
+                        overflow: TextOverflow.ellipsis,
+                        fontstyle: FontStyle.normal,
+                      ),
+                      if ((featured.artistName ?? "").isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          featured.artistName!,
+                          style: TextStyle(
+                            color: white.withValues(alpha: 0.75),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.play_arrow,
+                                    color: black, size: 16),
+                                SizedBox(width: 6),
+                                Text(
+                                  "Écouter",
+                                  style: TextStyle(
+                                    color: black,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: onFavourite,
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: black.withValues(alpha: 0.35),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.favorite_border,
+                                  color: white, size: 18),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildPage() {
     return Consumer<PodcatsProvider>(
         builder: (context, podcastprovider, child) {
@@ -150,21 +482,22 @@ class _PodcastState extends State<Podcast> {
     });
   }
 
-  Widget setSectioByType() {
+  Widget setSectioByType({List<podcastsection.Result>? overrideSections}) {
+    final sections = overrideSections ?? podcatsProvider.sectionList;
     if (podcatsProvider.podcastSectionModel.status == 200 &&
-        podcatsProvider.sectionList != null) {
-      if ((podcatsProvider.sectionList?.length ?? 0) > 0) {
+        sections != null) {
+      if ((sections.length) > 0) {
         return MediaQuery.removePadding(
           context: context,
           removeTop: true,
           child: ListView.builder(
-            itemCount: podcatsProvider.sectionList?.length ?? 0,
+            itemCount: sections.length,
             shrinkWrap: true,
             reverse: false,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (BuildContext context, int index) {
-              if (podcatsProvider.sectionList?[index].data != null &&
-                  (podcatsProvider.sectionList?[index].data?.length ?? 0) > 0) {
+              if (sections[index].data != null &&
+                  (sections[index].data?.length ?? 0) > 0) {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,10 +514,7 @@ class _PodcastState extends State<Podcast> {
                                 MyText(
                                     color:
                                         Theme.of(context).colorScheme.surface,
-                                    text: podcatsProvider
-                                            .sectionList?[index].title
-                                            .toString() ??
-                                        "",
+                                    text: sections[index].title.toString(),
                                     fontsize: Dimens.textBig,
                                     fontwaight: FontWeight.w600,
                                     maxline: 1,
@@ -196,10 +526,7 @@ class _PodcastState extends State<Podcast> {
                                 MyText(
                                     color: gray,
                                     multilanguage: false,
-                                    text: podcatsProvider
-                                            .sectionList?[index].subTitle
-                                            .toString() ??
-                                        "",
+                                    text: sections[index].subTitle.toString(),
                                     textalign: TextAlign.center,
                                     fontsize: Dimens.textSmall,
                                     maxline: 1,
@@ -209,7 +536,7 @@ class _PodcastState extends State<Podcast> {
                               ],
                             ),
                           ),
-                          podcatsProvider.sectionList?[index].viewAll == 1
+                          sections[index].viewAll == 1
                               ? InkWell(
                                   onTap: () {
                                     AdHelper.showFullscreenAd(
@@ -219,20 +546,16 @@ class _PodcastState extends State<Podcast> {
                                         MaterialPageRoute(
                                           builder: (context) {
                                             return PodcastViewAll(
-                                              sectionId: podcatsProvider
-                                                      .sectionList?[index].id
-                                                      .toString() ??
-                                                  "",
-                                              appbarTitle: podcatsProvider
-                                                      .sectionList?[index].title
-                                                      .toString() ??
-                                                  "",
+                                              sectionId: sections[index]
+                                                      .id
+                                                      .toString(),
+                                              appbarTitle: sections[index]
+                                                      .title
+                                                      .toString(),
                                               isTitleMultiLang: false,
-                                              screenLayout: podcatsProvider
-                                                      .sectionList?[index]
+                                              screenLayout: sections[index]
                                                       .screenLayout
-                                                      .toString() ??
-                                                  "",
+                                                      .toString(),
                                               sectionType: 2,
                                             );
                                           },
@@ -264,14 +587,11 @@ class _PodcastState extends State<Podcast> {
                       width: MediaQuery.of(context).size.width,
                       height: getRemainingDataHeight(
                           sectionindex: index,
-                          screenLayout: podcatsProvider
-                                  .sectionList?[index].screenLayout
-                                  .toString() ??
-                              "",
-                          sectionList: podcatsProvider.sectionList ?? []),
+                          screenLayout:
+                              sections[index].screenLayout.toString(),
+                          sectionList: sections),
                       child: setSectionData(
-                          index: index,
-                          sectionList: podcatsProvider.sectionList ?? []),
+                          index: index, sectionList: sections),
                     ),
                   ],
                 );
