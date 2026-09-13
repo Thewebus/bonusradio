@@ -18,7 +18,6 @@ import 'package:myBonus/pages/viewall.dart';
 import 'package:myBonus/pages/radiobyid.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/commonpage.dart';
-import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/notification.dart';
 import 'package:myBonus/pages/profile.dart';
@@ -559,17 +558,9 @@ class _HomeState extends State<Home> {
       case _homeTabIndex:
         return _buildHomeContent();
       case _podcastTabIndex:
-        return Podcast(onBack: () {
-          setState(() {
-            _currentBottomNavIndex = _homeTabIndex;
-          });
-        });
+        return const Podcast();
       case _filmsTabIndex:
-        return LiveEvent(onBack: () {
-          setState(() {
-            _currentBottomNavIndex = _homeTabIndex;
-          });
-        });
+        return const LiveEvent();
       // Page Recherche désactivée
       // case _searchTabIndex:
       //   return Search(onBack: () {
@@ -1302,15 +1293,26 @@ class _HomeState extends State<Home> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              AbidjanCircleIconButton(
-                icon: Icons.settings,
-                size: 40,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const Settings()),
-                  );
-                },
+              Container(
+                width: 40,
+                height: 40,
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 2)),
+                  ],
+                ),
+                child: MyImage(
+                  width: 40,
+                  height: 40,
+                  imagePath: "logo_mybonus.png",
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1445,15 +1447,20 @@ class _HomeState extends State<Home> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              LiveNeonCircleIconButton(
-                icon: Icons.settings,
-                size: 40,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const Settings()),
-                  );
-                },
+              Container(
+                width: 40,
+                height: 40,
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: white,
+                  shape: BoxShape.circle,
+                ),
+                child: MyImage(
+                  width: 40,
+                  height: 40,
+                  imagePath: "logo_mybonus.png",
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -23,8 +23,7 @@ import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
 class LiveEvent extends StatefulWidget {
-  final VoidCallback? onBack;
-  const LiveEvent({super.key, this.onBack});
+  const LiveEvent({super.key});
 
   @override
   State<LiveEvent> createState() => _LiveEventState();
@@ -90,10 +89,8 @@ class _LiveEventState extends State<LiveEvent> {
         decoration: liveNeonBackgroundDecoration(),
         child: Column(
           children: [
-            LiveNeonHeader(
+            const LiveNeonHeader(
               title: "liveevents",
-              showBack: true,
-              onBack: () => widget.onBack?.call(),
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -153,10 +150,8 @@ class _LiveEventState extends State<LiveEvent> {
       backgroundColor: homeAccueilBg(context),
       body: Column(
         children: [
-          AbidjanHeader(
+          const AbidjanHeader(
             title: "liveevents",
-            showBack: true,
-            onBack: () => widget.onBack?.call(),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 12),

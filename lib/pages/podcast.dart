@@ -26,8 +26,7 @@ import 'package:myBonus/widget/mytext.dart';
 import 'package:myBonus/model/podcastsectionmodel.dart' as podcastsection;
 
 class Podcast extends StatefulWidget {
-  final VoidCallback? onBack;
-  const Podcast({super.key, this.onBack});
+  const Podcast({super.key});
 
   @override
   State<Podcast> createState() => _PodcastState();
@@ -95,10 +94,8 @@ class _PodcastState extends State<Podcast> {
         decoration: liveNeonBackgroundDecoration(),
         child: Column(
           children: [
-            LiveNeonHeader(
+            const LiveNeonHeader(
               title: "podcast",
-              showBack: true,
-              onBack: () => widget.onBack?.call(),
             ),
             Consumer<PodcatsProvider>(
               builder: (context, podcastprovider, child) {
@@ -173,10 +170,8 @@ class _PodcastState extends State<Podcast> {
       backgroundColor: homeAccueilBg(context),
       body: Column(
         children: [
-          AbidjanHeader(
+          const AbidjanHeader(
             title: "podcast",
-            showBack: true,
-            onBack: () => widget.onBack?.call(),
           ),
           Consumer<PodcatsProvider>(
             builder: (context, podcastprovider, child) {
