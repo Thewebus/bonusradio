@@ -5,12 +5,17 @@ import 'package:intl_phone_field/countries.dart' as intl_countries;
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/editprofile.dart';
+import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/provider/profileprovider.dart';
+import 'package:myBonus/provider/subscriptionprovider.dart';
+import 'package:myBonus/subscription/subscription.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
+import 'package:myBonus/widget/abidjan_stat_pill.dart';
 import 'package:myBonus/widget/myappbar.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -31,13 +36,17 @@ class ProfileState extends State<Profile> {
   final emailController = TextEditingController();
   final numberController = TextEditingController();
   late ProfileProvider profileProvider;
+  late SubscriptionProvider subscriptionProvider;
   String mobilenumber = "", countrycode = "", countryname = "";
 
   @override
   void initState() {
     profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+    subscriptionProvider =
+        Provider.of<SubscriptionProvider>(context, listen: false);
     super.initState();
     getApi();
+    subscriptionProvider.getPackages();
   }
 
   Future<void> getApi() async {
@@ -56,6 +65,12 @@ class ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightScaffold() {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
       body: Stack(
@@ -116,6 +131,298 @@ class ProfileState extends State<Profile> {
                 profilebody(),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ABIDJAN (day theme): flat header + settings shortcut, profile card
+  // (real name/phone/avatar, no masking), placeholder stat row, a real
+  // cheapest-plan subscription promo, and a list card (Réglages real nav,
+  // Favoris/Téléchargements visual-only per plan decision).
+  Widget _buildAbidjanScaffold() {
+    return Scaffold(
+      backgroundColor: homeAccueilBg(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            AbidjanHeader(
+              title: "profile",
+              actions: settingsAppBarAction(context, light: true),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                child: Consumer<ProfileProvider>(
+                  builder: (context, profileprovider, child) {
+                    if (profileprovider.loading) {
+                      return Utils.pageLoader();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAbidjanProfileCard(profileprovider),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: white,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const AbidjanStatRow(stats: [
+                            AbidjanStat(value: "--", label: "Écoutes"),
+                            AbidjanStat(value: "--", label: "Favoris"),
+                            AbidjanStat(value: "--", label: "Hors ligne"),
+                          ]),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildAbidjanSubscriptionPromo(),
+                        const SizedBox(height: 20),
+                        _buildAbidjanListCard(),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAbidjanProfileCard(ProfileProvider profileprovider) {
+    final hasProfile = profileprovider.profileModel.result != null &&
+        profileprovider.profileModel.result!.isNotEmpty;
+    final item = hasProfile ? profileprovider.profileModel.result![0] : null;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(35),
+            child: MyNetworkImage(
+              fit: BoxFit.cover,
+              imgWidth: 70,
+              imgHeight: 70,
+              imageUrl: item?.image?.toString() ?? "",
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item?.fullName?.toString() ?? "",
+                  style: const TextStyle(
+                    color: black,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item?.mobileNumber?.toString() ?? "",
+                  style: const TextStyle(
+                    color: gray,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return const EditProfile();
+                  },
+                ),
+              );
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: abidjanIconChipBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.edit, size: 16, color: black),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAbidjanSubscriptionPromo() {
+    return Consumer<SubscriptionProvider>(
+      builder: (context, subscriptionprovider, child) {
+        final packages = subscriptionprovider.subscriptionModel.result ?? [];
+        String? price;
+        String? time;
+        double? bestValue;
+        for (final p in packages) {
+          final parsed = double.tryParse(p.price?.toString() ?? "");
+          if (parsed == null) continue;
+          if (bestValue == null || parsed < bestValue) {
+            bestValue = parsed;
+            price = p.price?.toString();
+            time = p.time?.toString();
+          }
+        }
+        if (price == null) return const SizedBox.shrink();
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const Subscription(openFrom: ''),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [colorAccent, colorPrimary],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Passez à l'offre premium",
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${Constant.currencySymbol}$price${time != null && time.isNotEmpty ? ' / $time' : ''}",
+                        style: TextStyle(
+                          color: white.withValues(alpha: 0.9),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, color: white, size: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAbidjanListCard() {
+    Widget row({
+      required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: abidjanIconChipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: black),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: gray, size: 20),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget divider() => Container(
+          height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          color: lightgray,
+        );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          row(
+            icon: Icons.favorite_border,
+            label: "Mes favoris",
+            // Visual-only — there is no favourites-listing screen yet.
+            onTap: () => Utils.showToast("Bientôt disponible"),
+          ),
+          divider(),
+          row(
+            icon: Icons.download_outlined,
+            label: "Téléchargements",
+            // Visual-only — there is no offline-downloads feature yet.
+            onTap: () => Utils.showToast("Bientôt disponible"),
+          ),
+          divider(),
+          row(
+            icon: Icons.settings_outlined,
+            label: "Réglages",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Settings(),
+                ),
+              );
+            },
           ),
         ],
       ),
