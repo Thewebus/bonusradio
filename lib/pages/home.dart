@@ -320,7 +320,11 @@ class _HomeState extends State<Home> {
                   if (player?.audioSource == null) {
                     return const SizedBox.shrink();
                   }
-                  return const MusicDetails(ishomepage: true, minHeight: 0);
+                  return MusicDetails(
+                    ishomepage: true,
+                    minHeight: 0,
+                    currentTabIndex: _currentBottomNavIndex,
+                  );
                 },
               ),
               Positioned(

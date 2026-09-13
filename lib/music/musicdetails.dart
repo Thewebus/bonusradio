@@ -10,8 +10,12 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:miniplayer/miniplayer.dart';
 import 'package:provider/provider.dart';
+import 'package:myBonus/model/bannermodel.dart' as banner;
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/pages/login.dart';
+import 'package:myBonus/pages/search.dart';
+import 'package:myBonus/provider/addfavouriteprovider.dart';
+import 'package:myBonus/provider/homeprovider.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
 import 'package:myBonus/subscription/subscription.dart';
 import 'package:myBonus/utils/adhelper.dart';
@@ -20,6 +24,7 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/music/musicmanager.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/musicutils.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -205,10 +210,18 @@ void setPlayerExpansion(double targetHeight) {
 class MusicDetails extends StatefulWidget {
   final bool ishomepage;
   final double minHeight;
+  // Mirrors FloatingPlayer's currentTabIndex: lets the persistent overlay
+  // (the only caller that ever sets this) tell whether it's currently being
+  // force-expanded by the Radios tab (radio.dart) vs manually expanded from
+  // another tab's dock chevron — only the former gets the ABIDJAN day-theme
+  // "Nos stations" screen; the latter always keeps the immersive dark panel,
+  // as before.
+  final int currentTabIndex;
   const MusicDetails({
     super.key,
     required this.ishomepage,
     this.minHeight = playerMinHeight,
+    this.currentTabIndex = -1,
   });
 
   @override
@@ -436,6 +449,428 @@ class _MusicDetailsState extends State<MusicDetails>
     }
   }
 
+  // ABIDJAN (day theme) Radios tab. Only reachable when ishomepage: false
+  // (see build()'s lockExpanded branch) — the shared dark overlay used by
+  // every other screen (buildMusicPanel) is completely untouched.
+  void _playStation(List<banner.Result> stations, int index) {
+    final item = stations[index];
+    Utils.playAudio(
+        context,
+        "radio",
+        item.isPremium ?? 0,
+        item.isBuy ?? 0,
+        item.image?.toString() ?? "",
+        item.name?.toString() ?? "",
+        'radiotab',
+        item.songUrl?.toString() ?? "",
+        item.name?.toString() ?? "",
+        item.name?.toString() ?? "",
+        item.id.toString(),
+        "",
+        index,
+        stations);
+  }
+
+  void _onFavouriteStation(banner.Result? item) {
+    if (item == null) return;
+    if (Constant.userID == null) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => const Login()));
+      return;
+    }
+    Provider.of<AddFavouriteProvider>(context, listen: false)
+        .getAddFavourite(Constant.userID ?? "", item.id.toString());
+    Utils.showToast("Ajouté aux favoris");
+  }
+
+  banner.Result? _currentStation(
+      List<banner.Result> stations, MediaItem? mediaItem) {
+    if (stations.isEmpty) return null;
+    if (mediaItem == null) return stations.first;
+    final match = stations.where((s) => s.id.toString() == mediaItem.id);
+    return match.isNotEmpty ? match.first : stations.first;
+  }
+
+  Widget _buildAbidjanRadioScreen() {
+    return Scaffold(
+      backgroundColor: homeAccueilBg(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            AbidjanHeader(
+              title: "Radios",
+              multilanguage: false,
+              actions: [
+                AbidjanCircleIconButton(
+                  icon: Icons.search,
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => const Search()));
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: Consumer<HomeProvider>(
+                builder: (context, homeprovider, child) {
+                  final stations = (homeprovider.bannerModel.result ??
+                          <banner.Result>[])
+                      .where((r) => r.type == 1)
+                      .toList();
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAbidjanNowPlayingCard(stations),
+                        const SizedBox(height: 24),
+                        _buildAbidjanStationsSection(stations),
+                        const SizedBox(height: 20),
+                        _buildPubSlideshow(showIndicators: true),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAbidjanNowPlayingCard(List<banner.Result> stations) {
+    return StreamBuilder<SequenceState?>(
+      stream: audioPlayer.sequenceStateStream,
+      builder: (context, snapshot) {
+        final mediaItem =
+            snapshot.data?.currentSource?.tag as MediaItem?;
+        final banner.Result? current = _currentStation(stations, mediaItem);
+        final String title =
+            mediaItem?.title ?? current?.name?.toString() ?? "";
+        final String subtitle = mediaItem?.artist ?? "";
+        final String? artUri = mediaItem?.artUri?.toString();
+
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          decoration: BoxDecoration(
+            color: black,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: colorPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                            color: white, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        "EN DIRECT",
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: artUri != null && artUri.isNotEmpty
+                    ? Image.network(
+                        artUri,
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(
+                          width: 160,
+                          height: 160,
+                          color: white.withValues(alpha: 0.1),
+                          child:
+                              const Icon(Icons.radio, color: white, size: 48),
+                        ),
+                      )
+                    : Container(
+                        width: 160,
+                        height: 160,
+                        color: white.withValues(alpha: 0.1),
+                        child: const Icon(Icons.radio, color: white, size: 48),
+                      ),
+              ),
+              const SizedBox(height: 20),
+              MyText(
+                color: white,
+                text: title,
+                multilanguage: false,
+                inter: 4,
+                fontsize: Dimens.textlargeBig,
+                fontwaight: FontWeight.w700,
+                maxline: 1,
+                textalign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                fontstyle: FontStyle.normal,
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: white.withValues(alpha: 0.6),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 20),
+              const _AbidjanWaveformBars(),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => _onFavouriteStation(current),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child:
+                          Icon(Icons.favorite_border, color: white, size: 26),
+                    ),
+                  ),
+                  StreamBuilder<bool>(
+                    stream: audioPlayer.playingStream,
+                    builder: (context, snap) {
+                      final isPlaying = snap.data ?? audioPlayer.playing;
+                      return InkWell(
+                        onTap: _checkPremiumPlayPause,
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: colorPrimary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isPlaying ? Icons.pause : Icons.play_arrow,
+                            color: white,
+                            size: 32,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Visual-only — no casting feature exists in the app.
+                  InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {},
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(Icons.cast, color: white, size: 26),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAbidjanStationsSection(List<banner.Result> stations) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            MyText(
+              color: black,
+              text: "Nos stations",
+              multilanguage: false,
+              inter: 4,
+              fontsize: Dimens.textBig,
+              fontwaight: FontWeight.w700,
+              maxline: 1,
+              textalign: TextAlign.left,
+              fontstyle: FontStyle.normal,
+            ),
+            Text(
+              stations.length.toString(),
+              style: const TextStyle(
+                color: colorPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (stations.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              "Aucune station disponible pour le moment.",
+              style: TextStyle(color: gray, fontSize: 13),
+            ),
+          )
+        else
+          ...List.generate(stations.length, (index) {
+            final item = stations[index];
+            final isLast = index == stations.length - 1;
+            return Column(
+              children: [
+                StreamBuilder<SequenceState?>(
+                  stream: audioPlayer.sequenceStateStream,
+                  builder: (context, snapshot) {
+                    final currentId =
+                        (snapshot.data?.currentSource?.tag as MediaItem?)?.id;
+                    final bool isCurrent = currentId != null &&
+                        currentId == item.id.toString();
+                    return StreamBuilder<bool>(
+                      stream: audioPlayer.playingStream,
+                      builder: (context, playingSnap) {
+                        final bool isPlayingThis = isCurrent &&
+                            (playingSnap.data ?? audioPlayer.playing);
+                        return InkWell(
+                          onTap: () {
+                            if (isCurrent) {
+                              _checkPremiumPlayPause();
+                            } else {
+                              _playStation(stations, index);
+                            }
+                          },
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: MyNetworkImage(
+                                    imgWidth: 48,
+                                    imgHeight: 48,
+                                    fit: BoxFit.cover,
+                                    imageUrl: item.image?.toString() ?? "",
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        item.name?.toString() ?? "",
+                                        style: const TextStyle(
+                                          color: black,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        [item.artistName, item.languageName]
+                                            .where((s) =>
+                                                s != null &&
+                                                s.toString().trim().isNotEmpty)
+                                            .join(" · "),
+                                        style: TextStyle(
+                                          color: gray,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isCurrent)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: colorPrimary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: const BoxDecoration(
+                                              color: white,
+                                              shape: BoxShape.circle),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          isPlayingThis ? "LIVE" : "PAUSE",
+                                          style: const TextStyle(
+                                            color: white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: 34,
+                                    height: 34,
+                                    alignment: Alignment.center,
+                                    decoration: const BoxDecoration(
+                                      color: abidjanIconChipBg,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.play_arrow,
+                                        color: black, size: 18),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                if (!isLast)
+                  Container(height: 1, color: lightgray),
+              ],
+            );
+          }),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool lockExpanded = !widget.ishomepage;
@@ -482,6 +917,20 @@ class _MusicDetailsState extends State<MusicDetails>
           // Full screen mode - keep UI fully visible
           const elementOpacity = 1.0;
           const progressIndicatorHeight = 2.0;
+
+          // ABIDJAN (day theme): the Radios tab (radio.dart) force-expands
+          // this exact persistent overlay to show its "now playing" panel —
+          // it's the only caller that sets currentTabIndex, so a manual
+          // dock-chevron expand from any OTHER tab never matches this and
+          // always keeps the immersive dark panel below, in every theme.
+          final bool isNight = Theme.of(context).brightness == Brightness.dark;
+          if (!isNight && widget.currentTabIndex == radioTabIndex) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {},
+              child: _buildAbidjanRadioScreen(),
+            );
+          }
 
           return GestureDetector(
             // Absorbs generic taps so they don't fall through to the
@@ -2701,5 +3150,86 @@ class _MusicDetailsState extends State<MusicDetails>
       default:
         return notesBase;
     }
+  }
+}
+
+// Small decorative animated waveform used only by the ABIDJAN (day theme)
+// Radios tab's now-playing card. Self-contained (owns its own
+// AnimationController) so it doesn't interact with _MusicDetailsState's
+// _bounceController/_notesController, which stay reserved for the
+// night/immersive player's own effects.
+class _AbidjanWaveformBars extends StatefulWidget {
+  const _AbidjanWaveformBars();
+
+  @override
+  State<_AbidjanWaveformBars> createState() => _AbidjanWaveformBarsState();
+}
+
+class _AbidjanWaveformBarsState extends State<_AbidjanWaveformBars>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  static const List<double> _peakHeights = [
+    10,
+    22,
+    16,
+    28,
+    14,
+    24,
+    18,
+    12,
+    20,
+    15
+  ];
+  static const List<Color> _barColors = [colorPrimary, colorAccent];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 30,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_peakHeights.length, (i) {
+              final phase = i / _peakHeights.length;
+              final t = (math.sin(
+                          (_controller.value * 2 * math.pi) +
+                              (phase * 2 * math.pi)) +
+                      1) /
+                  2;
+              final barHeight = 6 + (_peakHeights[i] * t);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Container(
+                  width: 3,
+                  height: barHeight,
+                  decoration: BoxDecoration(
+                    color: _barColors[i % _barColors.length],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
   }
 }
