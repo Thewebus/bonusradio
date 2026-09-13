@@ -8,6 +8,7 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/customwidget.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/myappbar.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -35,20 +36,27 @@ class NotificationPageState extends State<NotificationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
       body: Column(
         children: [
-          MyAppbar(
-            title: "notification",
-            icon: "back.png",
-            isSimpleappbar: 1,
-            isMultiLang: true,
-            useAccueilTheme: true,
-            onBack: () {
-              Navigator.pop(context);
-            },
-          ),
+          isNight
+              ? MyAppbar(
+                  title: "notification",
+                  icon: "back.png",
+                  isSimpleappbar: 1,
+                  isMultiLang: true,
+                  useAccueilTheme: true,
+                  onBack: () {
+                    Navigator.pop(context);
+                  },
+                )
+              : AbidjanHeader(
+                  title: "notification",
+                  showBack: true,
+                  onBack: () => Navigator.pop(context),
+                ),
           Expanded(child: notificationlist()),
         ],
       ),

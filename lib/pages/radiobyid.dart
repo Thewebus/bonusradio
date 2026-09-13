@@ -12,6 +12,7 @@ import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/customwidget.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/myappbar.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -123,22 +124,30 @@ class _RadioByIdState extends State<RadioById> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
         Scaffold(
           backgroundColor: homeAccueilBg(context),
           body: Column(
             children: [
-              MyAppbar(
-                isSimpleappbar: 1,
-                title: widget.title.toString(),
-                isMultiLang: false,
-                icon: "back.png",
-                useAccueilTheme: true,
-                onBack: () {
-                  Navigator.pop(context);
-                },
-              ),
+              isNight
+                  ? MyAppbar(
+                      isSimpleappbar: 1,
+                      title: widget.title.toString(),
+                      isMultiLang: false,
+                      icon: "back.png",
+                      useAccueilTheme: true,
+                      onBack: () {
+                        Navigator.pop(context);
+                      },
+                    )
+                  : AbidjanHeader(
+                      title: widget.title.toString(),
+                      multilanguage: false,
+                      showBack: true,
+                      onBack: () => Navigator.pop(context),
+                    ),
               Expanded(
                 child: SingleChildScrollView(
                   controller: _scrollController,

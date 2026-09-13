@@ -14,6 +14,7 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/customwidget.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -50,6 +51,7 @@ class _SearchState extends State<Search> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
         Scaffold(
@@ -58,111 +60,7 @@ class _SearchState extends State<Search> {
               builder: (context, searchprovider, child) {
             return Column(
               children: [
-                Container(
-                  constraints: const BoxConstraints(minHeight: 0),
-                  decoration: BoxDecoration(
-                    color: homeSearchBarBg(context),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(25),
-                      bottomRight: Radius.circular(25),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      AppBar(
-                        backgroundColor: transparent,
-                        elevation: 0,
-                        automaticallyImplyLeading: false,
-                        titleSpacing: 10,
-                        systemOverlayStyle: SystemUiOverlayStyle(
-                          statusBarColor: homeSearchBarBg(context),
-                          statusBarBrightness: Brightness.light,
-                        ),
-                        leading: InkWell(
-                          onTap: () {
-                            if (widget.onBack != null) {
-                              widget.onBack!.call();
-                            } else {
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: MyImage(
-                              width: 15, height: 15, imagePath: "back.png"),
-                        ),
-                        title: MyText(
-                            color: white,
-                            text: "search",
-                            textalign: TextAlign.center,
-                            fontsize: Dimens.textlargeExtraBig,
-                            inter: 1,
-                            maxline: 2,
-                            multilanguage: true,
-                            fontwaight: FontWeight.w500,
-                            overflow: TextOverflow.ellipsis,
-                            fontstyle: FontStyle.normal),
-                        centerTitle: true,
-                        actions: settingsAppBarAction(context),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        width: MediaQuery.of(context).size.width,
-                        padding: const EdgeInsets.fromLTRB(15, 0, 15, 15),
-                        alignment: Alignment.center,
-                        child: TextFormField(
-                          textAlign: TextAlign.start,
-                          controller: searchController,
-                          keyboardType: TextInputType.text,
-                          cursorColor: Theme.of(context).colorScheme.surface,
-                          style: Utils.googleFontStyle(
-                              1,
-                              18,
-                              FontStyle.normal,
-                              Theme.of(context).colorScheme.surface,
-                              FontWeight.w400),
-                          onChanged: (value) async {
-                            if (value.isNotEmpty) {
-                              searchProvider.clearProvider();
-                              if (searchProvider.layoutType ==
-                                  Constant.radioType) {
-                                _fetchData("1", 0);
-                              } else {
-                                _fetchData("2", 0);
-                              }
-                            } else {
-                              searchProvider.clearProvider();
-                            }
-                          },
-                          decoration: InputDecoration(
-                            prefixIcon: Container(
-                              width: 30,
-                              height: 30,
-                              alignment: Alignment.center,
-                              child: MyImage(
-                                width: 20,
-                                height: 20,
-                                imagePath: "ic_search.png",
-                                color: lightgray,
-                              ),
-                            ),
-                            hintText: Locales.string(context, "search"),
-                            hintStyle: Utils.googleFontStyle(1, 18,
-                                FontStyle.normal, lightgray, FontWeight.w400),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(32),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            filled: true,
-                            contentPadding: const EdgeInsets.all(10),
-                            fillColor: Theme.of(context).cardColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                isNight ? _buildNightHeader() : _buildAbidjanHeader(),
                 tabButton(),
                 Expanded(child: searchList()),
               ],
@@ -170,6 +68,171 @@ class _SearchState extends State<Search> {
           }),
         ),
         buildMusicPanel(context),
+      ],
+    );
+  }
+
+  void _onSearchChanged(String value) {
+    if (value.isNotEmpty) {
+      searchProvider.clearProvider();
+      if (searchProvider.layoutType == Constant.radioType) {
+        _fetchData("1", 0);
+      } else {
+        _fetchData("2", 0);
+      }
+    } else {
+      searchProvider.clearProvider();
+    }
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightHeader() {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 0),
+      decoration: BoxDecoration(
+        color: homeSearchBarBg(context),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(25),
+          bottomRight: Radius.circular(25),
+        ),
+      ),
+      child: Column(
+        children: [
+          AppBar(
+            backgroundColor: transparent,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            titleSpacing: 10,
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: homeSearchBarBg(context),
+              statusBarBrightness: Brightness.light,
+            ),
+            leading: InkWell(
+              onTap: () {
+                if (widget.onBack != null) {
+                  widget.onBack!.call();
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: MyImage(width: 15, height: 15, imagePath: "back.png"),
+            ),
+            title: MyText(
+                color: white,
+                text: "search",
+                textalign: TextAlign.center,
+                fontsize: Dimens.textlargeExtraBig,
+                inter: 1,
+                maxline: 2,
+                multilanguage: true,
+                fontwaight: FontWeight.w500,
+                overflow: TextOverflow.ellipsis,
+                fontstyle: FontStyle.normal),
+            centerTitle: true,
+            actions: settingsAppBarAction(context),
+          ),
+          const SizedBox(height: 5),
+          Container(
+            width: MediaQuery.of(context).size.width,
+            padding: const EdgeInsets.fromLTRB(15, 0, 15, 15),
+            alignment: Alignment.center,
+            child: TextFormField(
+              textAlign: TextAlign.start,
+              controller: searchController,
+              keyboardType: TextInputType.text,
+              cursorColor: Theme.of(context).colorScheme.surface,
+              style: Utils.googleFontStyle(1, 18, FontStyle.normal,
+                  Theme.of(context).colorScheme.surface, FontWeight.w400),
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                prefixIcon: Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  child: MyImage(
+                    width: 20,
+                    height: 20,
+                    imagePath: "ic_search.png",
+                    color: lightgray,
+                  ),
+                ),
+                hintText: Locales.string(context, "search"),
+                hintStyle: Utils.googleFontStyle(
+                    1, 18, FontStyle.normal, lightgray, FontWeight.w400),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(32),
+                  borderSide: const BorderSide(
+                    width: 0,
+                    style: BorderStyle.none,
+                  ),
+                ),
+                filled: true,
+                contentPadding: const EdgeInsets.all(10),
+                fillColor: Theme.of(context).cardColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ABIDJAN (day theme): flat cream header, white rounded search pill. The
+  // search-as-you-type logic (_onSearchChanged) is shared with night.
+  Widget _buildAbidjanHeader() {
+    return Column(
+      children: [
+        AbidjanHeader(
+          title: "search",
+          showBack: true,
+          onBack: () {
+            if (widget.onBack != null) {
+              widget.onBack!.call();
+            } else {
+              Navigator.pop(context);
+            }
+          },
+          actions: settingsAppBarAction(context, light: true),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: white,
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: TextFormField(
+              textAlign: TextAlign.start,
+              controller: searchController,
+              keyboardType: TextInputType.text,
+              cursorColor: black,
+              style: Utils.googleFontStyle(
+                  1, 16, FontStyle.normal, black, FontWeight.w500),
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                prefixIcon: Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.search, color: gray, size: 20),
+                ),
+                hintText: Locales.string(context, "search"),
+                hintStyle: Utils.googleFontStyle(
+                    1, 16, FontStyle.normal, gray, FontWeight.w400),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(32),
+                  borderSide: const BorderSide(
+                    width: 0,
+                    style: BorderStyle.none,
+                  ),
+                ),
+                filled: true,
+                contentPadding: const EdgeInsets.all(10),
+                fillColor: white,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

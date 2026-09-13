@@ -14,6 +14,7 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/myappbar.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -58,94 +59,161 @@ class _EditProfileState extends State<EditProfile> {
         profileProvider.profileModel.result?[0].mobileNumber.toString() ?? "";
   }
 
+  Future<void> _pickImage() async {
+    // Select Image From Gallary and Camera
+    var image =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 100);
+    setState(() {
+      _image = image;
+      iseditimg = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Column(
           children: [
-            Stack(
-              children: [
-                // AppBar
-                MyAppbar(
-                  isSimpleappbar: 2,
-                  title: "editprofile",
-                  isMultiLang: true,
-                  useAccueilTheme: true,
-                  onBack: () {
-                    Navigator.of(context).pop(false);
-                    getApi();
-                  },
-                  icon: "back,png",
-                ),
-                // UserProfile And Change Image Icon
-                Consumer<ProfileProvider>(
-                    builder: (context, profileProvider, child) {
-                  return Positioned.fill(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(100),
-                            child: _image == null
-                                ? MyNetworkImage(
-                                    fit: BoxFit.cover,
-                                    imgWidth: 110,
-                                    imgHeight: 110,
-                                    imageUrl: profileProvider
-                                            .profileModel.result?[0].image
-                                            .toString() ??
-                                        "")
-                                : Image.file(
-                                    File(_image!.path),
-                                    fit: BoxFit.cover,
-                                    width: 110,
-                                    height: 110,
-                                  ),
-                          ),
-                          Positioned.fill(
-                            child: Align(
-                              alignment: Alignment.bottomRight,
-                              child: InkWell(
-                                onTap: () async {
-                                  // Select Image From Gallary and Camera
-                                  var image = await picker.pickImage(
-                                      source: ImageSource.gallery,
-                                      imageQuality: 100);
-                                  setState(() {
-                                    _image = image;
-                                    iseditimg = true;
-                                  });
-                                },
-                                child: Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: const BoxDecoration(
-                                      color: colorAccent,
-                                      shape: BoxShape.circle),
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    Icons.camera_alt_outlined,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            ),
+            isNight ? _buildNightTopSection() : _buildAbidjanTopSection(),
             // Body
             profilebody(),
           ],
         ),
       ),
+    );
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightTopSection() {
+    return Stack(
+      children: [
+        // AppBar
+        MyAppbar(
+          isSimpleappbar: 2,
+          title: "editprofile",
+          isMultiLang: true,
+          useAccueilTheme: true,
+          onBack: () {
+            Navigator.of(context).pop(false);
+            getApi();
+          },
+          icon: "back,png",
+        ),
+        // UserProfile And Change Image Icon
+        Consumer<ProfileProvider>(builder: (context, profileProvider, child) {
+          return Positioned.fill(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: _image == null
+                        ? MyNetworkImage(
+                            fit: BoxFit.cover,
+                            imgWidth: 110,
+                            imgHeight: 110,
+                            imageUrl: profileProvider
+                                    .profileModel.result?[0].image
+                                    .toString() ??
+                                "")
+                        : Image.file(
+                            File(_image!.path),
+                            fit: BoxFit.cover,
+                            width: 110,
+                            height: 110,
+                          ),
+                  ),
+                  Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.bottomRight,
+                      child: InkWell(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: const BoxDecoration(
+                              color: colorAccent, shape: BoxShape.circle),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.camera_alt_outlined,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  // ABIDJAN (day theme): flat header, avatar shown in-flow below it rather
+  // than overlapping a colored banner. Image-picking logic (_pickImage) and
+  // the back/refresh navigation are shared with night.
+  Widget _buildAbidjanTopSection() {
+    return Column(
+      children: [
+        AbidjanHeader(
+          title: "editprofile",
+          showBack: true,
+          onBack: () {
+            Navigator.of(context).pop(false);
+            getApi();
+          },
+        ),
+        const SizedBox(height: 10),
+        Consumer<ProfileProvider>(builder: (context, profileProvider, child) {
+          return Center(
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(55),
+                  child: _image == null
+                      ? MyNetworkImage(
+                          fit: BoxFit.cover,
+                          imgWidth: 110,
+                          imgHeight: 110,
+                          imageUrl: profileProvider
+                                  .profileModel.result?[0].image
+                                  .toString() ??
+                              "")
+                      : Image.file(
+                          File(_image!.path),
+                          fit: BoxFit.cover,
+                          width: 110,
+                          height: 110,
+                        ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: InkWell(
+                    onTap: _pickImage,
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                          color: colorAccent, shape: BoxShape.circle),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.camera_alt_outlined,
+                          color: white, size: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+        const SizedBox(height: 20),
+      ],
     );
   }
 

@@ -10,6 +10,7 @@ import 'package:myBonus/provider/subscriptionprovider.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mytext.dart';
 import 'package:myBonus/utils/utils.dart';
@@ -181,14 +182,22 @@ class SubscriptionState extends State<Subscription> {
         ),
       );
     } else {
+      final bool isNight = Theme.of(context).brightness == Brightness.dark;
       return Scaffold(
         backgroundColor: homeAccueilBg(context),
-        appBar: (widget.openFrom == 'player')
-            ? Utils.myAppBarWithoutBack(context, "subsciption", true)
-            : Utils.myAppBarWithBack(context, "subsciption", true),
+        appBar: isNight
+            ? ((widget.openFrom == 'player')
+                ? Utils.myAppBarWithoutBack(context, "subsciption", true)
+                : Utils.myAppBarWithBack(context, "subsciption", true))
+            : null,
         body: SafeArea(
           child: Column(
             children: [
+              if (!isNight)
+                AbidjanHeader(
+                  title: "subsciption",
+                  showBack: widget.openFrom != 'player',
+                ),
               Expanded(
                 child: SingleChildScrollView(
                   child: _buildSubscription(),
