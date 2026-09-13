@@ -8,6 +8,7 @@ import 'package:flutter_locales/flutter_locales.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +40,8 @@ import 'package:myBonus/utils/customwidget.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
+import 'package:myBonus/widget/abidjan_bokeh_card.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/music/floating_player.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -1242,6 +1245,165 @@ class _HomeState extends State<Home> {
   }
 
   Widget appBar() {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    return isNight ? _buildNightAppBar() : _buildAbidjanAppBar();
+  }
+
+  // ABIDJAN (day theme): brand mark + date/greeting + settings/bell circle
+  // buttons, white search pill with a (visual-only) mic icon. Tapping the
+  // search bar still opens Search() exactly as before.
+  Widget _buildAbidjanAppBar() {
+    final now = DateTime.now();
+    final String greetingWord =
+        now.hour < 12 ? "Bonjour" : (now.hour < 18 ? "Bonjour" : "Bonsoir");
+    final String? fullName =
+        profileprovider.profileModel.result?[0].fullName?.toString();
+    final String? firstName =
+        (fullName != null && fullName.trim().isNotEmpty)
+            ? fullName.trim().split(RegExp(r'\s+')).first
+            : null;
+    final String greeting =
+        firstName != null ? "$greetingWord $firstName" : "$greetingWord !";
+    final String dateLabel =
+        DateFormat('EEEE d MMMM', 'fr_FR').format(now).toUpperCase();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AbidjanCircleIconButton(
+                icon: Icons.settings,
+                size: 40,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const Settings()),
+                  );
+                },
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.headphones,
+                            size: 12, color: colorPrimary),
+                        const SizedBox(width: 4),
+                        Text(
+                          "MY BONUS",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: black.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dateLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                        color: gray,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    MyText(
+                      color: black,
+                      text: greeting,
+                      multilanguage: false,
+                      inter: 4,
+                      fontsize: Dimens.textlargeBig,
+                      fontwaight: FontWeight.w700,
+                      maxline: 1,
+                      textalign: TextAlign.left,
+                      overflow: TextOverflow.ellipsis,
+                      fontstyle: FontStyle.normal,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              AbidjanCircleIconButton(
+                icon: Icons.notifications_outlined,
+                size: 40,
+                onTap: () {
+                  if (Constant.userID == null) {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => const Login()));
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationPage(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Search()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Color(0x0F000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2)),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: black.withValues(alpha: 0.4)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      Locales.string(context, "search"),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: black.withValues(alpha: 0.4),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Visual-only — no voice-search backend exists yet.
+                  Icon(Icons.mic_none, color: black.withValues(alpha: 0.4)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightAppBar() {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 0),
@@ -1720,49 +1882,45 @@ class _HomeState extends State<Home> {
                 ),
                 itemBuilder:
                     (BuildContext context, int index, int pageViewIndex) {
-                  return Container(
-                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-                    child: InkWell(
-                      focusColor: transparent,
-                      splashColor: transparent,
-                      hoverColor: transparent,
-                      highlightColor: transparent,
-                      onTap: () async {
-                        if (homeprovider.bannerModel.result?[index].type == 1) {
-                          /* Radio Banner */
-                          Utils.playAudio(
-                              context,
-                              "radio",
-                              homeprovider
-                                      .bannerModel.result?[index].isPremium ??
-                                  0,
-                              homeprovider.bannerModel.result?[index].isBuy ??
-                                  0,
-                              homeprovider.bannerModel.result?[index].image
-                                      .toString() ??
-                                  "",
-                              homeprovider
-                                      .bannerModel.result?[index].name
-                                      .toString() ??
-                                  "",
-                              'homebanner',
-                              homeprovider.bannerModel.result?[index].songUrl
-                                      .toString() ??
-                                  "",
-                              homeprovider.bannerModel.result?[index].name
-                                      .toString() ??
-                                  "",
-                              homeprovider
-                                      .bannerModel.result?[index].name
-                                      .toString() ??
-                                  "",
-                              homeprovider.bannerModel.result?[index].id
-                                      .toString() ??
-                                  "",
-                              "",
-                              index,
-                              homeprovider.bannerModel.result?.toList() ?? []);
-                        } else {
+                  final bool isNight =
+                      Theme.of(context).brightness == Brightness.dark;
+
+                  void playThisRadioBanner() {
+                    Utils.playAudio(
+                        context,
+                        "radio",
+                        homeprovider.bannerModel.result?[index].isPremium ??
+                            0,
+                        homeprovider.bannerModel.result?[index].isBuy ?? 0,
+                        homeprovider.bannerModel.result?[index].image
+                                .toString() ??
+                            "",
+                        homeprovider.bannerModel.result?[index].name
+                                .toString() ??
+                            "",
+                        'homebanner',
+                        homeprovider.bannerModel.result?[index].songUrl
+                                .toString() ??
+                            "",
+                        homeprovider.bannerModel.result?[index].name
+                                .toString() ??
+                            "",
+                        homeprovider.bannerModel.result?[index].name
+                                .toString() ??
+                            "",
+                        homeprovider.bannerModel.result?[index].id
+                                .toString() ??
+                            "",
+                        "",
+                        index,
+                        homeprovider.bannerModel.result?.toList() ?? []);
+                  }
+
+                  Future<void> handleBannerTap() async {
+                    if (homeprovider.bannerModel.result?[index].type == 1) {
+                      /* Radio Banner */
+                      playThisRadioBanner();
+                    } else {
                           /* Podcast Banner */
                           final musicdetailProvider =
                               Provider.of<MusicDetailProvider>(context,
@@ -1817,8 +1975,10 @@ class _HomeState extends State<Home> {
                             }
                           }
                         }
-                      },
-                      child: ClipRRect(
+                  }
+
+                  // Night mode — unchanged from before the ABIDJAN redesign.
+                  final Widget nightCard = ClipRRect(
                         borderRadius: BorderRadius.circular(22),
                         child: Stack(
                           children: [
@@ -2296,7 +2456,20 @@ class _HomeState extends State<Home> {
                                 : const SizedBox.shrink(),
                           ],
                         ),
-                      ),
+                      );
+
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                    child: InkWell(
+                      focusColor: transparent,
+                      splashColor: transparent,
+                      hoverColor: transparent,
+                      highlightColor: transparent,
+                      onTap: handleBannerTap,
+                      child: isNight
+                          ? nightCard
+                          : _buildAbidjanBannerCard(
+                              homeprovider, index, playThisRadioBanner),
                     ),
                   );
                 },
@@ -2310,6 +2483,224 @@ class _HomeState extends State<Home> {
         }
       }
     });
+  }
+
+  // ABIDJAN (day theme) banner card. Business logic (playThisRadioBanner,
+  // handleBannerTap) is passed in / already wired on the outer InkWell —
+  // this only builds the visual content.
+  Widget _buildAbidjanBannerCard(
+      HomeProvider homeprovider, int index, VoidCallback onPlayRadio) {
+    final item = homeprovider.bannerModel.result?[index];
+    final bool isRadio = item?.type == 1;
+    final String title = isRadio
+        ? (item?.name?.toString() ?? "")
+        : (item?.title?.toString() ?? "");
+    final String subtitle = isRadio
+        ? [item?.artistName, item?.languageName, item?.cityName]
+            .where((s) => s != null && s.toString().trim().isNotEmpty)
+            .join(" · ")
+            .toUpperCase()
+        : (item?.artistName?.toString() ?? "");
+    final bool isPremiumLocked = item?.isPremium == 1 && item?.isBuy == 0;
+
+    Widget pillButton({
+      required Color background,
+      required Color foreground,
+      required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: foreground, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: SizedBox(
+        height: Dimens.homeBannerHeight,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            isRadio
+                ? const AbidjanBokehCard(index: 1)
+                : MyNetworkImage(
+                    fit: BoxFit.cover,
+                    imgWidth: double.infinity,
+                    imgHeight: double.infinity,
+                    imageUrl: item?.landscapeImg?.toString() ??
+                        item?.image?.toString() ??
+                        "",
+                  ),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [transparent, Color(0x99000000)],
+                ),
+              ),
+            ),
+            if (isRadio)
+              Positioned(
+                top: 14,
+                left: 14,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: colorPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration:
+                            const BoxDecoration(color: white, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        "EN DIRECT",
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Positioned(
+                top: 14,
+                left: 14,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration:
+                      const BoxDecoration(color: colorPrimary, shape: BoxShape.circle),
+                  child: const Icon(Icons.podcasts, color: white, size: 16),
+                ),
+              ),
+            if (isPremiumLocked)
+              const Positioned(
+                top: 14,
+                right: 14,
+                child: Icon(Icons.lock, color: white, size: 18),
+              ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MyText(
+                    color: white,
+                    text: title,
+                    multilanguage: false,
+                    inter: 4,
+                    fontsize: Dimens.textlargeBig,
+                    fontwaight: FontWeight.w700,
+                    maxline: 1,
+                    textalign: TextAlign.left,
+                    overflow: TextOverflow.ellipsis,
+                    fontstyle: FontStyle.normal,
+                  ),
+                  if (subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: white.withValues(alpha: 0.75),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  if (isRadio)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        StreamBuilder<bool>(
+                          stream: audioPlayer.playingStream,
+                          builder: (context, snapshot) {
+                            final isPlaying =
+                                snapshot.data ?? audioPlayer.playing;
+                            return pillButton(
+                              background: white,
+                              foreground: black,
+                              icon: isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              label: isPlaying ? "En écoute" : "Écouter",
+                              onTap: () {
+                                if (isPlaying) {
+                                  audioPlayer.pause();
+                                } else {
+                                  onPlayRadio();
+                                }
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 10),
+                        pillButton(
+                          background: black.withValues(alpha: 0.35),
+                          foreground: white,
+                          icon: Icons.videocam,
+                          label: "Regarder",
+                          onTap: () {
+                            _collapseFullPlayer();
+                            setState(() {
+                              _currentBottomNavIndex = _filmsTabIndex;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget bannerShimmer() {
@@ -3140,6 +3531,112 @@ class _HomeState extends State<Home> {
               shrinkWrap: true,
               physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
+                final bool isNight =
+                    Theme.of(context).brightness == Brightness.dark;
+                final categoryName = sectionList?[sectionindex]
+                        .data?[index]
+                        .name
+                        .toString() ??
+                    "";
+                void openCategory() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return RadioById(
+                          itemId: sectionList?[sectionindex]
+                                  .data?[index]
+                                  .id
+                                  .toString() ??
+                              "",
+                          viewType: "category",
+                          title: categoryName,
+                          languagegId: "",
+                        );
+                      },
+                    ),
+                  );
+                }
+
+                // Night mode — unchanged from before the ABIDJAN redesign.
+                final Widget nightCard = Container(
+                  width: MediaQuery.of(context).size.width * 0.19,
+                  height: MediaQuery.of(context).size.height * 0.15,
+                  decoration: BoxDecoration(
+                      color: homeCategoryPalette(context)[
+                          index % homeCategoryPalette(context).length],
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Stack(
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          MyNetworkImage(
+                            imgWidth: 40,
+                            imgHeight: 40,
+                            imageUrl: sectionList?[sectionindex]
+                                    .data?[index]
+                                    .image
+                                    .toString() ??
+                                "",
+                            fit: BoxFit.cover,
+                          ),
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.01),
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
+                            child: MyText(
+                                color: Theme.of(context).colorScheme.surface,
+                                text: categoryName,
+                                textalign: TextAlign.center,
+                                fontsize: Dimens.textSmall,
+                                inter: 1,
+                                maxline: 1,
+                                fontwaight: FontWeight.w700,
+                                overflow: TextOverflow.ellipsis,
+                                fontstyle: FontStyle.normal),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        bottom: 6,
+                        right: 6,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: white.withValues(alpha: 0.85),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: homeSearchBarBg(context),
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (isNight) {
+                  return Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: InkWell(
+                      focusColor: transparent,
+                      splashColor: transparent,
+                      hoverColor: transparent,
+                      highlightColor: transparent,
+                      onTap: openCategory,
+                      child: nightCard,
+                    ),
+                  );
+                }
+
+                // ABIDJAN (day theme): bokeh-gradient card, count caption
+                // below (visual-only — no per-category count data exists).
                 return Padding(
                   padding: const EdgeInsets.all(6.0),
                   child: InkWell(
@@ -3147,90 +3644,74 @@ class _HomeState extends State<Home> {
                     splashColor: transparent,
                     hoverColor: transparent,
                     highlightColor: transparent,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) {
-                            return RadioById(
-                              itemId: sectionList?[sectionindex]
-                                      .data?[index]
-                                      .id
-                                      .toString() ??
-                                  "",
-                              viewType: "category",
-                              title: sectionList?[sectionindex]
-                                      .data?[index]
-                                      .name
-                                      .toString() ??
-                                  "",
-                              languagegId: "",
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    child: Container(
+                    onTap: openCategory,
+                    child: SizedBox(
                       width: MediaQuery.of(context).size.width * 0.19,
-                      height: MediaQuery.of(context).size.height * 0.15,
-                      decoration: BoxDecoration(
-                          color: homeCategoryPalette(context)[
-                              index % homeCategoryPalette(context).length],
-                          borderRadius: BorderRadius.circular(20)),
-                      child: Stack(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              MyNetworkImage(
-                                imgWidth: 40,
-                                imgHeight: 40,
-                                imageUrl: sectionList?[sectionindex]
-                                        .data?[index]
-                                        .image
-                                        .toString() ??
-                                    "",
-                                fit: BoxFit.cover,
+                          AbidjanBokehCard(
+                            index: index,
+                            borderRadius: BorderRadius.circular(20),
+                            child: SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.15,
+                              child: Stack(
+                                children: [
+                                  Center(
+                                    child: MyNetworkImage(
+                                      imgWidth: 36,
+                                      imgHeight: 36,
+                                      imageUrl: sectionList?[sectionindex]
+                                              .data?[index]
+                                              .image
+                                              .toString() ??
+                                          "",
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 6,
+                                    right: 6,
+                                    child: Container(
+                                      width: 22,
+                                      height: 22,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: white.withValues(alpha: 0.85),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.play_arrow,
+                                        color: black,
+                                        size: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(
-                                  height: MediaQuery.of(context).size.height *
-                                      0.01),
-                              Container(
-                                padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
-                                child: MyText(
-                                    color:
-                                        Theme.of(context).colorScheme.surface,
-                                    text: sectionList?[sectionindex]
-                                            .data?[index]
-                                            .name
-                                            .toString() ??
-                                        "",
-                                    textalign: TextAlign.center,
-                                    fontsize: Dimens.textSmall,
-                                    inter: 1,
-                                    maxline: 1,
-                                    fontwaight: FontWeight.w700,
-                                    overflow: TextOverflow.ellipsis,
-                                    fontstyle: FontStyle.normal),
-                              ),
-                            ],
+                            ),
                           ),
-                          Positioned(
-                            bottom: 6,
-                            right: 6,
-                            child: Container(
-                              width: 22,
-                              height: 22,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: white.withValues(alpha: 0.85),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.play_arrow,
-                                color: homeSearchBarBg(context),
-                                size: 14,
-                              ),
+                          const SizedBox(height: 6),
+                          MyText(
+                            color: black,
+                            text: categoryName,
+                            textalign: TextAlign.center,
+                            fontsize: Dimens.textSmall,
+                            inter: 1,
+                            maxline: 1,
+                            fontwaight: FontWeight.w700,
+                            overflow: TextOverflow.ellipsis,
+                            fontstyle: FontStyle.normal,
+                          ),
+                          // Visual-only — no per-category title count exists
+                          // in the API.
+                          Text(
+                            "Titres",
+                            style: TextStyle(
+                              color: gray,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
