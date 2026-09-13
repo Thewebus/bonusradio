@@ -88,6 +88,54 @@ const List<List<Color>> abidjanBokehGradients = [
   [Color(0xFF3B82C4), Color(0xFF1B3F6B)],
 ];
 
+/* =================== LIVE NEON (night theme) tokens ========================
+   Additive only, mirroring the ABIDJAN section above: existing night
+   tokens (homeAccueilBg, homeSearchBarBg, homeCategoryPalette, ...) keep
+   serving the not-yet-migrated screens' _buildNightXxx() methods untouched.
+   Each screen migrated to LIVE NEON reads these new tokens instead, via its
+   own _buildLiveNeonXxx() method — never referenced from a day branch. */
+const Color liveNeonBg = Color(0xFF0D0817);
+const Color liveNeonCardBg = Color(0xFF171225);
+const Color liveNeonBorder = Color(0xFF2E2444);
+const Color liveNeonIconChipBg = Color(0xFF241A38);
+const Color liveNeonTextSecondary = Color(0xFFB9AFCB);
+
+const List<Color> liveNeonGradient = [
+  Color(0xFFEC4899),
+  Color(0xFF8B5CF6),
+  Color(0xFF3B82F6),
+];
+
+BoxDecoration liveNeonBackgroundDecoration() => const BoxDecoration(
+      gradient: RadialGradient(
+        center: Alignment(-0.7, -0.9),
+        radius: 1.4,
+        colors: [
+          Color(0xFF3A1868),
+          Color(0xFF1B0E30),
+          liveNeonBg,
+        ],
+        stops: [0.0, 0.5, 1.0],
+      ),
+    );
+
+const List<List<Color>> liveNeonBokehGradients = [
+  [Color(0xFF3B82F6), Color(0xFF10254F)],
+  [Color(0xFF10B981), Color(0xFF0B3B2C)],
+  [Color(0xFFEC4899), Color(0xFF4A0F35)],
+  [Color(0xFF8B5CF6), Color(0xFF2E1454)],
+];
+
+// Same palette already used by floating_player.dart's waveform, reused here
+// so every LIVE NEON waveform/accent looks consistent.
+const List<Color> liveNeonWaveColors = [
+  Color(0xFF00F5FF),
+  Color(0xFFFF006E),
+  Color(0xFFFFBE0B),
+  Color(0xFF8338EC),
+  Color(0xFF00D9FF),
+];
+
 /* ============================= Light Theme =============================== */
 
 final ThemeData lightTheme = ThemeData(
