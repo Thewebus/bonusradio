@@ -1778,7 +1778,12 @@ class _HomeState extends State<Home> {
       }
     } else {
       if (screenLayout == "category") {
-        return Dimens.categoryheight;
+        // ABIDJAN (day theme) category tiles show the category name and a
+        // "Titres" caption below the bokeh card, which the night design
+        // doesn't — give that row extra height so the caption isn't clipped
+        // into (and painted over) the section below it.
+        final bool isNight = Theme.of(context).brightness == Brightness.dark;
+        return isNight ? Dimens.categoryheight : Dimens.categoryheight + 60;
       } else if (screenLayout == "language") {
         return Dimens.languageheight;
       } else if (screenLayout == "artist") {
@@ -3516,11 +3521,15 @@ class _HomeState extends State<Home> {
 
   /* Category */
   Widget category(int sectionindex, List<section.Result>? sectionList) {
+    final bool isNightCategory =
+        Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         SizedBox(
           width: MediaQuery.of(context).size.width,
-          height: Dimens.categoryheight,
+          height: isNightCategory
+              ? Dimens.categoryheight
+              : Dimens.categoryheight + 60,
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
