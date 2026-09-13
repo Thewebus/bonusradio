@@ -15,6 +15,7 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
+import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -33,14 +34,42 @@ class _SettingsState extends State<Settings> {
 
   late GeneralProvider generalProvider;
 
+  // ABIDJAN (day theme) "LECTURE" card — visual toggles, cheap to persist.
+  bool _wifiOnly = false;
+  bool _liveAlerts = true;
+
   @override
   void initState() {
     super.initState();
     generalProvider = Provider.of<GeneralProvider>(context, listen: false);
+    _loadPlaybackPrefs();
+  }
+
+  Future<void> _loadPlaybackPrefs() async {
+    final wifiOnly = await sharedpre.readBool("wifi_only") ?? false;
+    final liveAlerts = await sharedpre.readBool("live_alerts") ?? true;
+    if (!mounted) return;
+    setState(() {
+      _wifiOnly = wifiOnly;
+      _liveAlerts = liveAlerts;
+    });
+  }
+
+  Future<void> _selectThemeMode(
+      ThemeProvider themeprovider, AppThemeMode mode) async {
+    themeprovider.setMode(mode);
+    await sharedpre.remove("theme_mode");
+    await sharedpre.save("theme_mode", mode.name);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+  }
+
+  // Night mode — unchanged from before the ABIDJAN redesign.
+  Widget _buildNightScaffold() {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
       appBar: AppBar(
@@ -68,11 +97,8 @@ class _SettingsState extends State<Settings> {
           children: [
             /* Theme Mode Selector: Auto / Day / Night */
             Consumer<ThemeProvider>(builder: (context, themeprovider, child) {
-              Future<void> select(AppThemeMode mode) async {
-                themeprovider.setMode(mode);
-                await sharedpre.remove("theme_mode");
-                await sharedpre.save("theme_mode", mode.name);
-              }
+              Future<void> select(AppThemeMode mode) =>
+                  _selectThemeMode(themeprovider, mode);
 
               Widget modeButton(
                   IconData icon, AppThemeMode mode, String tooltip) {
@@ -241,13 +267,380 @@ class _SettingsState extends State<Settings> {
     );
   }
 
+  // ABIDJAN (day theme): flat cream header, black-fill theme selector,
+  // "LECTURE" (visual-only playback toggles) + "APPLICATION" cards. Every
+  // tap target below delegates to the exact same handlers as night mode
+  // (_selectThemeMode, _languageChangeDialog, _showRatingDialog, Utils.share
+  // App, CommonPage navigation, _showLogoutDialog) — only the chrome differs.
+  Widget _buildAbidjanScaffold() {
+    return Scaffold(
+      backgroundColor: homeAccueilBg(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const AbidjanHeader(title: "settings", showBack: true),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildAbidjanThemeSelector(),
+                    const SizedBox(height: 22),
+                    _buildAbidjanSectionLabel("LECTURE"),
+                    const SizedBox(height: 8),
+                    _buildAbidjanCard(children: [
+                      _buildAbidjanToggleRow(
+                        icon: Icons.wifi,
+                        label: "Wi-Fi uniquement",
+                        value: _wifiOnly,
+                        onChanged: (v) async {
+                          setState(() => _wifiOnly = v);
+                          await sharedpre.saveBool("wifi_only", v);
+                        },
+                      ),
+                      _abidjanDivider(),
+                      _buildAbidjanToggleRow(
+                        icon: Icons.notifications_active_outlined,
+                        label: "Alertes en direct",
+                        value: _liveAlerts,
+                        onChanged: (v) async {
+                          setState(() => _liveAlerts = v);
+                          await sharedpre.saveBool("live_alerts", v);
+                        },
+                      ),
+                      _abidjanDivider(),
+                      _buildAbidjanStaticRow(
+                        icon: Icons.graphic_eq,
+                        label: "Qualité audio",
+                        trailing: "Automatique",
+                      ),
+                    ]),
+                    const SizedBox(height: 22),
+                    _buildAbidjanSectionLabel("APPLICATION"),
+                    const SizedBox(height: 8),
+                    _buildAbidjanCard(children: [
+                      _buildSettingItem(
+                        "ic_language.png",
+                        "changelanguage",
+                        () => _languageChangeDialog(),
+                        materialIcon: Icons.translate,
+                        light: true,
+                      ),
+                      _abidjanDivider(),
+                      _buildSettingItem(
+                        "ic_rateapp.png",
+                        "rateapp",
+                        () => _showRatingDialog(),
+                        materialIcon: Icons.star_rate_rounded,
+                        light: true,
+                      ),
+                      _abidjanDivider(),
+                      _buildSettingItem(
+                        "ic_share.png",
+                        "shareapp",
+                        () async {
+                          await Utils.shareApp(Platform.isIOS
+                              ? Constant.iosAppShareUrlDesc
+                              : Constant.androidAppShareUrlDesc);
+                        },
+                        materialIcon: Icons.share_rounded,
+                        light: true,
+                      ),
+                      _buildPages(light: true),
+                      _buildSocialLink(light: true),
+                    ]),
+                    const SizedBox(height: 28),
+                    Center(
+                      child: Column(
+                        children: [
+                          const Text(
+                            "BONUS MULTIMEDIA",
+                            style: TextStyle(
+                              color: gray,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Version ${Constant.appVersion}",
+                            style: const TextStyle(
+                              color: gray,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildAbidjanLogoutButton(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAbidjanSectionLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: gray,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1,
+      ),
+    );
+  }
+
+  Widget _buildAbidjanCard({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _abidjanDivider() {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      color: lightgray,
+    );
+  }
+
+  Widget _buildAbidjanIconChip(Widget icon) {
+    return Container(
+      width: 38,
+      height: 38,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: abidjanIconChipBg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: icon,
+    );
+  }
+
+  Widget _buildAbidjanToggleRow({
+    required IconData icon,
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          _buildAbidjanIconChip(Icon(icon, size: 18, color: black)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: black,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: white,
+            activeTrackColor: black,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAbidjanStaticRow({
+    required IconData icon,
+    required String label,
+    required String trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          _buildAbidjanIconChip(Icon(icon, size: 18, color: black)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: black,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            trailing,
+            style: const TextStyle(
+              color: gray,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAbidjanThemeSelector() {
+    return Consumer<ThemeProvider>(builder: (context, themeprovider, child) {
+      Widget modeButton(IconData icon, AppThemeMode mode, String label) {
+        final bool isActive = themeprovider.mode == mode;
+        return Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => _selectThemeMode(themeprovider, mode),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: isActive ? black : white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: isActive ? white : black, size: 20),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isActive ? white : black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      return Row(
+        children: [
+          modeButton(Icons.brightness_auto, AppThemeMode.auto, "Auto"),
+          modeButton(Icons.wb_sunny, AppThemeMode.day, "Jour"),
+          modeButton(Icons.nightlight_round, AppThemeMode.night, "Nuit"),
+        ],
+      );
+    });
+  }
+
+  Widget _buildAbidjanLogoutButton() {
+    return InkWell(
+      focusColor: transparent,
+      splashColor: transparent,
+      hoverColor: transparent,
+      highlightColor: transparent,
+      onTap: () {
+        if (Constant.userID == null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return const Login();
+              },
+            ),
+          );
+        } else {
+          _showLogoutDialog();
+        }
+      },
+      child: Container(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: white,
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: colorPrimary),
+        ),
+        child: MyText(
+          color: colorPrimary,
+          multilanguage: true,
+          text: Constant.userID != null ? "logout" : "login",
+          fontwaight: FontWeight.w700,
+          fontsize: Dimens.textTitle,
+          inter: 1,
+          fontstyle: FontStyle.normal,
+          maxline: 1,
+          overflow: TextOverflow.ellipsis,
+          textalign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSettingItem(
     String icon,
     String name,
     Function() onTap, {
     bool isNetworkIcon = false,
     IconData? materialIcon,
+    bool light = false,
   }) {
+    if (light) {
+      return InkWell(
+        focusColor: transparent,
+        splashColor: transparent,
+        hoverColor: transparent,
+        highlightColor: transparent,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              _buildAbidjanIconChip(materialIcon != null
+                  ? Icon(materialIcon, size: 18, color: black)
+                  : isNetworkIcon
+                      ? MyNetworkImage(
+                          imgWidth: 20,
+                          imgHeight: 20,
+                          fit: BoxFit.cover,
+                          imageUrl: icon,
+                        )
+                      : MyImage(
+                          width: 20,
+                          height: 20,
+                          imagePath: icon,
+                          color: black,
+                        )),
+              const SizedBox(width: 14),
+              Expanded(
+                child: MyText(
+                  color: black,
+                  text: name,
+                  textalign: TextAlign.start,
+                  multilanguage: !isNetworkIcon,
+                  fontsize: Dimens.textMedium,
+                  inter: 1,
+                  maxline: 1,
+                  fontwaight: FontWeight.w600,
+                  overflow: TextOverflow.ellipsis,
+                  fontstyle: FontStyle.normal,
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: gray, size: 20),
+            ],
+          ),
+        ),
+      );
+    }
     return InkWell(
       focusColor: transparent,
       splashColor: transparent,
@@ -803,7 +1196,7 @@ class _SettingsState extends State<Settings> {
     );
   }
 
-  Widget _buildPages() {
+  Widget _buildPages({bool light = false}) {
     if (generalProvider.loading) {
       return const SizedBox.shrink();
     } else {
@@ -839,8 +1232,9 @@ class _SettingsState extends State<Settings> {
                   },
                   isNetworkIcon: true,
                   materialIcon: Icons.menu_book_rounded,
+                  light: light,
                 ),
-                divider(),
+                light ? _abidjanDivider() : divider(),
               ],
             );
           },
@@ -851,7 +1245,7 @@ class _SettingsState extends State<Settings> {
     }
   }
 
-  Widget _buildSocialLink() {
+  Widget _buildSocialLink({bool light = false}) {
     if (generalProvider.loading) {
       return const SizedBox.shrink();
     } else {
@@ -886,8 +1280,9 @@ class _SettingsState extends State<Settings> {
                     );
                   },
                   isNetworkIcon: true,
+                  light: light,
                 ),
-                divider(),
+                light ? _abidjanDivider() : divider(),
               ],
             );
           },
