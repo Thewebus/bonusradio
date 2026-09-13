@@ -17,7 +17,9 @@ import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/abidjan_pill_filter.dart';
-import 'package:myBonus/widget/myappbar.dart';
+import 'package:myBonus/widget/liveneon_buttons.dart';
+import 'package:myBonus/widget/liveneon_header.dart';
+import 'package:myBonus/widget/liveneon_pill_filter.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -79,59 +81,86 @@ class _PodcastState extends State<Podcast> {
   @override
   Widget build(BuildContext context) {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
-    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+    return isNight ? _buildLiveNeonScaffold() : _buildAbidjanScaffold();
   }
 
-  // Night mode — unchanged from before the ABIDJAN redesign.
-  Widget _buildNightScaffold() {
+  // LIVE NEON (night theme): same structure as ABIDJAN (flat header, real
+  // category-pill filter, featured card) recolored for the neon palette.
+  // Business logic (playback, favourites, pagination) is fully shared with
+  // day via the theme-neutral provider/section helpers below.
+  Widget _buildLiveNeonScaffold() {
     return Scaffold(
-      backgroundColor: homeAccueilBg(context),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: homeAccueilBackgroundDecoration(context),
+      backgroundColor: liveNeonBg,
+      body: Container(
+        decoration: liveNeonBackgroundDecoration(),
+        child: Column(
+          children: [
+            LiveNeonHeader(
+              title: "podcast",
+              showBack: true,
+              onBack: () => widget.onBack?.call(),
             ),
-          ),
-          Column(
-            children: [
-              MyAppbar(
-                title: "podcast",
-                icon: "back.png",
-                isSimpleappbar: 1,
-                isMultiLang: true,
-                useAccueilTheme: true,
-                onBack: () {
-                  widget.onBack?.call();
+            Consumer<PodcatsProvider>(
+              builder: (context, podcastprovider, child) {
+                final options = _availableCategoryOptions();
+                if (options.length <= 1) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: LiveNeonPillFilterRow(
+                    options: options,
+                    selected: _selectedCategory,
+                    onSelected: (value) =>
+                        setState(() => _selectedCategory = value),
+                  ),
+                );
+              },
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                backgroundColor: liveNeonCardBg,
+                color: colorPrimary,
+                displacement: 70,
+                edgeOffset: 1.0,
+                triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                strokeWidth: 3,
+                onRefresh: () async {
+                  podcatsProvider.clearProvider();
+                  _fetchData(0);
                 },
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  backgroundColor: white,
-                  color: colorAccent,
-                  displacement: 70,
-                  edgeOffset: 1.0,
-                  triggerMode: RefreshIndicatorTriggerMode.anywhere,
-                  strokeWidth: 3,
-                  onRefresh: () async {
-                    podcatsProvider.clearProvider();
-                    _fetchData(0);
-                  },
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(0, 15, 0, 160),
-                    child: Column(
-                      children: [
-                        buildPage(),
-                      ],
-                    ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
+                  child: Consumer<PodcatsProvider>(
+                    builder: (context, podcastprovider, child) {
+                      if (podcastprovider.loading &&
+                          !podcastprovider.loadmore) {
+                        return shimmer();
+                      }
+                      final filtered = _filteredSections();
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            _buildLiveNeonFeaturedCard(filtered),
+                            setSectioByType(overrideSections: filtered),
+                            if (podcastprovider.loadmore)
+                              SizedBox(
+                                height: 50,
+                                child: Utils.pageLoader(),
+                              )
+                            else
+                              const SizedBox.shrink(),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
-            ],
-          ),
-          // MusicPanel now handled by FloatingPlayer in Home
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -456,30 +485,158 @@ class _PodcastState extends State<Podcast> {
     );
   }
 
-  Widget buildPage() {
-    return Consumer<PodcatsProvider>(
-        builder: (context, podcastprovider, child) {
-      if (podcastprovider.loading && !podcastprovider.loadmore) {
-        return shimmer();
-      } else {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              setSectioByType(),
-              if (podcastprovider.loadmore)
-                SizedBox(
-                  height: 50,
-                  child: Utils.pageLoader(),
-                )
-              else
-                const SizedBox.shrink(),
-            ],
-          ),
-        );
+  // LIVE NEON (night theme) featured card. Same shared logic as ABIDJAN's
+  // version (_playPodcastEpisode, favourite closure) — only the palette
+  // differs: gradient button instead of solid white, dark cast unaffected.
+  Widget _buildLiveNeonFeaturedCard(List<podcastsection.Result> sections) {
+    podcastsection.Datum? item;
+    for (final s in sections) {
+      final data = s.data ?? [];
+      if (data.isNotEmpty) {
+        item = data.first;
+        break;
       }
-    });
+    }
+    if (item == null) return const SizedBox.shrink();
+    final featured = item;
+    final bool isPremiumLocked =
+        featured.isPremium == 1 && featured.isBuy == 0;
+
+    void onFavourite() {
+      if (Constant.userID == null) {
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const Login()));
+        return;
+      }
+      Provider.of<AddFavouriteProvider>(context, listen: false)
+          .getAddFavourite(Constant.userID ?? "", featured.id.toString());
+      Utils.showToast("Ajouté aux favoris");
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 10, 15, 20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () => _playPodcastEpisode(featured),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: SizedBox(
+            height: 210,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                MyNetworkImage(
+                  fit: BoxFit.cover,
+                  imgWidth: double.infinity,
+                  imgHeight: double.infinity,
+                  imageUrl: featured.landscapeImg?.toString() ??
+                      featured.portraitImg?.toString() ??
+                      "",
+                ),
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [transparent, Color(0xCC000000)],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 14,
+                  left: 14,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: colorPrimary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "Épisode de la semaine",
+                      style: TextStyle(
+                        color: white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                if (isPremiumLocked)
+                  const Positioned(
+                    top: 14,
+                    right: 14,
+                    child: Icon(Icons.lock, color: white, size: 18),
+                  ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MyText(
+                        color: white,
+                        text: featured.title?.toString() ?? "",
+                        multilanguage: false,
+                        inter: 4,
+                        fontsize: Dimens.textlargeBig,
+                        fontwaight: FontWeight.w700,
+                        maxline: 2,
+                        textalign: TextAlign.left,
+                        overflow: TextOverflow.ellipsis,
+                        fontstyle: FontStyle.normal,
+                      ),
+                      if ((featured.artistName ?? "").isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          featured.artistName!,
+                          style: const TextStyle(
+                            color: liveNeonTextSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          LiveNeonGradientButton(
+                            icon: Icons.play_arrow,
+                            label: "Écouter",
+                            onTap: () => _playPodcastEpisode(featured),
+                          ),
+                          const SizedBox(width: 10),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: onFavourite,
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: black.withValues(alpha: 0.35),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.favorite_border,
+                                  color: white, size: 18),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget setSectioByType({List<podcastsection.Result>? overrideSections}) {
