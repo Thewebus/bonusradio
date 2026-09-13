@@ -388,21 +388,22 @@ class _HomeState extends State<Home> {
       );
     }
 
-    // ABIDJAN (day theme): the mini-player is its own black rounded-top bar
-    // sitting directly above the (separate) white nav card, instead of
-    // sharing one cream card with the nav row.
+    // ABIDJAN (day theme): the mini-player is its own separate black
+    // rounded-rect bar, with a visible gap above the fully pill-shaped white
+    // nav card below it — two distinct floating elements, not one card.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.circular(20),
           child: Container(color: black, child: floatingPlayer),
         ),
+        const SizedBox(height: 10),
         Material(
           elevation: 5,
           shadowColor: black.withValues(alpha: 0.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(40),
             side: const BorderSide(color: lightgray, width: 0.3),
           ),
           color: homeAccueilBg(context),
