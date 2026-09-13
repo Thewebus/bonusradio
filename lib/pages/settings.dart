@@ -16,6 +16,7 @@ import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
+import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
@@ -65,203 +66,332 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
-    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+    return isNight ? _buildLiveNeonScaffold() : _buildAbidjanScaffold();
   }
 
-  // Night mode — unchanged from before the ABIDJAN redesign.
-  Widget _buildNightScaffold() {
+  // LIVE NEON (night theme): same structure as ABIDJAN (flat header,
+  // theme selector, "LECTURE" + "APPLICATION" cards) recolored for the
+  // neon palette. Every tap target delegates to the exact same handlers
+  // as day mode (_selectThemeMode, _languageChangeDialog, _showRatingDialog,
+  // Utils.shareApp, CommonPage navigation, _showLogoutDialog).
+  Widget _buildLiveNeonScaffold() {
     return Scaffold(
-      backgroundColor: homeAccueilBg(context),
-      appBar: AppBar(
-        backgroundColor: homeSearchBarBg(context),
-        elevation: 0,
-        title: MyText(
-          color: white,
-          text: "settings",
-          multilanguage: true,
-          textalign: TextAlign.start,
-          fontsize: Dimens.textBig,
-          fontwaight: FontWeight.w600,
-          maxline: 1,
-          overflow: TextOverflow.ellipsis,
-          fontstyle: FontStyle.normal,
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        child: Column(
-          children: [
-            /* Theme Mode Selector: Auto / Day / Night */
-            Consumer<ThemeProvider>(builder: (context, themeprovider, child) {
-              Future<void> select(AppThemeMode mode) =>
-                  _selectThemeMode(themeprovider, mode);
-
-              Widget modeButton(
-                  IconData icon, AppThemeMode mode, String tooltip) {
-                final bool isActive = themeprovider.mode == mode;
-                return Expanded(
-                  child: Tooltip(
-                    message: tooltip,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => select(mode),
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color:
-                              isActive ? homeSearchBarBg(context) : transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isActive ? homeSearchBarBg(context) : gray,
-                          ),
+      backgroundColor: liveNeonBg,
+      body: SafeArea(
+        child: Container(
+          decoration: liveNeonBackgroundDecoration(),
+          child: Column(
+            children: [
+              const LiveNeonHeader(title: "settings", showBack: true),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLiveNeonThemeSelector(),
+                      const SizedBox(height: 22),
+                      _buildLiveNeonSectionLabel("LECTURE"),
+                      const SizedBox(height: 8),
+                      _buildLiveNeonCard(children: [
+                        _buildLiveNeonToggleRow(
+                          icon: Icons.wifi,
+                          label: "Wi-Fi uniquement",
+                          value: _wifiOnly,
+                          onChanged: (v) async {
+                            setState(() => _wifiOnly = v);
+                            await sharedpre.saveBool("wifi_only", v);
+                          },
                         ),
-                        child: Icon(
-                          icon,
-                          color: isActive
-                              ? white
-                              : Theme.of(context).colorScheme.surface,
+                        _liveNeonDivider(),
+                        _buildLiveNeonToggleRow(
+                          icon: Icons.notifications_active_outlined,
+                          label: "Alertes en direct",
+                          value: _liveAlerts,
+                          onChanged: (v) async {
+                            setState(() => _liveAlerts = v);
+                            await sharedpre.saveBool("live_alerts", v);
+                          },
+                        ),
+                        _liveNeonDivider(),
+                        _buildLiveNeonStaticRow(
+                          icon: Icons.graphic_eq,
+                          label: "Qualité audio",
+                          trailing: "Automatique",
+                        ),
+                      ]),
+                      const SizedBox(height: 22),
+                      _buildLiveNeonSectionLabel("APPLICATION"),
+                      const SizedBox(height: 8),
+                      _buildLiveNeonCard(children: [
+                        _buildSettingItem(
+                          "ic_language.png",
+                          "changelanguage",
+                          () => _languageChangeDialog(),
+                          materialIcon: Icons.translate,
+                          neon: true,
+                        ),
+                        _liveNeonDivider(),
+                        _buildSettingItem(
+                          "ic_rateapp.png",
+                          "rateapp",
+                          () => _showRatingDialog(),
+                          materialIcon: Icons.star_rate_rounded,
+                          neon: true,
+                        ),
+                        _liveNeonDivider(),
+                        _buildSettingItem(
+                          "ic_share.png",
+                          "shareapp",
+                          () async {
+                            await Utils.shareApp(Platform.isIOS
+                                ? Constant.iosAppShareUrlDesc
+                                : Constant.androidAppShareUrlDesc);
+                          },
+                          materialIcon: Icons.share_rounded,
+                          neon: true,
+                        ),
+                        _buildPages(neon: true),
+                        _buildSocialLink(neon: true),
+                      ]),
+                      const SizedBox(height: 28),
+                      Center(
+                        child: Column(
+                          children: [
+                            const Text(
+                              "BONUS MULTIMEDIA",
+                              style: TextStyle(
+                                color: liveNeonTextSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Version ${Constant.appVersion}",
+                              style: const TextStyle(
+                                color: liveNeonTextSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      _buildLiveNeonLogoutButton(),
+                    ],
                   ),
-                );
-              }
-
-              return Container(
-                padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.dark_mode_rounded,
-                          size: 25,
-                          color: homeSearchBarBg(context),
-                        ),
-                        SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.05),
-                        MyText(
-                          color: Theme.of(context).colorScheme.surface,
-                          text: "darkmode",
-                          textalign: TextAlign.center,
-                          multilanguage: true,
-                          fontsize: Dimens.textTitle,
-                          inter: 1,
-                          maxline: 2,
-                          fontwaight: FontWeight.w500,
-                          overflow: TextOverflow.ellipsis,
-                          fontstyle: FontStyle.normal,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        modeButton(
-                            Icons.brightness_auto, AppThemeMode.auto, "Auto"),
-                        modeButton(Icons.wb_sunny, AppThemeMode.day, "Jour"),
-                        modeButton(
-                            Icons.nightlight_round, AppThemeMode.night, "Nuit"),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const SizedBox(height: 15),
-            divider(),
-
-            /* Change Language */
-            _buildSettingItem(
-              "ic_language.png",
-              "changelanguage",
-              () {
-                _languageChangeDialog();
-              },
-              materialIcon: Icons.translate,
-            ),
-            divider(),
-
-            /* Rate App */
-            _buildSettingItem(
-              "ic_rateapp.png",
-              "rateapp",
-              () {
-                _showRatingDialog();
-              },
-              materialIcon: Icons.star_rate_rounded,
-            ),
-            divider(),
-
-            /* Share App */
-            _buildSettingItem(
-              "ic_share.png",
-              "shareapp",
-              () async {
-                await Utils.shareApp(Platform.isIOS
-                    ? Constant.iosAppShareUrlDesc
-                    : Constant.androidAppShareUrlDesc);
-              },
-              materialIcon: Icons.share_rounded,
-            ),
-            divider(),
-
-            /* Pages (About, Terms, Privacy) */
-            _buildPages(),
-
-            /* Social Links */
-            _buildSocialLink(),
-
-            /* Logout */
-            const SizedBox(height: 10),
-            InkWell(
-              focusColor: transparent,
-              splashColor: transparent,
-              hoverColor: transparent,
-              highlightColor: transparent,
-              onTap: () {
-                if (Constant.userID == null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return const Login();
-                      },
-                    ),
-                  );
-                } else {
-                  _showLogoutDialog();
-                }
-              },
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 14),
-                height: MediaQuery.of(context).size.height * 0.065,
-                width: MediaQuery.of(context).size.width * 0.50,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                    color: homeSearchBarBg(context),
-                    borderRadius: BorderRadius.circular(50)),
-                child: MyText(
-                  color: white,
-                  multilanguage: true,
-                  text: Constant.userID != null ? "logout" : "login",
-                  fontwaight: FontWeight.w600,
-                  fontsize: Dimens.textBig,
-                  inter: 1,
-                  fontstyle: FontStyle.normal,
-                  maxline: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textalign: TextAlign.center,
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonSectionLabel(String label) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: liveNeonTextSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1,
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonCard({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: liveNeonCardBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: liveNeonBorder),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _liveNeonDivider() {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      color: liveNeonBorder,
+    );
+  }
+
+  Widget _buildLiveNeonIconChip(Widget icon) {
+    return Container(
+      width: 38,
+      height: 38,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: liveNeonIconChipBg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: icon,
+    );
+  }
+
+  Widget _buildLiveNeonToggleRow({
+    required IconData icon,
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          _buildLiveNeonIconChip(Icon(icon, size: 18, color: white)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ],
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: white,
+            activeTrackColor: colorPrimary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonStaticRow({
+    required IconData icon,
+    required String label,
+    required String trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          _buildLiveNeonIconChip(Icon(icon, size: 18, color: white)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            trailing,
+            style: const TextStyle(
+              color: liveNeonTextSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonThemeSelector() {
+    return Consumer<ThemeProvider>(builder: (context, themeprovider, child) {
+      Widget modeButton(IconData icon, AppThemeMode mode, String label) {
+        final bool isActive = themeprovider.mode == mode;
+        return Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => _selectThemeMode(themeprovider, mode),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                gradient:
+                    isActive ? const LinearGradient(colors: liveNeonGradient) : null,
+                color: isActive ? null : liveNeonCardBg,
+                borderRadius: BorderRadius.circular(14),
+                border: isActive ? null : Border.all(color: liveNeonBorder),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon,
+                      color: isActive ? white : liveNeonTextSecondary,
+                      size: 20),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isActive ? white : liveNeonTextSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      return Row(
+        children: [
+          modeButton(Icons.brightness_auto, AppThemeMode.auto, "Auto"),
+          modeButton(Icons.wb_sunny, AppThemeMode.day, "Jour"),
+          modeButton(Icons.nightlight_round, AppThemeMode.night, "Nuit"),
+        ],
+      );
+    });
+  }
+
+  Widget _buildLiveNeonLogoutButton() {
+    return InkWell(
+      focusColor: transparent,
+      splashColor: transparent,
+      hoverColor: transparent,
+      highlightColor: transparent,
+      onTap: () {
+        if (Constant.userID == null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return const Login();
+              },
+            ),
+          );
+        } else {
+          _showLogoutDialog();
+        }
+      },
+      child: Container(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: liveNeonCardBg,
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: colorPrimary),
+        ),
+        child: MyText(
+          color: colorPrimary,
+          multilanguage: true,
+          text: Constant.userID != null ? "logout" : "login",
+          fontwaight: FontWeight.w700,
+          fontsize: Dimens.textTitle,
+          inter: 1,
+          fontstyle: FontStyle.normal,
+          maxline: 1,
+          overflow: TextOverflow.ellipsis,
+          textalign: TextAlign.center,
         ),
       ),
     );
@@ -593,8 +723,9 @@ class _SettingsState extends State<Settings> {
     bool isNetworkIcon = false,
     IconData? materialIcon,
     bool light = false,
+    bool neon = false,
   }) {
-    if (light) {
+    if (neon) {
       return InkWell(
         focusColor: transparent,
         splashColor: transparent,
@@ -605,8 +736,8 @@ class _SettingsState extends State<Settings> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              _buildAbidjanIconChip(materialIcon != null
-                  ? Icon(materialIcon, size: 18, color: black)
+              _buildLiveNeonIconChip(materialIcon != null
+                  ? Icon(materialIcon, size: 18, color: white)
                   : isNetworkIcon
                       ? MyNetworkImage(
                           imgWidth: 20,
@@ -618,12 +749,12 @@ class _SettingsState extends State<Settings> {
                           width: 20,
                           height: 20,
                           imagePath: icon,
-                          color: black,
+                          color: white,
                         )),
               const SizedBox(width: 14),
               Expanded(
                 child: MyText(
-                  color: black,
+                  color: white,
                   text: name,
                   textalign: TextAlign.start,
                   multilanguage: !isNetworkIcon,
@@ -635,7 +766,8 @@ class _SettingsState extends State<Settings> {
                   fontstyle: FontStyle.normal,
                 ),
               ),
-              const Icon(Icons.chevron_right, color: gray, size: 20),
+              const Icon(Icons.chevron_right,
+                  color: liveNeonTextSecondary, size: 20),
             ],
           ),
         ),
@@ -647,64 +779,44 @@ class _SettingsState extends State<Settings> {
       hoverColor: transparent,
       highlightColor: transparent,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
-        height: 60,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: transparent,
+            _buildAbidjanIconChip(materialIcon != null
+                ? Icon(materialIcon, size: 18, color: black)
+                : isNetworkIcon
+                    ? MyNetworkImage(
+                        imgWidth: 20,
+                        imgHeight: 20,
+                        fit: BoxFit.cover,
+                        imageUrl: icon,
+                      )
+                    : MyImage(
+                        width: 20,
+                        height: 20,
+                        imagePath: icon,
+                        color: black,
+                      )),
+            const SizedBox(width: 14),
+            Expanded(
+              child: MyText(
+                color: black,
+                text: name,
+                textalign: TextAlign.start,
+                multilanguage: !isNetworkIcon,
+                fontsize: Dimens.textMedium,
+                inter: 1,
+                maxline: 1,
+                fontwaight: FontWeight.w600,
+                overflow: TextOverflow.ellipsis,
+                fontstyle: FontStyle.normal,
               ),
-              child: materialIcon != null
-                  ? Icon(materialIcon,
-                      size: 28, color: homeSearchBarBg(context))
-                  : isNetworkIcon
-                      ? MyNetworkImage(
-                          imgWidth: 30,
-                          imgHeight: 30,
-                          fit: BoxFit.cover,
-                          imageUrl: icon,
-                        )
-                      : MyImage(
-                          width: 30,
-                          height: 30,
-                          imagePath: icon,
-                          color: homeSearchBarBg(context),
-                        ),
             ),
-            SizedBox(width: MediaQuery.of(context).size.width * 0.05),
-            MyText(
-              color: Theme.of(context).colorScheme.surface,
-              text: name,
-              textalign: TextAlign.center,
-              // Network-icon items come from the backend (About, social
-              // links...) and are already display-ready text, not
-              // translation keys — treating them as keys via
-              // multilanguage:true made LocaleText show "$name" whenever
-              // that exact string wasn't also a key in the locale files.
-              multilanguage: !isNetworkIcon,
-              fontsize: Dimens.textTitle,
-              inter: 1,
-              maxline: 2,
-              fontwaight: FontWeight.w500,
-              overflow: TextOverflow.ellipsis,
-              fontstyle: FontStyle.normal,
-            ),
+            const Icon(Icons.chevron_right, color: gray, size: 20),
           ],
         ),
       ),
-    );
-  }
-
-  Widget divider() {
-    return Container(
-      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.15),
-      width: MediaQuery.of(context).size.width,
-      margin: const EdgeInsets.fromLTRB(15, 0, 15, 0),
-      height: 1,
     );
   }
 
@@ -1196,7 +1308,7 @@ class _SettingsState extends State<Settings> {
     );
   }
 
-  Widget _buildPages({bool light = false}) {
+  Widget _buildPages({bool light = false, bool neon = false}) {
     if (generalProvider.loading) {
       return const SizedBox.shrink();
     } else {
@@ -1233,8 +1345,9 @@ class _SettingsState extends State<Settings> {
                   isNetworkIcon: true,
                   materialIcon: Icons.menu_book_rounded,
                   light: light,
+                  neon: neon,
                 ),
-                light ? _abidjanDivider() : divider(),
+                neon ? _liveNeonDivider() : _abidjanDivider(),
               ],
             );
           },
@@ -1245,7 +1358,7 @@ class _SettingsState extends State<Settings> {
     }
   }
 
-  Widget _buildSocialLink({bool light = false}) {
+  Widget _buildSocialLink({bool light = false, bool neon = false}) {
     if (generalProvider.loading) {
       return const SizedBox.shrink();
     } else {
@@ -1281,8 +1394,9 @@ class _SettingsState extends State<Settings> {
                   },
                   isNetworkIcon: true,
                   light: light,
+                  neon: neon,
                 ),
-                light ? _abidjanDivider() : divider(),
+                neon ? _liveNeonDivider() : _abidjanDivider(),
               ],
             );
           },
