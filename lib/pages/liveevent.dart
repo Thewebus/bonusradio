@@ -15,7 +15,10 @@ import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_bokeh_card.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/abidjan_pill_filter.dart';
-import 'package:myBonus/widget/myappbar.dart';
+import 'package:myBonus/widget/liveneon_bokeh_card.dart';
+import 'package:myBonus/widget/liveneon_buttons.dart';
+import 'package:myBonus/widget/liveneon_header.dart';
+import 'package:myBonus/widget/liveneon_pill_filter.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
@@ -73,60 +76,70 @@ class _LiveEventState extends State<LiveEvent> {
   @override
   Widget build(BuildContext context) {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
-    return isNight ? _buildNightScaffold() : _buildAbidjanScaffold();
+    return isNight ? _buildLiveNeonScaffold() : _buildAbidjanScaffold();
   }
 
-  // Night mode — unchanged from before the ABIDJAN redesign.
-  Widget _buildNightScaffold() {
+  // LIVE NEON (night theme): same structure as ABIDJAN (flat header, single
+  // cosmetic filter pill, featured card + "Tendances" strip) recolored for
+  // the neon palette. Tap-dispatch logic (_handleLiveEventTap) and data
+  // fetching are fully shared with day.
+  Widget _buildLiveNeonScaffold() {
     return Scaffold(
-      backgroundColor: homeAccueilBg(context),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: homeAccueilBackgroundDecoration(context),
+      backgroundColor: liveNeonBg,
+      body: Container(
+        decoration: liveNeonBackgroundDecoration(),
+        child: Column(
+          children: [
+            LiveNeonHeader(
+              title: "liveevents",
+              showBack: true,
+              onBack: () => widget.onBack?.call(),
             ),
-          ),
-          Column(
-            children: [
-              MyAppbar(
-                title: "liveevents",
-                icon: "back.png",
-                isSimpleappbar: 1,
-                isMultiLang: true,
-                useAccueilTheme: true,
-                onBack: () {
-                  widget.onBack?.call();
-                },
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LiveNeonPillFilterRow(
+                options: const ["Tous"],
+                selected: "Tous",
+                onSelected: (_) {},
               ),
-              Expanded(
-                child: RefreshIndicator(
-                  backgroundColor: white,
-                  color: colorAccent,
-                  displacement: 70,
-                  edgeOffset: 1.0,
-                  triggerMode: RefreshIndicatorTriggerMode.anywhere,
-                  strokeWidth: 3,
-                  onRefresh: () async {
-                    liveEventProvider.clearProvider();
-                    _fetchData(0);
-                  },
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(0, 15, 0, 160),
-                    scrollDirection: Axis.vertical,
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        buildLiveEventList(),
-                      ],
-                    ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                backgroundColor: liveNeonCardBg,
+                color: colorPrimary,
+                displacement: 70,
+                edgeOffset: 1.0,
+                triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                strokeWidth: 3,
+                onRefresh: () async {
+                  liveEventProvider.clearProvider();
+                  _fetchData(0);
+                },
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
+                  scrollDirection: Axis.vertical,
+                  physics: const BouncingScrollPhysics(),
+                  child: Consumer<LiveEventProvider>(
+                    builder: (context, liveeventprovider, child) {
+                      if (liveeventprovider.loading &&
+                          !liveeventprovider.loadMore) {
+                        return buildLiveEventListShimmer();
+                      }
+                      return Column(
+                        children: [
+                          _buildLiveNeonFeaturedCard(),
+                          _buildLiveNeonTrendingStrip(),
+                          buildLiveEventList(),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -432,6 +445,215 @@ class _LiveEventState extends State<LiveEvent> {
                 child: SizedBox(
                   width: 150,
                   child: AbidjanBokehCard(
+                    index: index,
+                    borderRadius: BorderRadius.circular(18),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            item.title?.toString() ?? "",
+                            style: const TextStyle(
+                              color: white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isPaidLocked
+                                ? "${Constant.currencySymbol}${item.price ?? ""}"
+                                : "Gratuit",
+                            style: TextStyle(
+                              color: white.withValues(alpha: 0.85),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  // LIVE NEON (night theme) featured card. Same shared _handleLiveEventTap
+  // logic as ABIDJAN's version — only the palette differs.
+  Widget _buildLiveNeonFeaturedCard() {
+    final list = liveEventProvider.liveEventList;
+    if (list == null || list.isEmpty) return const SizedBox.shrink();
+    final Result item = list.first;
+    final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
+    bool isNew = false;
+    final createdAt = item.createdAt;
+    if (createdAt != null) {
+      final parsed = DateTime.tryParse(createdAt);
+      if (parsed != null) {
+        isNew = DateTime.now().difference(parsed).inDays <= 7;
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 10, 15, 20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () => _handleLiveEventTap(0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: SizedBox(
+            height: 220,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                MyNetworkImage(
+                  fit: BoxFit.cover,
+                  imgWidth: double.infinity,
+                  imgHeight: double.infinity,
+                  imageUrl: item.landscapeImg?.toString() ??
+                      item.portraitImg?.toString() ??
+                      "",
+                ),
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [transparent, Color(0xCC000000)],
+                    ),
+                  ),
+                ),
+                if (isNew)
+                  Positioned(
+                    top: 14,
+                    left: 14,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: colorPrimary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "Nouveau",
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: black.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    // Visual-only — there is no watch-list feature in the app.
+                    child: const Icon(Icons.bookmark_border,
+                        color: white, size: 18),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MyText(
+                        color: white,
+                        text: item.title?.toString() ?? "",
+                        multilanguage: false,
+                        inter: 4,
+                        fontsize: Dimens.textlargeBig,
+                        fontwaight: FontWeight.w700,
+                        maxline: 2,
+                        textalign: TextAlign.left,
+                        overflow: TextOverflow.ellipsis,
+                        fontstyle: FontStyle.normal,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          LiveNeonGradientButton(
+                            icon: Icons.play_arrow,
+                            label: isPaidLocked
+                                ? "${Constant.currencySymbol}${item.price ?? ""}"
+                                : "Regarder",
+                            onTap: () => _handleLiveEventTap(0),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveNeonTrendingStrip() {
+    final list = liveEventProvider.liveEventList;
+    if (list == null || list.length < 2) return const SizedBox.shrink();
+    final items = list.length > 8 ? list.sublist(0, 8) : list;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+          child: MyText(
+            color: white,
+            text: "Tendances",
+            multilanguage: false,
+            inter: 4,
+            fontsize: Dimens.textBig,
+            fontwaight: FontWeight.w700,
+            maxline: 1,
+            textalign: TextAlign.left,
+            fontstyle: FontStyle.normal,
+          ),
+        ),
+        SizedBox(
+          height: 130,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              final originalIndex = list.indexOf(item);
+              final bool isPaidLocked =
+                  item.isPaid == 1 && item.isJoin == 0;
+              return InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => _handleLiveEventTap(originalIndex),
+                child: SizedBox(
+                  width: 150,
+                  child: LiveNeonBokehCard(
                     index: index,
                     borderRadius: BorderRadius.circular(18),
                     child: Padding(
