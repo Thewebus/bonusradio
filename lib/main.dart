@@ -46,7 +46,7 @@ Future<void> main() async {
     androidShowNotificationBadge: true,
   );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await Locales.init([
+  const supportedLanguageCodes = [
     'fr',
     'en',
     'ar',
@@ -61,11 +61,19 @@ Future<void> main() async {
     'tr',
     'vi',
     'sq'
-  ]);
-  // Needed for any French-localized DateFormat (e.g. the ABIDJAN home
-  // header's date line) — without this, formatting with the 'fr_FR' locale
-  // throws at runtime instead of falling back silently.
-  await initializeDateFormatting('fr_FR', null);
+  ];
+  await Locales.init(supportedLanguageCodes);
+  // Needed for the ABIDJAN home header's date line, which formats using
+  // whichever language the app is currently set to — without this, that
+  // DateFormat throws at runtime instead of rendering the date.
+  for (final code in supportedLanguageCodes) {
+    try {
+      await initializeDateFormatting(code, null);
+    } catch (_) {
+      // Some codes may lack intl date-symbol data; the date line falls
+      // back to the default locale's formatting for those.
+    }
+  }
 
   if (!kIsWeb) {
     MobileAds.instance.initialize();

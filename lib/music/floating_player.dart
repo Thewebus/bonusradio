@@ -465,94 +465,102 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
     final String displaySubtitle =
         isLive && subtitle.isNotEmpty ? "En direct · $subtitle" : subtitle;
 
-    return InkWell(
-      onTap: _expandPlayer,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: artUri != null && artUri.isNotEmpty
-                  ? Image.network(
-                      artUri,
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: _expandPlayer,
+        focusColor: transparent,
+        splashColor: transparent,
+        hoverColor: transparent,
+        highlightColor: transparent,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: artUri != null && artUri.isNotEmpty
+                    ? Image.network(
+                        artUri,
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 40,
+                          height: 40,
+                          color: white.withValues(alpha: 0.15),
+                          child:
+                              const Icon(Icons.radio, color: white, size: 20),
+                        ),
+                      )
+                    : Container(
                         width: 40,
                         height: 40,
                         color: white.withValues(alpha: 0.15),
                         child: const Icon(Icons.radio, color: white, size: 20),
                       ),
-                    )
-                  : Container(
-                      width: 40,
-                      height: 40,
-                      color: white.withValues(alpha: 0.15),
-                      child: const Icon(Icons.radio, color: white, size: 20),
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  MyText(
-                    color: white,
-                    text: title,
-                    multilanguage: false,
-                    fontsize: 14,
-                    fontwaight: FontWeight.w700,
-                    maxline: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  MyText(
-                    color: white.withValues(alpha: 0.6),
-                    text: displaySubtitle,
-                    multilanguage: false,
-                    fontsize: 12,
-                    fontwaight: FontWeight.w500,
-                    maxline: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
               ),
-            ),
-            StreamBuilder<bool>(
-              stream: effectivePlayer.playingStream,
-              builder: (context, snapshot) {
-                final isPlaying = snapshot.data ?? effectivePlayer.playing;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () {
-                    if (isPlaying) {
-                      effectivePlayer.pause();
-                    } else {
-                      effectivePlayer.play();
-                    }
-                    setState(() {});
-                  },
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: colorPrimary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isPlaying ? Icons.pause : Icons.play_arrow,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MyText(
                       color: white,
-                      size: 20,
+                      text: title,
+                      multilanguage: false,
+                      fontsize: 14,
+                      fontwaight: FontWeight.w700,
+                      maxline: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                );
-              },
-            ),
-          ],
+                    const SizedBox(height: 2),
+                    MyText(
+                      color: white.withValues(alpha: 0.6),
+                      text: displaySubtitle,
+                      multilanguage: false,
+                      fontsize: 12,
+                      fontwaight: FontWeight.w500,
+                      maxline: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              StreamBuilder<bool>(
+                stream: effectivePlayer.playingStream,
+                builder: (context, snapshot) {
+                  final isPlaying = snapshot.data ?? effectivePlayer.playing;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () {
+                      if (isPlaying) {
+                        effectivePlayer.pause();
+                      } else {
+                        effectivePlayer.play();
+                      }
+                      setState(() {});
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: colorPrimary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: white,
+                        size: 20,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

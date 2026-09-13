@@ -389,13 +389,16 @@ class _HomeState extends State<Home> {
     }
 
     // ABIDJAN (day theme): the mini-player is its own separate black
-    // rounded-rect bar, with a visible gap above the fully pill-shaped white
-    // nav card below it — two distinct floating elements, not one card.
+    // rounded-rect bar, with a visible gap above the white nav card below
+    // it — two distinct floating elements, not one card. Radius matches the
+    // header's search field (16) for a consistent rounding across the
+    // screen.
+    const double abidjanDockRadius = 16;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(abidjanDockRadius),
           child: Container(color: black, child: floatingPlayer),
         ),
         const SizedBox(height: 10),
@@ -403,7 +406,7 @@ class _HomeState extends State<Home> {
           elevation: 5,
           shadowColor: black.withValues(alpha: 0.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(40),
+            borderRadius: BorderRadius.circular(abidjanDockRadius),
             side: const BorderSide(color: lightgray, width: 0.3),
           ),
           color: homeAccueilBg(context),
@@ -1259,8 +1262,10 @@ class _HomeState extends State<Home> {
   // search bar still opens Search() exactly as before.
   Widget _buildAbidjanAppBar() {
     final now = DateTime.now();
-    final String greetingWord =
-        now.hour < 12 ? "Bonjour" : (now.hour < 18 ? "Bonjour" : "Bonsoir");
+    final String greetingKey = now.hour < 12
+        ? "goodmorning"
+        : (now.hour < 18 ? "goodafternoon" : "goodevening");
+    final String greetingWord = Locales.string(context, greetingKey);
     final String? fullName =
         profileprovider.profileModel.result?[0].fullName?.toString();
     final String? firstName =
@@ -1269,8 +1274,9 @@ class _HomeState extends State<Home> {
             : null;
     final String greeting =
         firstName != null ? "$greetingWord $firstName" : "$greetingWord !";
+    final String currentLangCode = Localizations.localeOf(context).languageCode;
     final String dateLabel =
-        DateFormat('EEEE d MMMM', 'fr_FR').format(now).toUpperCase();
+        DateFormat('EEEE d MMMM', currentLangCode).format(now).toUpperCase();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
@@ -1303,7 +1309,7 @@ class _HomeState extends State<Home> {
                             size: 12, color: colorPrimary),
                         const SizedBox(width: 4),
                         Text(
-                          "MY BONUS",
+                          Locales.string(context, "home").toUpperCase(),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -3524,6 +3530,36 @@ class _HomeState extends State<Home> {
 
 /* ============================ Other Layout Start ======================= */
 
+  // ABIDJAN (day theme) category tiles: a small representative icon rather
+  // than the category's own image — visual-only heuristic keyed off common
+  // category-name keywords, since categories are free-text from the backend
+  // and there's no dedicated icon field to key off instead.
+  IconData _categoryIcon(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('popul') || n.contains('tendance') || n.contains('trend')) {
+      return Icons.trending_up;
+    } else if (n.contains('gospel') || n.contains('louange')) {
+      return Icons.church;
+    } else if (n.contains('coupé') ||
+        n.contains('coupe') ||
+        n.contains('decal') || n.contains('décal')) {
+      return Icons.content_cut;
+    } else if (n.contains('sport')) {
+      return Icons.sports_soccer;
+    } else if (n.contains('info') || n.contains('actualit')) {
+      return Icons.newspaper;
+    } else if (n.contains('humour') || n.contains('comedie') ||
+        n.contains('comédie')) {
+      return Icons.theater_comedy;
+    } else if (n.contains('enfant') || n.contains('kids')) {
+      return Icons.child_care;
+    } else if (n.contains('musi') || n.contains('music')) {
+      return Icons.music_note;
+    } else {
+      return Icons.radio;
+    }
+  }
+
   /* Category */
   Widget category(int sectionindex, List<section.Result>? sectionList) {
     final bool isNightCategory =
@@ -3649,8 +3685,12 @@ class _HomeState extends State<Home> {
                   );
                 }
 
-                // ABIDJAN (day theme): bokeh-gradient card, count caption
-                // below (visual-only — no per-category count data exists).
+                // ABIDJAN (day theme): solid-color block with a small
+                // representative icon badge, count caption below
+                // (visual-only — no per-category count data exists).
+                final Color cardColor = abidjanBokehGradients[
+                        index % abidjanBokehGradients.length]
+                    .first;
                 return Padding(
                   padding: const EdgeInsets.all(6.0),
                   child: InkWell(
@@ -3664,45 +3704,27 @@ class _HomeState extends State<Home> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AbidjanBokehCard(
-                            index: index,
-                            borderRadius: BorderRadius.circular(20),
-                            child: SizedBox(
-                              height:
-                                  MediaQuery.of(context).size.height * 0.15,
-                              child: Stack(
-                                children: [
-                                  Center(
-                                    child: MyNetworkImage(
-                                      imgWidth: 36,
-                                      imgHeight: 36,
-                                      imageUrl: sectionList?[sectionindex]
-                                              .data?[index]
-                                              .image
-                                              .toString() ??
-                                          "",
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 6,
-                                    right: 6,
-                                    child: Container(
-                                      width: 22,
-                                      height: 22,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: white.withValues(alpha: 0.85),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.play_arrow,
-                                        color: black,
-                                        size: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          Container(
+                            height: MediaQuery.of(context).size.height * 0.09,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            alignment: Alignment.topLeft,
+                            child: Container(
+                              width: 26,
+                              height: 26,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _categoryIcon(categoryName),
+                                color: cardColor,
+                                size: 14,
                               ),
                             ),
                           ),
