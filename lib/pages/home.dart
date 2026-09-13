@@ -3,7 +3,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -41,6 +40,9 @@ import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
+import 'package:myBonus/widget/liveneon_bokeh_card.dart';
+import 'package:myBonus/widget/liveneon_buttons.dart';
+import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/abidjan_bokeh_card.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/music/floating_player.dart';
@@ -1259,10 +1261,10 @@ class _HomeState extends State<Home> {
     return isNight ? _buildNightAppBar() : _buildAbidjanAppBar();
   }
 
-  // ABIDJAN (day theme): brand mark + date/greeting + settings/bell circle
-  // buttons, white search pill with a (visual-only) mic icon. Tapping the
-  // search bar still opens Search() exactly as before.
-  Widget _buildAbidjanAppBar() {
+  // Shared by both header themes: greeting word picked by hour bracket (all
+  // localized), first name appended when available, date formatted in the
+  // app's current language.
+  ({String greeting, String dateLabel}) _greetingAndDate() {
     final now = DateTime.now();
     final String greetingKey = now.hour < 12
         ? "goodmorning"
@@ -1279,6 +1281,16 @@ class _HomeState extends State<Home> {
     final String currentLangCode = Localizations.localeOf(context).languageCode;
     final String dateLabel =
         DateFormat('EEEE d MMMM', currentLangCode).format(now).toUpperCase();
+    return (greeting: greeting, dateLabel: dateLabel);
+  }
+
+  // ABIDJAN (day theme): brand mark + date/greeting + settings/bell circle
+  // buttons, white search pill with a (visual-only) mic icon. Tapping the
+  // search bar still opens Search() exactly as before.
+  Widget _buildAbidjanAppBar() {
+    final greetingInfo = _greetingAndDate();
+    final String greeting = greetingInfo.greeting;
+    final String dateLabel = greetingInfo.dateLabel;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
@@ -1416,170 +1428,135 @@ class _HomeState extends State<Home> {
   }
 
   // Night mode — unchanged from before the ABIDJAN redesign.
+  // LIVE NEON (night theme): same header layout/logic as ABIDJAN (brand
+  // mark + date/greeting + settings/bell circle buttons, search pill with a
+  // visual-only mic icon) recolored for the neon palette. Settings gear is
+  // kept alongside the bell for consistency with the day theme.
   Widget _buildNightAppBar() {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 0),
+    final greetingInfo = _greetingAndDate();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppBar(
-            backgroundColor: transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            surfaceTintColor: transparent,
-            systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: homeAccueilBg(context),
-                statusBarBrightness: Theme.of(context).brightness,
-                statusBarIconBrightness:
-                    Theme.of(context).brightness == Brightness.dark
-                        ? Brightness.light
-                        : Brightness.dark),
-            titleSpacing: 10,
-            leading: IconButton(
-              icon: Icon(Icons.settings,
-                  color: Theme.of(context).colorScheme.surface),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const Settings(),
-                  ),
-                );
-              },
-            ),
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                MyText(
-                  color: Theme.of(context).colorScheme.surface,
-                  multilanguage: true,
-                  text: "discover",
-                  textalign: TextAlign.center,
-                  fontsize: Dimens.textlargeExtraBig,
-                  inter: 1,
-                  maxline: 2,
-                  fontwaight: FontWeight.w700,
-                  overflow: TextOverflow.ellipsis,
-                  fontstyle: FontStyle.normal,
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () {
-                    if (Constant.userID == null) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Login()));
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationPage(),
-                        ),
-                      );
-                    }
-                  },
-                  icon: Icon(
-                    Icons.notifications_outlined,
-                    color: Theme.of(context).colorScheme.surface,
-                    size: 30,
-                  ),
-                ),
-                SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-                InkWell(
-                  focusColor: transparent,
-                  splashColor: transparent,
-                  hoverColor: transparent,
-                  highlightColor: transparent,
-                  onTap: () {
-                    if (Constant.userID == null) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Login()));
-                    } else {
-                      _collapseFullPlayer();
-                      setState(() {
-                        _currentBottomNavIndex = _profileTabIndex;
-                      });
-                    }
-                  },
-                  child: Constant.userID == null
-                      ? MyImage(
-                          width: 30,
-                          height: 30,
-                          imagePath: "ic_userprofile.png",
-                        )
-                      : Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(50),
-                              border: Border.all(
-                                color: homeSearchBarBg(context),
-                                width: 2,
-                              )),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
-                            child: MyNetworkImage(
-                                imgWidth: 30,
-                                imgHeight: 30,
-                                fit: BoxFit.cover,
-                                imageUrl: Constant.userImage ?? ""),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              LiveNeonCircleIconButton(
+                icon: Icons.settings,
+                size: 40,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const Settings()),
+                  );
+                },
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.headphones,
+                            size: 12, color: colorPrimary),
+                        const SizedBox(width: 4),
+                        Text(
+                          Locales.string(context, "home").toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: liveNeonTextSecondary,
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      greetingInfo.dateLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                        color: liveNeonTextSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    MyText(
+                      color: white,
+                      text: greetingInfo.greeting,
+                      multilanguage: false,
+                      inter: 4,
+                      fontsize: Dimens.textlargeBig,
+                      fontwaight: FontWeight.w700,
+                      maxline: 1,
+                      textalign: TextAlign.left,
+                      overflow: TextOverflow.ellipsis,
+                      fontstyle: FontStyle.normal,
+                    ),
+                  ],
                 ),
-                SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-              ],
-            ),
-            centerTitle: false,
+              ),
+              const SizedBox(width: 12),
+              LiveNeonCircleIconButton(
+                icon: Icons.notifications_outlined,
+                size: 40,
+                onTap: () {
+                  if (Constant.userID == null) {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => const Login()));
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationPage(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 5),
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: const EdgeInsets.fromLTRB(15, 0, 15, 15),
-            alignment: Alignment.center,
-            child: TextFormField(
-              textAlign: TextAlign.left,
-              keyboardType: TextInputType.text,
-              readOnly: true,
-              style: Utils.googleFontStyle(
-                  1, 16, FontStyle.normal, white, FontWeight.w400),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const Search();
-                    },
+          const SizedBox(height: 16),
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Search()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: liveNeonCardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: liveNeonBorder),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: liveNeonTextSecondary, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      Locales.string(context, "search"),
+                      style: const TextStyle(
+                        color: liveNeonTextSecondary,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                );
-              },
-              decoration: InputDecoration(
-                prefixIcon: Container(
-                  width: 30,
-                  height: 30,
-                  alignment: Alignment.center,
-                  child: MyImage(
-                    width: 20,
-                    height: 20,
-                    imagePath: "ic_search.png",
-                    color: white,
-                  ),
-                ),
-                hintText: Locales.string(context, "search"),
-                hintStyle: Utils.googleFontStyle(
-                    1, 16, FontStyle.normal, white, FontWeight.w400),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    width: 0,
-                    style: BorderStyle.none,
-                  ),
-                ),
-                filled: true,
-                contentPadding: const EdgeInsets.all(10),
-                fillColor: homeSearchBarBg(context),
+                  const Icon(Icons.mic_none,
+                      color: liveNeonTextSecondary, size: 20),
+                ],
               ),
             ),
           ),
@@ -1791,12 +1768,11 @@ class _HomeState extends State<Home> {
       }
     } else {
       if (screenLayout == "category") {
-        // ABIDJAN (day theme) category tiles show the category name and a
-        // "Titres" caption below the bokeh card, which the night design
-        // doesn't — give that row extra height so the caption isn't clipped
-        // into (and painted over) the section below it.
-        final bool isNight = Theme.of(context).brightness == Brightness.dark;
-        return isNight ? Dimens.categoryheight : Dimens.categoryheight + 60;
+        // Both themes' category tiles show the category name and a
+        // "Titres" caption below the block, so both need the extra height
+        // — otherwise the caption gets clipped into (and painted over) the
+        // section below it.
+        return Dimens.categoryheight + 60;
       } else if (screenLayout == "language") {
         return Dimens.languageheight;
       } else if (screenLayout == "artist") {
@@ -1995,487 +1971,6 @@ class _HomeState extends State<Home> {
                         }
                   }
 
-                  // Night mode — unchanged from before the ABIDJAN redesign.
-                  final Widget nightCard = ClipRRect(
-                        borderRadius: BorderRadius.circular(22),
-                        child: Stack(
-                          children: [
-                            MyNetworkImage(
-                                fit: BoxFit.cover,
-                                imgWidth: MediaQuery.of(context).size.width,
-                                imgHeight: MediaQuery.of(context).size.height,
-                                imageUrl: homeprovider
-                                            .bannerModel.result?[index].type ==
-                                        1
-                                    ? (homeprovider
-                                            .bannerModel.result?[index].image
-                                            .toString() ??
-                                        "")
-                                    : (homeprovider.bannerModel.result?[index]
-                                            .landscapeImg
-                                            .toString() ??
-                                        "")),
-                            Container(
-                              width: MediaQuery.of(context).size.width,
-                              height: MediaQuery.of(context).size.height,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    transparent,
-                                    homeSearchBarBg(context)
-                                        .withValues(alpha: 0.75),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            if (homeprovider.bannerModel.result?[index].type ==
-                                1)
-                              Positioned(
-                                top: 13,
-                                left: 13,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: black.withValues(alpha: 0.35),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: homeLiveBadge(context),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      MyText(
-                                        color: white,
-                                        text: "EN DIRECT",
-                                        multilanguage: false,
-                                        textalign: TextAlign.center,
-                                        fontsize: Dimens.textExtraSmall,
-                                        inter: 1,
-                                        maxline: 1,
-                                        fontwaight: FontWeight.w700,
-                                        overflow: TextOverflow.ellipsis,
-                                        fontstyle: FontStyle.normal,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            Positioned.fill(
-                              bottom: 13,
-                              left: 13,
-                              right: 13,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            5, 1, 5, 1),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors:
-                                                Theme.of(context).brightness ==
-                                                        Brightness.dark
-                                                    ? const [
-                                                        colorAccent,
-                                                        colorPrimary
-                                                      ]
-                                                    : [
-                                                        colorPrimary,
-                                                        homeSearchBarBg(context)
-                                                      ],
-                                            end: Alignment.bottomLeft,
-                                            begin: Alignment.bottomRight,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(02),
-                                        ),
-                                        child: Center(
-                                          child: MyText(
-                                            color: white,
-                                            text: homeprovider.bannerModel
-                                                    .result?[index].languageName
-                                                    .toString() ??
-                                                "",
-                                            textalign: TextAlign.center,
-                                            fontsize: Dimens.textExtraSmall,
-                                            inter: 1,
-                                            maxline: 2,
-                                            fontwaight: FontWeight.w400,
-                                            overflow: TextOverflow.ellipsis,
-                                            fontstyle: FontStyle.normal,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.40,
-                                        child: MyText(
-                                          color: white,
-                                          text: homeprovider.bannerModel
-                                                      .result?[index].type ==
-                                                  1
-                                              ? (homeprovider.bannerModel
-                                                      .result?[index].name
-                                                      .toString() ??
-                                                  "")
-                                              : (homeprovider.bannerModel
-                                                      .result?[index].title
-                                                      .toString() ??
-                                                  ""),
-                                          textalign: TextAlign.left,
-                                          fontsize: Dimens.textTitle,
-                                          inter: 1,
-                                          maxline: 1,
-                                          fontwaight: FontWeight.w700,
-                                          overflow: TextOverflow.ellipsis,
-                                          fontstyle: FontStyle.normal,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.40,
-                                        child: MyText(
-                                          color: white,
-                                          text: homeprovider.bannerModel
-                                                  .result?[index].artistName
-                                                  .toString() ??
-                                              "",
-                                          textalign: TextAlign.left,
-                                          fontsize: Dimens.textSmall,
-                                          inter: 1,
-                                          maxline: 2,
-                                          fontwaight: FontWeight.w600,
-                                          overflow: TextOverflow.ellipsis,
-                                          fontstyle: FontStyle.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  homeprovider.bannerModel.result?[index]
-                                              .type !=
-                                          1
-                                      ? Container(
-                                          height: 40,
-                                          width: 40,
-                                          alignment: Alignment.center,
-                                          decoration: const BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: colorPrimary,
-                                          ),
-                                          child: MyImage(
-                                            imagePath: "ic_podcast.png",
-                                            height: 20,
-                                            color: white,
-                                            width: 20,
-                                          ),
-                                        )
-                                      : Flexible(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              // Bouton "Ecouter" / "Arrêter" - reflète l'état de lecture
-                                              Flexible(
-                                                child: StreamBuilder<bool>(
-                                                  stream:
-                                                      audioPlayer.playingStream,
-                                                  builder: (context, snapshot) {
-                                                    final isPlaying =
-                                                        snapshot.data ??
-                                                            audioPlayer.playing;
-                                                    return InkWell(
-                                                      focusColor: transparent,
-                                                      splashColor: transparent,
-                                                      hoverColor: transparent,
-                                                      highlightColor:
-                                                          transparent,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      onTap: () {
-                                                        if (isPlaying) {
-                                                          audioPlayer.pause();
-                                                        } else {
-                                                          Utils.playAudio(
-                                                              context,
-                                                              "radio",
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .isPremium ??
-                                                                  0,
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .isBuy ??
-                                                                  0,
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .image
-                                                                      .toString() ??
-                                                                  "",
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .name
-                                                                      .toString() ??
-                                                                  "",
-                                                              'homebanner',
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .songUrl
-                                                                      .toString() ??
-                                                                  "",
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .name
-                                                                      .toString() ??
-                                                                  "",
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .name
-                                                                      .toString() ??
-                                                                  "",
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result?[
-                                                                          index]
-                                                                      .id
-                                                                      .toString() ??
-                                                                  "",
-                                                              "",
-                                                              index,
-                                                              homeprovider
-                                                                      .bannerModel
-                                                                      .result
-                                                                      ?.toList() ??
-                                                                  []);
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 8,
-                                                        ),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          gradient:
-                                                              LinearGradient(
-                                                            colors: Theme.of(
-                                                                            context)
-                                                                        .brightness ==
-                                                                    Brightness
-                                                                        .dark
-                                                                ? const [
-                                                                    colorAccent,
-                                                                    colorPrimary
-                                                                  ]
-                                                                : [
-                                                                    colorPrimary,
-                                                                    homeSearchBarBg(
-                                                                        context)
-                                                                  ],
-                                                            begin: Alignment
-                                                                .topLeft,
-                                                            end: Alignment
-                                                                .bottomRight,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(20),
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: colorPrimary
-                                                                  .withValues(
-                                                                      alpha:
-                                                                          0.3),
-                                                              blurRadius: 8,
-                                                              offset:
-                                                                  const Offset(
-                                                                      0, 2),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        child: Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                              isPlaying
-                                                                  ? Icons.stop
-                                                                  : Icons
-                                                                      .play_arrow,
-                                                              color: white,
-                                                              size: 16,
-                                                            ),
-                                                            const SizedBox(
-                                                                width: 3),
-                                                            Flexible(
-                                                              child: MyText(
-                                                                color: white,
-                                                                text: isPlaying
-                                                                    ? "Arrêter"
-                                                                    : "Écouter",
-                                                                multilanguage:
-                                                                    false,
-                                                                fontsize: Dimens
-                                                                    .textExtraSmall,
-                                                                fontwaight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              // Bouton "Regarder" - Actif
-                                              Flexible(
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    _collapseFullPlayer();
-                                                    setState(() {
-                                                      _currentBottomNavIndex =
-                                                          _filmsTabIndex;
-                                                    });
-                                                  },
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      gradient: LinearGradient(
-                                                        colors: Theme.of(
-                                                                        context)
-                                                                    .brightness ==
-                                                                Brightness.dark
-                                                            ? const [
-                                                                colorAccent,
-                                                                colorPrimary
-                                                              ]
-                                                            : [
-                                                                colorPrimary,
-                                                                homeSearchBarBg(
-                                                                    context)
-                                                              ],
-                                                        begin:
-                                                            Alignment.topLeft,
-                                                        end: Alignment
-                                                            .bottomRight,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: colorPrimary
-                                                              .withOpacity(0.3),
-                                                          blurRadius: 8,
-                                                          offset: const Offset(
-                                                              0, 2),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.videocam,
-                                                          color: white,
-                                                          size: 16,
-                                                        ),
-                                                        const SizedBox(
-                                                            width: 3),
-                                                        Flexible(
-                                                          child: MyText(
-                                                            color: white,
-                                                            text: "Regarder",
-                                                            fontsize: Dimens
-                                                                .textExtraSmall,
-                                                            fontwaight:
-                                                                FontWeight.w600,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                ],
-                              ),
-                            ),
-                            homeprovider.bannerModel.result?[index].isPremium ==
-                                        1 &&
-                                    homeprovider
-                                            .bannerModel.result?[index].isBuy ==
-                                        0
-                                ? Positioned.fill(
-                                    top: 15,
-                                    left: 15,
-                                    right: 15,
-                                    child: Align(
-                                      alignment: Alignment.topLeft,
-                                      child: MyImage(
-                                          width: 20,
-                                          height: 15,
-                                          color: colorPrimary,
-                                          imagePath: "ic_primium.png"),
-                                    ),
-                                  )
-                                : const SizedBox.shrink(),
-                          ],
-                        ),
-                      );
-
                   return Container(
                     padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
                     child: InkWell(
@@ -2485,7 +1980,8 @@ class _HomeState extends State<Home> {
                       highlightColor: transparent,
                       onTap: handleBannerTap,
                       child: isNight
-                          ? nightCard
+                          ? _buildLiveNeonBannerCard(
+                              homeprovider, index, playThisRadioBanner)
                           : _buildAbidjanBannerCard(
                               homeprovider, index, playThisRadioBanner),
                     ),
@@ -2701,6 +2197,182 @@ class _HomeState extends State<Home> {
                         pillButton(
                           background: black.withValues(alpha: 0.35),
                           foreground: white,
+                          icon: Icons.videocam,
+                          label: "Regarder",
+                          onTap: () {
+                            _collapseFullPlayer();
+                            setState(() {
+                              _currentBottomNavIndex = _filmsTabIndex;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // LIVE NEON (night theme) banner card. Same shared logic as ABIDJAN's
+  // version (playThisRadioBanner/handleBannerTap passed in, wired on the
+  // outer InkWell) — only the palette differs: LiveNeonBokehCard instead of
+  // AbidjanBokehCard, gradient buttons instead of solid-white/dark ones.
+  Widget _buildLiveNeonBannerCard(
+      HomeProvider homeprovider, int index, VoidCallback onPlayRadio) {
+    final item = homeprovider.bannerModel.result?[index];
+    final bool isRadio = item?.type == 1;
+    final String title = isRadio
+        ? (item?.name?.toString() ?? "")
+        : (item?.title?.toString() ?? "");
+    final String subtitle = isRadio
+        ? [item?.artistName, item?.languageName, item?.cityName]
+            .where((s) => s != null && s.toString().trim().isNotEmpty)
+            .join(" · ")
+            .toUpperCase()
+        : (item?.artistName?.toString() ?? "");
+    final bool isPremiumLocked = item?.isPremium == 1 && item?.isBuy == 0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: SizedBox(
+        height: Dimens.homeBannerHeight,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            isRadio
+                ? const LiveNeonBokehCard(index: 1)
+                : MyNetworkImage(
+                    fit: BoxFit.cover,
+                    imgWidth: double.infinity,
+                    imgHeight: double.infinity,
+                    imageUrl: item?.landscapeImg?.toString() ??
+                        item?.image?.toString() ??
+                        "",
+                  ),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [transparent, Color(0xCC000000)],
+                ),
+              ),
+            ),
+            if (isRadio)
+              Positioned(
+                top: 14,
+                left: 14,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: colorPrimary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                            color: white, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        "EN DIRECT",
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Positioned(
+                top: 14,
+                left: 14,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                      color: colorPrimary, shape: BoxShape.circle),
+                  child: const Icon(Icons.podcasts, color: white, size: 16),
+                ),
+              ),
+            if (isPremiumLocked)
+              const Positioned(
+                top: 14,
+                right: 14,
+                child: Icon(Icons.lock, color: white, size: 18),
+              ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MyText(
+                    color: white,
+                    text: title,
+                    multilanguage: false,
+                    inter: 4,
+                    fontsize: Dimens.textlargeBig,
+                    fontwaight: FontWeight.w700,
+                    maxline: 1,
+                    textalign: TextAlign.left,
+                    overflow: TextOverflow.ellipsis,
+                    fontstyle: FontStyle.normal,
+                  ),
+                  if (subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: liveNeonTextSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  if (isRadio)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        StreamBuilder<bool>(
+                          stream: audioPlayer.playingStream,
+                          builder: (context, snapshot) {
+                            final isPlaying =
+                                snapshot.data ?? audioPlayer.playing;
+                            return LiveNeonGradientButton(
+                              icon: isPlaying ? Icons.pause : Icons.play_arrow,
+                              label: isPlaying ? "En écoute" : "Écouter",
+                              onTap: () {
+                                if (isPlaying) {
+                                  audioPlayer.pause();
+                                } else {
+                                  onPlayRadio();
+                                }
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 10),
+                        LiveNeonOutlineButton(
                           icon: Icons.videocam,
                           label: "Regarder",
                           onTap: () {
@@ -3564,15 +3236,14 @@ class _HomeState extends State<Home> {
 
   /* Category */
   Widget category(int sectionindex, List<section.Result>? sectionList) {
-    final bool isNightCategory =
-        Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         SizedBox(
           width: MediaQuery.of(context).size.width,
-          height: isNightCategory
-              ? Dimens.categoryheight
-              : Dimens.categoryheight + 60,
+          // Both themes' cards show a name + "Titres" caption below the
+          // block now, so both need the taller row (see the matching fix
+          // in getRemainingDataHeight below).
+          height: Dimens.categoryheight + 60,
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
@@ -3610,70 +3281,13 @@ class _HomeState extends State<Home> {
                   );
                 }
 
-                // Night mode — unchanged from before the ABIDJAN redesign.
-                final Widget nightCard = Container(
-                  width: MediaQuery.of(context).size.width * 0.19,
-                  height: MediaQuery.of(context).size.height * 0.15,
-                  decoration: BoxDecoration(
-                      color: homeCategoryPalette(context)[
-                          index % homeCategoryPalette(context).length],
-                      borderRadius: BorderRadius.circular(20)),
-                  child: Stack(
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          MyNetworkImage(
-                            imgWidth: 40,
-                            imgHeight: 40,
-                            imageUrl: sectionList?[sectionindex]
-                                    .data?[index]
-                                    .image
-                                    .toString() ??
-                                "",
-                            fit: BoxFit.cover,
-                          ),
-                          SizedBox(
-                              height:
-                                  MediaQuery.of(context).size.height * 0.01),
-                          Container(
-                            padding: const EdgeInsets.fromLTRB(7, 0, 7, 0),
-                            child: MyText(
-                                color: Theme.of(context).colorScheme.surface,
-                                text: categoryName,
-                                textalign: TextAlign.center,
-                                fontsize: Dimens.textSmall,
-                                inter: 1,
-                                maxline: 1,
-                                fontwaight: FontWeight.w700,
-                                overflow: TextOverflow.ellipsis,
-                                fontstyle: FontStyle.normal),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        bottom: 6,
-                        right: 6,
-                        child: Container(
-                          width: 22,
-                          height: 22,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: white.withValues(alpha: 0.85),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.play_arrow,
-                            color: homeSearchBarBg(context),
-                            size: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-
+                // LIVE NEON (night theme): same solid-block + icon-badge
+                // pattern as ABIDJAN, using the neon gradient palette
+                // instead. No play-button overlay, matching the day design.
                 if (isNight) {
+                  final Color neonCardColor = liveNeonBokehGradients[
+                          index % liveNeonBokehGradients.length]
+                      .first;
                   return Padding(
                     padding: const EdgeInsets.all(6.0),
                     child: InkWell(
@@ -3682,7 +3296,59 @@ class _HomeState extends State<Home> {
                       hoverColor: transparent,
                       highlightColor: transparent,
                       onTap: openCategory,
-                      child: nightCard,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.19,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.09,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: neonCardColor,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              alignment: Alignment.topLeft,
+                              child: Container(
+                                width: 26,
+                                height: 26,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  _categoryIcon(categoryName),
+                                  color: neonCardColor,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            MyText(
+                              color: white,
+                              text: categoryName,
+                              textalign: TextAlign.center,
+                              fontsize: Dimens.textSmall,
+                              inter: 1,
+                              maxline: 1,
+                              fontwaight: FontWeight.w700,
+                              overflow: TextOverflow.ellipsis,
+                              fontstyle: FontStyle.normal,
+                            ),
+                            const Text(
+                              "Titres",
+                              style: TextStyle(
+                                color: liveNeonTextSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 }

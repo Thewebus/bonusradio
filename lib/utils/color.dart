@@ -50,22 +50,6 @@ BoxDecoration homeAccueilBackgroundDecoration(BuildContext context) =>
           )
         : BoxDecoration(color: homeAccueilBg(context));
 
-List<Color> homeCategoryPalette(BuildContext context) => _isNight(context)
-    ? const [
-        Color(0xFF7A3F38),
-        Color(0xFF8A6A2E),
-        Color(0xFF5C4A73),
-        Color(0xFF375873),
-        Color(0xFF3C6B4F),
-      ]
-    : const [
-        Color(0xFFF3B9B0),
-        Color(0xFFF6D8A8),
-        Color(0xFFD9C5EE),
-        Color(0xFFB9D6F3),
-        Color(0xFFB9E4C9),
-      ];
-
 /* ===================== ABIDJAN (day theme) tokens =========================
    Additive only — every function above keeps both its branches untouched.
    dockActivePillBg is the one shared/always-mounted widget (dock) that
@@ -90,7 +74,7 @@ const List<List<Color>> abidjanBokehGradients = [
 
 /* =================== LIVE NEON (night theme) tokens ========================
    Additive only, mirroring the ABIDJAN section above: existing night
-   tokens (homeAccueilBg, homeSearchBarBg, homeCategoryPalette, ...) keep
+   tokens (homeAccueilBg, homeSearchBarBg, ...) keep
    serving the not-yet-migrated screens' _buildNightXxx() methods untouched.
    Each screen migrated to LIVE NEON reads these new tokens instead, via its
    own _buildLiveNeonXxx() method — never referenced from a day branch. */
