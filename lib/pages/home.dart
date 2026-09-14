@@ -443,13 +443,6 @@ class _HomeState extends State<Home> {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-          // Compte requires being logged in — otherwise the profile screen
-          // has nothing to show (empty header, empty fields).
-          if (index == _profileTabIndex && Constant.userID == null) {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const Login()));
-            return;
-          }
           // Collapse the sliding full-screen player when leaving the Radio
           // tab, so it doesn't keep covering whichever tab is now shown.
           if (index != radioTabIndex) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/editprofile.dart';
+import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/provider/profileprovider.dart';
 import 'package:myBonus/provider/subscriptionprovider.dart';
@@ -35,8 +36,10 @@ class ProfileState extends State<Profile> {
     subscriptionProvider =
         Provider.of<SubscriptionProvider>(context, listen: false);
     super.initState();
-    getApi();
-    subscriptionProvider.getPackages();
+    if (Constant.userID != null) {
+      getApi();
+      subscriptionProvider.getPackages();
+    }
   }
 
   Future<void> getApi() async {
@@ -46,7 +49,210 @@ class ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    if (Constant.userID == null) {
+      return isNight
+          ? _buildLiveNeonLoggedOutScaffold()
+          : _buildAbidjanLoggedOutScaffold();
+    }
     return isNight ? _buildLiveNeonScaffold() : _buildAbidjanScaffold();
+  }
+
+  // Compte tab while logged out — the dock's tap handler used to push a
+  // full-screen Login() route here instead, which hid the dock and the
+  // settings shortcut entirely. Keeping the same header (with its settings
+  // gear) and just swapping the body for a sign-in prompt lets Compte behave
+  // like every other tab: dock and header stay put, only the content
+  // changes. Login() itself is still where the actual phone/Google/email
+  // sign-in flow lives — pushed on demand from the button below.
+  Widget _buildLiveNeonLoggedOutScaffold() {
+    return Scaffold(
+      backgroundColor: liveNeonBg,
+      body: SafeArea(
+        child: Container(
+          decoration: liveNeonBackgroundDecoration(),
+          child: Column(
+            children: [
+              LiveNeonHeader(
+                title: "profile",
+                actions: [
+                  LiveNeonCircleIconButton(
+                    icon: Icons.settings,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const Settings()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 84,
+                        height: 84,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          color: liveNeonIconChipBg,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.person_outline,
+                            color: white, size: 40),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Connecte-toi pour accéder à ton compte",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Retrouve ton profil, tes favoris et ton abonnement.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: liveNeonTextSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(30),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const Login()),
+                            );
+                          },
+                          child: Container(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 14),
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(
+                              gradient:
+                                  LinearGradient(colors: liveNeonGradient),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(30)),
+                            ),
+                            child: const Text(
+                              "Se connecter",
+                              style: TextStyle(
+                                color: white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAbidjanLoggedOutScaffold() {
+    return Scaffold(
+      backgroundColor: homeAccueilBg(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            AbidjanHeader(
+              title: "profile",
+              actions: settingsAppBarAction(context, light: true),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 84,
+                      height: 84,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: abidjanIconChipBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person_outline,
+                          color: black, size: 40),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Connecte-toi pour accéder à ton compte",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: black,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Retrouve ton profil, tes favoris et ton abonnement.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: gray,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(30),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Login()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: black,
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                          ),
+                          child: const Text(
+                            "Se connecter",
+                            style: TextStyle(
+                              color: white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // LIVE NEON (night theme): same structure as ABIDJAN (flat header +

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myBonus/music/musicdetails.dart';
+import 'package:myBonus/pages/home.dart' show radioTabIndex;
 
 class RadioScreen extends StatefulWidget {
   const RadioScreen({super.key});
@@ -25,6 +26,9 @@ class _RadioScreenState extends State<RadioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const MusicDetails(ishomepage: false);
+    return const MusicDetails(
+      ishomepage: false,
+      currentTabIndex: radioTabIndex,
+    );
   }
 }

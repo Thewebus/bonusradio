@@ -1216,6 +1216,19 @@ class _MusicDetailsState extends State<MusicDetails>
     final bool lockExpanded = !widget.ishomepage;
     final double fullHeight = MediaQuery.of(context).size.height;
     if (lockExpanded) {
+      // RadioScreen (radio.dart) is the only caller that locks this widget
+      // expanded — it's the Radios tab's own base layer, shown immediately
+      // on mount and whenever nothing is playing yet (the persistent overlay
+      // in home.dart only mounts once currentlyPlaying is non-null). It used
+      // to always fall through to the generic dark buildMusicPanel here,
+      // which briefly flashed the pre-redesign look on every app launch
+      // before the overlay's expand animation finished covering it. Route it
+      // to the same ABIDJAN/LIVE NEON hero screen the overlay shows instead,
+      // so there's nothing left to flash.
+      if (widget.currentTabIndex == radioTabIndex) {
+        final bool isNight = Theme.of(context).brightness == Brightness.dark;
+        return isNight ? _buildLiveNeonRadioScreen() : _buildAbidjanRadioScreen();
+      }
       const elementOpacity = 1.0;
       const progressIndicatorHeight = 2.0;
       return Scaffold(
