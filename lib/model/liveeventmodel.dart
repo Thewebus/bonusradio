@@ -65,12 +65,21 @@ class Result {
   int? isPaid;
   int? price;
   int? type;
+  // Video-on-demand fields — present on every row (live events included,
+  // where they default to 0/null/1 server-side) so this one model keeps
+  // parsing both get_live_event and get_video without any schema branch.
+  int? isVod;
+  int? categoryId;
+  int? videoSource;
   String? link;
   String? description;
   int? status;
   String? createdAt;
   String? updatedAt;
   int? isJoin;
+  // Only present on get_video (joined server-side from tbl_video_category);
+  // null for plain live events.
+  String? categoryName;
 
   Result({
     this.id,
@@ -83,12 +92,16 @@ class Result {
     this.isPaid,
     this.price,
     this.type,
+    this.isVod,
+    this.categoryId,
+    this.videoSource,
     this.link,
     this.description,
     this.status,
     this.createdAt,
     this.updatedAt,
     this.isJoin,
+    this.categoryName,
   });
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
@@ -102,12 +115,16 @@ class Result {
         isPaid: json["is_paid"],
         price: json["price"],
         type: json["type"],
+        isVod: json["is_vod"],
+        categoryId: json["category_id"],
+        videoSource: json["video_source"],
         link: json["link"],
         description: json["description"],
         status: json["status"],
         createdAt: json["created_at"],
         updatedAt: json["updated_at"],
         isJoin: json["is_join"],
+        categoryName: json["category_name"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -121,11 +138,15 @@ class Result {
         "is_paid": isPaid,
         "price": price,
         "type": type,
+        "is_vod": isVod,
+        "category_id": categoryId,
+        "video_source": videoSource,
         "link": link,
         "description": description,
         "status": status,
         "created_at": createdAt,
         "updated_at": updatedAt,
         "is_join": isJoin,
+        "category_name": categoryName,
       };
 }

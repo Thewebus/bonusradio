@@ -5,7 +5,9 @@ import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/nodata.dart';
+import 'package:myBonus/model/videocategorymodel.dart' as videocategory;
 import 'package:myBonus/provider/liveeventsprovider.dart';
+import 'package:myBonus/provider/videoprovider.dart';
 import 'package:myBonus/subscription/allpayment.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
@@ -30,16 +32,22 @@ class LiveEvent extends StatefulWidget {
 }
 
 class _LiveEventState extends State<LiveEvent> {
+  static const String _allVideoCategoriesOption = "Tous";
+
   late LiveEventProvider liveEventProvider;
+  late VideoProvider videoProvider;
   final ScrollController categoryController = ScrollController();
   late ScrollController _scrollController;
 
   @override
   void initState() {
     liveEventProvider = Provider.of<LiveEventProvider>(context, listen: false);
+    videoProvider = Provider.of<VideoProvider>(context, listen: false);
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     _fetchData(0);
+    videoProvider.getCategoryList();
+    _fetchVideos(0);
     super.initState();
   }
 
@@ -47,11 +55,16 @@ class _LiveEventState extends State<LiveEvent> {
     if (!_scrollController.hasClients) return;
     if (_scrollController.offset >=
             _scrollController.position.maxScrollExtent &&
-        !_scrollController.position.outOfRange &&
-        (liveEventProvider.currentPage ?? 0) <
-            (liveEventProvider.totalPage ?? 0)) {
-      liveEventProvider.setLoadMore(true);
-      _fetchData(liveEventProvider.currentPage ?? 0);
+        !_scrollController.position.outOfRange) {
+      if ((liveEventProvider.currentPage ?? 0) <
+          (liveEventProvider.totalPage ?? 0)) {
+        liveEventProvider.setLoadMore(true);
+        _fetchData(liveEventProvider.currentPage ?? 0);
+      }
+      if ((videoProvider.currentPage ?? 0) < (videoProvider.totalPage ?? 0)) {
+        videoProvider.setLoadMore(true);
+        _fetchVideos(videoProvider.currentPage ?? 0);
+      }
     }
   }
 
@@ -66,9 +79,47 @@ class _LiveEventState extends State<LiveEvent> {
     liveEventProvider.setLoadMore(false);
   }
 
+  Future<void> _fetchVideos(int? nextPage) async {
+    await videoProvider.getVideoList((nextPage ?? 0) + 1);
+    videoProvider.setLoadMore(false);
+  }
+
+  // Real server-side category filter (unlike the live events pill above,
+  // which stays a single cosmetic "Tous" — LiveEventModel has no category
+  // field, but videos do via tbl_video_category).
+  List<String> _videoCategoryOptions() {
+    final names = (videoProvider.categoryList ?? [])
+        .map((c) => c.name ?? '')
+        .where((n) => n.isNotEmpty)
+        .toList();
+    return [_allVideoCategoriesOption, ...names];
+  }
+
+  String get _selectedVideoCategoryLabel {
+    final id = videoProvider.selectedCategoryId;
+    if (id == null) return _allVideoCategoriesOption;
+    return (videoProvider.categoryList ?? [])
+            .firstWhere((c) => c.id == id,
+                orElse: () => videocategory.Result())
+            .name ??
+        _allVideoCategoriesOption;
+  }
+
+  void _onVideoCategorySelected(String label) {
+    final int? categoryId = label == _allVideoCategoriesOption
+        ? null
+        : (videoProvider.categoryList ?? [])
+            .firstWhere((c) => c.name == label,
+                orElse: () => videocategory.Result())
+            .id;
+    videoProvider.selectCategory(categoryId);
+    _fetchVideos(0);
+  }
+
   @override
   void dispose() {
     liveEventProvider.clearProvider();
+    videoProvider.clearProvider();
     super.dispose();
   }
 
@@ -128,6 +179,7 @@ class _LiveEventState extends State<LiveEvent> {
                           _buildLiveNeonFeaturedCard(),
                           _buildLiveNeonTrendingStrip(),
                           buildLiveEventList(),
+                          _buildLiveNeonVideosSection(),
                         ],
                       );
                     },
@@ -189,6 +241,7 @@ class _LiveEventState extends State<LiveEvent> {
                         _buildAbidjanFeaturedCard(),
                         _buildAbidjanTrendingStrip(),
                         buildLiveEventList(),
+                        _buildAbidjanVideosSection(),
                       ],
                     );
                   },
@@ -202,6 +255,17 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Future<void> _handleLiveEventTap(int index) async {
+    await _handleContentTap(liveEventProvider.liveEventList?[index]);
+  }
+
+  // Videos are rows of the exact same table/model as live events (is_vod=1),
+  // so tapping one reuses the identical pay-to-unlock / play dispatch logic —
+  // only the source list differs.
+  Future<void> _handleVideoTap(int index) async {
+    await _handleContentTap(videoProvider.videoList?[index]);
+  }
+
+  Future<void> _handleContentTap(Result? item) async {
     if (Constant.userID == null) {
       Navigator.push(
         context,
@@ -213,7 +277,6 @@ class _LiveEventState extends State<LiveEvent> {
       );
       return;
     }
-    final item = liveEventProvider.liveEventList?[index];
     if (item == null) return;
     if (item.isPaid == 1 && item.isJoin == 0) {
       await Navigator.push(
@@ -483,6 +546,50 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
+  // "Vidéos" section — added alongside the live events above, not replacing
+  // them. Real server-side category pills (tbl_video_category), unlike the
+  // single cosmetic "Tous" pill live events get.
+  Widget _buildAbidjanVideosSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+          child: MyText(
+            color: black,
+            text: "Vidéos",
+            multilanguage: false,
+            inter: 4,
+            fontsize: Dimens.textBig,
+            fontwaight: FontWeight.w700,
+            maxline: 1,
+            textalign: TextAlign.left,
+            fontstyle: FontStyle.normal,
+          ),
+        ),
+        // Consumer, not a direct read — getCategoryList() resolves after this
+        // section's first (synchronous) build, so the pill row needs its own
+        // listener to appear once the categories actually arrive.
+        Consumer<VideoProvider>(
+          builder: (context, videoprovider, child) {
+            if ((videoprovider.categoryList ?? []).isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: AbidjanPillFilterRow(
+                options: _videoCategoryOptions(),
+                selected: _selectedVideoCategoryLabel,
+                onSelected: _onVideoCategorySelected,
+              ),
+            );
+          },
+        ),
+        buildVideoList(),
+      ],
+    );
+  }
+
   // LIVE NEON (night theme) featured card. Same shared _handleLiveEventTap
   // logic as ABIDJAN's version — only the palette differs.
   Widget _buildLiveNeonFeaturedCard() {
@@ -692,6 +799,44 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
+  Widget _buildLiveNeonVideosSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+          child: MyText(
+            color: white,
+            text: "Vidéos",
+            multilanguage: false,
+            inter: 4,
+            fontsize: Dimens.textBig,
+            fontwaight: FontWeight.w700,
+            maxline: 1,
+            textalign: TextAlign.left,
+            fontstyle: FontStyle.normal,
+          ),
+        ),
+        Consumer<VideoProvider>(
+          builder: (context, videoprovider, child) {
+            if ((videoprovider.categoryList ?? []).isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LiveNeonPillFilterRow(
+                options: _videoCategoryOptions(),
+                selected: _selectedVideoCategoryLabel,
+                onSelected: _onVideoCategorySelected,
+              ),
+            );
+          },
+        ),
+        buildVideoList(),
+      ],
+    );
+  }
+
   Widget buildLiveEventList() {
     return Consumer<LiveEventProvider>(
         builder: (context, liveeventprovider, child) {
@@ -725,22 +870,67 @@ class _LiveEventState extends State<LiveEvent> {
     });
   }
 
+  Widget buildVideoList() {
+    return Consumer<VideoProvider>(builder: (context, videoprovider, child) {
+      if (videoprovider.loading && !videoprovider.loadMore) {
+        return buildLiveEventListShimmer();
+      } else {
+        if (videoprovider.videoModel.status == 200 &&
+            videoprovider.videoList != null) {
+          if ((videoprovider.videoList?.length ?? 0) > 0) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildVideoListItem(),
+                if (videoprovider.loadMore)
+                  SizedBox(
+                    height: 50,
+                    child: Utils.pageLoader(),
+                  )
+                else
+                  const SizedBox.shrink(),
+              ],
+            );
+          } else {
+            return const NoData(text: "", subTitle: "");
+          }
+        } else {
+          return const NoData(text: "", subTitle: "");
+        }
+      }
+    });
+  }
+
   Widget buildLiveEventListItem() {
+    return buildContentGridItem(liveEventProvider.liveEventList, _handleLiveEventTap);
+  }
+
+  Widget buildVideoListItem() {
+    return buildContentGridItem(videoProvider.videoList, _handleVideoTap);
+  }
+
+  // Shared 2-column grid for both the live-event list and the video list —
+  // same Result type, same card layout, only the source list and the tap
+  // handler differ.
+  Widget buildContentGridItem(
+      List<Result>? items, void Function(int index) onTapItem) {
     return AlignedGridView.count(
       shrinkWrap: true,
       crossAxisCount: 2,
       mainAxisSpacing: 20,
       crossAxisSpacing: 15,
-      itemCount: liveEventProvider.liveEventList?.length ?? 0,
+      itemCount: items?.length ?? 0,
       padding: const EdgeInsets.fromLTRB(15, 0, 15, 8),
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (BuildContext context, int index) {
+        final item = items?[index];
         return InkWell(
           focusColor: transparent,
           splashColor: transparent,
           hoverColor: transparent,
           highlightColor: transparent,
-          onTap: () => _handleLiveEventTap(index),
+          onTap: () => onTapItem(index),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,10 +941,7 @@ class _LiveEventState extends State<LiveEvent> {
                     imgWidth: MediaQuery.of(context).size.width,
                     imgHeight: 250,
                     fit: BoxFit.cover,
-                    imageUrl: liveEventProvider
-                            .liveEventList?[index].portraitImg
-                            .toString() ??
-                        ""),
+                    imageUrl: item?.portraitImg.toString() ?? ""),
               ),
               const SizedBox(height: 10),
               Column(
@@ -772,10 +959,8 @@ class _LiveEventState extends State<LiveEvent> {
                         MyText(
                           color: colorPrimary,
                           inter: 1,
-                          text: Utils.dateformat(DateTime.parse(
-                              liveEventProvider.liveEventList?[index].createdAt
-                                      .toString() ??
-                                  "")),
+                          text: Utils.dateformat(
+                              DateTime.parse(item?.createdAt.toString() ?? "")),
                           fontsize: Dimens.textSmall,
                           fontwaight: FontWeight.w600,
                           maxline: 1,
@@ -803,9 +988,7 @@ class _LiveEventState extends State<LiveEvent> {
                   MyText(
                     color: Theme.of(context).colorScheme.surface,
                     inter: 1,
-                    text: liveEventProvider.liveEventList?[index].title
-                            .toString() ??
-                        "",
+                    text: item?.title.toString() ?? "",
                     fontsize: Dimens.textSmall,
                     fontwaight: FontWeight.w600,
                     maxline: 1,
@@ -814,17 +997,13 @@ class _LiveEventState extends State<LiveEvent> {
                     fontstyle: FontStyle.normal,
                   ),
                   const SizedBox(height: 4),
-                  if (liveEventProvider.liveEventList?[index].isPaid
-                              .toString() ==
-                          "1" &&
-                      liveEventProvider.liveEventList?[index].isJoin
-                              .toString() ==
-                          "0")
+                  if (item?.isPaid.toString() == "1" &&
+                      item?.isJoin.toString() == "0")
                     MyText(
                       color: colorPrimary,
                       inter: 1,
                       text:
-                          "${Constant.currencySymbol}${liveEventProvider.liveEventList?[index].price.toString() ?? ""}",
+                          "${Constant.currencySymbol}${item?.price.toString() ?? ""}",
                       fontsize: Dimens.textTitle,
                       fontwaight: FontWeight.w600,
                       maxline: 2,
@@ -832,12 +1011,8 @@ class _LiveEventState extends State<LiveEvent> {
                       textalign: TextAlign.left,
                       fontstyle: FontStyle.normal,
                     )
-                  else if (liveEventProvider.liveEventList?[index].isPaid
-                              .toString() ==
-                          "1" &&
-                      liveEventProvider.liveEventList?[index].isJoin
-                              .toString() ==
-                          "1")
+                  else if (item?.isPaid.toString() == "1" &&
+                      item?.isJoin.toString() == "1")
                     Container(
                       padding: const EdgeInsets.fromLTRB(5, 3, 5, 3),
                       decoration: BoxDecoration(

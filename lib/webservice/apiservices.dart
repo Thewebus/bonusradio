@@ -28,6 +28,7 @@ import 'package:myBonus/model/podcastsectionmodel.dart';
 import 'package:myBonus/model/profilemodel.dart';
 import 'package:myBonus/model/searchmodel.dart';
 import 'package:myBonus/model/subscriptionmodel.dart';
+import 'package:myBonus/model/videocategorymodel.dart';
 import 'package:myBonus/model/successmodel.dart';
 import 'package:myBonus/model/updateprofilemodel.dart';
 import 'package:myBonus/utils/constant.dart';
@@ -525,6 +526,40 @@ class ApiService {
     );
     liveEventModel = LiveEventModel.fromJson(response.data);
     return liveEventModel;
+  }
+
+  // Video-on-demand rows live in the same table as live events and share
+  // its exact response shape (see get_video on the backend), so this reuses
+  // LiveEventModel instead of a dedicated one — one parser for both.
+  Future<LiveEventModel> videoList(
+      dynamic pageNo, dynamic categoryId, dynamic search) async {
+    LiveEventModel liveEventModel;
+    String apiname = "get_video";
+    Response response = await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({
+        'user_id': Constant.userID,
+        'page_no': pageNo,
+        // Empty string, not null — the backend's empty() filter check treats
+        // "" as "no filter", while a literal "null" string would not match.
+        'category_id': categoryId ?? '',
+        'search': search ?? '',
+      }),
+      options: optHeaders,
+    );
+    liveEventModel = LiveEventModel.fromJson(response.data);
+    return liveEventModel;
+  }
+
+  Future<VideoCategoryModel> videoCategoryList() async {
+    VideoCategoryModel videoCategoryModel;
+    String apiname = "get_video_category";
+    Response response = await dio.post(
+      '$baseurl$apiname',
+      options: optHeaders,
+    );
+    videoCategoryModel = VideoCategoryModel.fromJson(response.data);
+    return videoCategoryModel;
   }
 
   Future<PodcastSectionModel> podcastSectionList(dynamic pageNo) async {
