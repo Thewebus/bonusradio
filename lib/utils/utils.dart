@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:progress_dialog_null_safe/progress_dialog_null_safe.dart';
 import 'package:provider/provider.dart';
+import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/settings.dart';
 import 'package:myBonus/music/musicdetails.dart';
@@ -19,6 +20,7 @@ import 'package:myBonus/players/player_video.dart';
 import 'package:myBonus/players/player_vimeo.dart';
 import 'package:myBonus/players/player_youtube.dart';
 import 'package:myBonus/provider/updateprofileprovider.dart';
+import 'package:myBonus/subscription/allpayment.dart';
 import 'package:myBonus/subscription/subscription.dart';
 import 'package:myBonus/utils/adhelper.dart';
 import 'package:myBonus/utils/color.dart';
@@ -1051,6 +1053,67 @@ class Utils {
             },
           ),
         );
+      }
+    }
+  }
+
+  // Shared pay-to-unlock / play dispatch for live events, standalone videos
+  // and video-series episodes alike — they're all rows of the same
+  // tbl_live_event/LiveEventModel.Result shape. Login is only required to
+  // pay/unlock; free content (and anything already unlocked) plays straight
+  // away, same as podcasts and radios elsewhere in the app.
+  static Future<void> handleVideoContentTap(
+      BuildContext context, Result? item) async {
+    if (item == null) return;
+    if (item.isPaid == 1 && item.isJoin == 0) {
+      if (Constant.userID == null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return const Login();
+            },
+          ),
+        );
+        return;
+      }
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return AllPayment(
+              payType: 'liveevent',
+              itemId: item.id.toString(),
+              price: item.price.toString(),
+              itemTitle: item.title.toString(),
+              typeId: '',
+              contentType: item.type.toString(),
+              productPackage: '',
+              currency: '',
+            );
+          },
+        ),
+      );
+    } else {
+      if (item.type == 1) {
+        /* Audio */
+        musicManager.playSingleSong(
+          item.id.toString(),
+          item.title.toString(),
+          item.link.toString(),
+          item.landscapeImg.toString(),
+          "",
+        );
+      } else {
+        /* Video */
+        openPlayer(
+            context: context,
+            videoId: item.id.toString(),
+            videoUrl: item.link.toString(),
+            vUploadType: "external",
+            videoThumb: item.landscapeImg.toString(),
+            stoptime: "",
+            iscontinueWatching: false);
       }
     }
   }

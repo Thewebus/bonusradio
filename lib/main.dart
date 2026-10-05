@@ -30,6 +30,7 @@ import 'package:myBonus/provider/subhistoryprovider.dart';
 import 'package:myBonus/provider/subscriptionprovider.dart';
 import 'package:myBonus/provider/updateprofileprovider.dart';
 import 'package:myBonus/provider/videoprovider.dart';
+import 'package:myBonus/provider/videoseriesprovider.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/music/musicmanager.dart';
@@ -113,6 +114,7 @@ Future<void> main() async {
             ChangeNotifierProvider(create: (_) => PodcatsProvider()),
             ChangeNotifierProvider(create: (_) => LiveEventProvider()),
             ChangeNotifierProvider(create: (_) => VideoProvider()),
+            ChangeNotifierProvider(create: (_) => VideoSeriesProvider()),
             ChangeNotifierProvider(create: (_) => MusicDetailProvider()),
             ChangeNotifierProvider(create: (_) => PodcatViewAllProvider()),
             ChangeNotifierProvider(create: (_) => ThemeProvider()),

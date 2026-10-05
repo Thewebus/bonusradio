@@ -71,6 +71,10 @@ class Result {
   int? isVod;
   int? categoryId;
   int? videoSource;
+  // Present only on episodes fetched through get_video_series_detail; null
+  // for standalone videos and live events.
+  int? videoSeriesId;
+  int? episodeNumber;
   String? link;
   String? description;
   int? status;
@@ -95,6 +99,8 @@ class Result {
     this.isVod,
     this.categoryId,
     this.videoSource,
+    this.videoSeriesId,
+    this.episodeNumber,
     this.link,
     this.description,
     this.status,
@@ -118,6 +124,8 @@ class Result {
         isVod: json["is_vod"],
         categoryId: json["category_id"],
         videoSource: json["video_source"],
+        videoSeriesId: json["video_series_id"],
+        episodeNumber: json["episode_number"],
         link: json["link"],
         description: json["description"],
         status: json["status"],
@@ -141,6 +149,8 @@ class Result {
         "is_vod": isVod,
         "category_id": categoryId,
         "video_source": videoSource,
+        "video_series_id": videoSeriesId,
+        "episode_number": episodeNumber,
         "link": link,
         "description": description,
         "status": status,

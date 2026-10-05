@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/model/liveeventmodel.dart';
-import 'package:myBonus/music/musicdetails.dart';
-import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/nodata.dart';
 import 'package:myBonus/model/videocategorymodel.dart' as videocategory;
+import 'package:myBonus/model/videoseriesmodel.dart' as videoseries;
+import 'package:myBonus/pages/videoseriesdetail.dart';
 import 'package:myBonus/provider/liveeventsprovider.dart';
 import 'package:myBonus/provider/videoprovider.dart';
-import 'package:myBonus/subscription/allpayment.dart';
+import 'package:myBonus/provider/videoseriesprovider.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/customwidget.dart';
@@ -36,6 +36,7 @@ class _LiveEventState extends State<LiveEvent> {
 
   late LiveEventProvider liveEventProvider;
   late VideoProvider videoProvider;
+  late VideoSeriesProvider videoSeriesProvider;
   final ScrollController categoryController = ScrollController();
   late ScrollController _scrollController;
 
@@ -43,11 +44,14 @@ class _LiveEventState extends State<LiveEvent> {
   void initState() {
     liveEventProvider = Provider.of<LiveEventProvider>(context, listen: false);
     videoProvider = Provider.of<VideoProvider>(context, listen: false);
+    videoSeriesProvider =
+        Provider.of<VideoSeriesProvider>(context, listen: false);
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     _fetchData(0);
     videoProvider.getCategoryList();
     _fetchVideos(0);
+    videoSeriesProvider.getSeriesList();
     super.initState();
   }
 
@@ -266,61 +270,7 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Future<void> _handleContentTap(Result? item) async {
-    if (item == null) return;
-    // Login is only required to pay/unlock — free content (and anything
-    // already unlocked) plays straight away, same as podcasts and radios
-    // elsewhere in the app never gate plain playback behind an account.
-    if (item.isPaid == 1 && item.isJoin == 0) {
-      if (Constant.userID == null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return const Login();
-            },
-          ),
-        );
-        return;
-      }
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            return AllPayment(
-              payType: 'liveevent',
-              itemId: item.id.toString(),
-              price: item.price.toString(),
-              itemTitle: item.title.toString(),
-              typeId: '',
-              contentType: item.type.toString(),
-              productPackage: '',
-              currency: '',
-            );
-          },
-        ),
-      );
-    } else {
-      if (item.type == 1) {
-        /* Audio */
-        musicManager.playSingleSong(
-          item.id.toString(),
-          item.title.toString(),
-          item.link.toString(),
-          item.landscapeImg.toString(),
-          "",
-        );
-      } else {
-        /* Video */
-        Utils.openPlayer(
-            context: context,
-            videoId: item.id.toString(),
-            videoUrl: item.link.toString(),
-            vUploadType: "external",
-            videoThumb: item.landscapeImg.toString(),
-            stoptime: "",
-            iscontinueWatching: false);
-      }
-    }
+    await Utils.handleVideoContentTap(context, item);
   }
 
   Widget _buildAbidjanFeaturedCard() {
@@ -549,6 +499,112 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
+  // Series are their own, separately-fetched list (get_video_series) — a
+  // series header, not a Result row, so it needs its own Consumer and its
+  // own tap target (the series detail screen) rather than reusing
+  // _handleContentTap/buildContentGridItem built for single videos.
+  Widget _buildSeriesStrip({required bool isNight}) {
+    return Consumer<VideoSeriesProvider>(
+      builder: (context, provider, child) {
+        final list = provider.seriesList ?? [];
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              child: MyText(
+                color: isNight ? white : black,
+                text: "Séries",
+                multilanguage: false,
+                inter: isNight ? 1 : 4,
+                fontsize: Dimens.textBig,
+                fontwaight: FontWeight.w700,
+                maxline: 1,
+                textalign: TextAlign.left,
+                fontstyle: FontStyle.normal,
+              ),
+            ),
+            SizedBox(
+              height: 130,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                itemCount: list.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final series = list[index];
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VideoSeriesDetail(
+                          seriesId: series.id ?? 0,
+                          title: series.title ?? "",
+                          landscapeImg: series.landscapeImg,
+                        ),
+                      ),
+                    ),
+                    child: SizedBox(
+                      width: 150,
+                      child: isNight
+                          ? LiveNeonBokehCard(
+                              index: index,
+                              borderRadius: BorderRadius.circular(18),
+                              child: _buildSeriesCardContent(series),
+                            )
+                          : AbidjanBokehCard(
+                              index: index,
+                              borderRadius: BorderRadius.circular(18),
+                              child: _buildSeriesCardContent(series),
+                            ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSeriesCardContent(videoseries.Result series) {
+    final episodeCount = series.episodeCount ?? 0;
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            series.title ?? "",
+            style: const TextStyle(
+              color: white,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            episodeCount > 1
+                ? "$episodeCount épisodes"
+                : "$episodeCount épisode",
+            style: TextStyle(
+              color: white.withValues(alpha: 0.85),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // "Vidéos" section — added alongside the live events above, not replacing
   // them. Real server-side category pills (tbl_video_category), unlike the
   // single cosmetic "Tous" pill live events get.
@@ -588,6 +644,7 @@ class _LiveEventState extends State<LiveEvent> {
             );
           },
         ),
+        _buildSeriesStrip(isNight: false),
         buildVideoList(),
       ],
     );
@@ -835,6 +892,7 @@ class _LiveEventState extends State<LiveEvent> {
             );
           },
         ),
+        _buildSeriesStrip(isNight: true),
         buildVideoList(),
       ],
     );

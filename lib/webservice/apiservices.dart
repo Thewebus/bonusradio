@@ -29,6 +29,7 @@ import 'package:myBonus/model/profilemodel.dart';
 import 'package:myBonus/model/searchmodel.dart';
 import 'package:myBonus/model/subscriptionmodel.dart';
 import 'package:myBonus/model/videocategorymodel.dart';
+import 'package:myBonus/model/videoseriesmodel.dart';
 import 'package:myBonus/model/successmodel.dart';
 import 'package:myBonus/model/updateprofilemodel.dart';
 import 'package:myBonus/utils/constant.dart';
@@ -560,6 +561,32 @@ class ApiService {
     );
     videoCategoryModel = VideoCategoryModel.fromJson(response.data);
     return videoCategoryModel;
+  }
+
+  Future<VideoSeriesModel> videoSeriesList() async {
+    VideoSeriesModel videoSeriesModel;
+    String apiname = "get_video_series";
+    Response response = await dio.post(
+      '$baseurl$apiname',
+      options: optHeaders,
+    );
+    videoSeriesModel = VideoSeriesModel.fromJson(response.data);
+    return videoSeriesModel;
+  }
+
+  Future<VideoSeriesDetailModel> videoSeriesDetail(dynamic seriesId) async {
+    VideoSeriesDetailModel videoSeriesDetailModel;
+    String apiname = "get_video_series_detail";
+    Response response = await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({
+        'user_id': Constant.userID,
+        'series_id': seriesId,
+      }),
+      options: optHeaders,
+    );
+    videoSeriesDetailModel = VideoSeriesDetailModel.fromJson(response.data);
+    return videoSeriesDetailModel;
   }
 
   Future<PodcastSectionModel> podcastSectionList(dynamic pageNo) async {
