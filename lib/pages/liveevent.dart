@@ -266,19 +266,22 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Future<void> _handleContentTap(Result? item) async {
-    if (Constant.userID == null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            return const Login();
-          },
-        ),
-      );
-      return;
-    }
     if (item == null) return;
+    // Login is only required to pay/unlock — free content (and anything
+    // already unlocked) plays straight away, same as podcasts and radios
+    // elsewhere in the app never gate plain playback behind an account.
     if (item.isPaid == 1 && item.isJoin == 0) {
+      if (Constant.userID == null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return const Login();
+            },
+          ),
+        );
+        return;
+      }
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -903,18 +906,27 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Widget buildLiveEventListItem() {
-    return buildContentGridItem(liveEventProvider.liveEventList, _handleLiveEventTap);
+    return buildContentGridItem(liveEventProvider.liveEventList,
+        _handleLiveEventTap,
+        showDateBadge: true);
   }
 
   Widget buildVideoListItem() {
-    return buildContentGridItem(videoProvider.videoList, _handleVideoTap);
+    // The badge shows createdAt ("<date> onwards"), meaningful for an
+    // upcoming live event but not for on-demand video — and the "onwards"
+    // string has no French translation, so it rendered in English. Hidden
+    // for videos rather than mistranslated or repurposed to show something
+    // it was never wired to compute (e.g. the real expiry date).
+    return buildContentGridItem(videoProvider.videoList, _handleVideoTap,
+        showDateBadge: false);
   }
 
   // Shared 2-column grid for both the live-event list and the video list —
-  // same Result type, same card layout, only the source list and the tap
-  // handler differ.
+  // same Result type, same card layout, only the source list, the tap
+  // handler and the date badge differ.
   Widget buildContentGridItem(
-      List<Result>? items, void Function(int index) onTapItem) {
+      List<Result>? items, void Function(int index) onTapItem,
+      {required bool showDateBadge}) {
     return AlignedGridView.count(
       shrinkWrap: true,
       crossAxisCount: 2,
@@ -948,43 +960,45 @@ class _LiveEventState extends State<LiveEvent> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: colorPrimary.withValues(alpha: 0.09),
+                  if (showDateBadge) ...[
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: colorPrimary.withValues(alpha: 0.09),
+                      ),
+                      child: Row(
+                        children: [
+                          MyText(
+                            color: colorPrimary,
+                            inter: 1,
+                            text: Utils.dateformat(DateTime.parse(
+                                item?.createdAt.toString() ?? "")),
+                            fontsize: Dimens.textSmall,
+                            fontwaight: FontWeight.w600,
+                            maxline: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textalign: TextAlign.center,
+                            fontstyle: FontStyle.normal,
+                          ),
+                          const SizedBox(width: 5),
+                          MyText(
+                            color: colorPrimary,
+                            inter: 1,
+                            text: "onwards",
+                            fontsize: Dimens.textSmall,
+                            multilanguage: true,
+                            fontwaight: FontWeight.w600,
+                            maxline: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textalign: TextAlign.center,
+                            fontstyle: FontStyle.normal,
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        MyText(
-                          color: colorPrimary,
-                          inter: 1,
-                          text: Utils.dateformat(
-                              DateTime.parse(item?.createdAt.toString() ?? "")),
-                          fontsize: Dimens.textSmall,
-                          fontwaight: FontWeight.w600,
-                          maxline: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textalign: TextAlign.center,
-                          fontstyle: FontStyle.normal,
-                        ),
-                        const SizedBox(width: 5),
-                        MyText(
-                          color: colorPrimary,
-                          inter: 1,
-                          text: "onwards",
-                          fontsize: Dimens.textSmall,
-                          multilanguage: true,
-                          fontwaight: FontWeight.w600,
-                          maxline: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textalign: TextAlign.center,
-                          fontstyle: FontStyle.normal,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 3),
+                    const SizedBox(height: 3),
+                  ],
                   MyText(
                     color: Theme.of(context).colorScheme.surface,
                     inter: 1,
