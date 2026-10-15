@@ -11,9 +11,13 @@ class VideoSeriesProvider extends ChangeNotifier {
   bool detailLoading = false;
   DetailResult? seriesDetail;
 
+  // No notifyListeners() before the first await: both methods are called
+  // synchronously from a page's initState() (no `await` there, since
+  // initState can't be async), and initState runs while the parent widget
+  // is still building — notifying synchronously at that point throws
+  // "setState() or markNeedsBuild() called during build".
   Future<void> getSeriesList() async {
     loading = true;
-    notifyListeners();
     final model = await ApiService().videoSeriesList();
     if (model.status == 200) {
       seriesList = model.result ?? [];
@@ -25,7 +29,6 @@ class VideoSeriesProvider extends ChangeNotifier {
   Future<void> getSeriesDetail(dynamic seriesId) async {
     detailLoading = true;
     seriesDetail = null;
-    notifyListeners();
     final model = await ApiService().videoSeriesDetail(seriesId);
     if (model.status == 200) {
       seriesDetail = model.result;
