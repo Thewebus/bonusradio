@@ -36,6 +36,11 @@ class PlayerYoutubeState extends State<PlayerYoutube> {
         mute: false,
         showFullscreenButton: true,
         loop: false,
+        // Without this, YouTube shows an end-screen/sidebar of suggested
+        // videos from across the whole platform — restricts them to the
+        // same channel instead (the strictest the iframe API allows since
+        // YouTube removed full related-video suppression in 2018).
+        strictRelatedVideos: true,
       ),
     );
     debugPrint("videoUrl :===> ${widget.videoUrl}");
@@ -52,6 +57,7 @@ class PlayerYoutubeState extends State<PlayerYoutube> {
         mute: false,
         showFullscreenButton: true,
         loop: false,
+        strictRelatedVideos: true,
       ),
     );
     debugPrint("Start Playing :====> $videoId");
