@@ -29,7 +29,6 @@ import 'package:myBonus/provider/homeprovider.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
 import 'package:myBonus/provider/profileprovider.dart';
 import 'package:myBonus/provider/themeprovider.dart';
-import 'package:myBonus/subscription/allpayment.dart';
 import 'package:myBonus/subscription/subscription.dart';
 import 'package:myBonus/utils/adhelper.dart';
 import 'package:myBonus/utils/color.dart';
@@ -49,6 +48,7 @@ import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mynetworkimg2.dart';
 import 'package:myBonus/widget/mytext.dart';
 import 'package:myBonus/widget/sectionrowtile.dart';
+import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/model/sectionlistmodel.dart' as section;
 
 ValueNotifier<AudioPlayer?> currentlyPlaying = ValueNotifier(null);
@@ -1661,6 +1661,24 @@ class _HomeState extends State<Home> {
                                   onTap: () {
                                     AdHelper.showFullscreenAd(
                                         context, Constant.interstialAdType, () {
+                                      // Video sections (type=8) are just a
+                                      // teaser of the real Films catalog —
+                                      // "Tout afficher" goes straight to
+                                      // that full screen instead of the
+                                      // generic flat ViewAll list.
+                                      if (homeProvider.sectionList?[index]
+                                              .type ==
+                                          8) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) {
+                                              return const LiveEvent();
+                                            },
+                                          ),
+                                        );
+                                        return;
+                                      }
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -3833,98 +3851,26 @@ class _HomeState extends State<Home> {
             hoverColor: transparent,
             highlightColor: transparent,
             onTap: () async {
-              if (Constant.userID == null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return const Login();
-                    },
-                  ),
-                );
-              } else {
-                if (sectionList?[sectionindex].data?[index].isPaid == 1 &&
-                    sectionList?[sectionindex].data?[index].isJoin == 0) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return AllPayment(
-                          payType: 'liveevent',
-                          itemId: sectionList?[sectionindex]
-                                  .data?[index]
-                                  .id
-                                  .toString() ??
-                              '',
-                          price: sectionList?[sectionindex]
-                                  .data?[index]
-                                  .price
-                                  .toString() ??
-                              '',
-                          itemTitle: sectionList?[sectionindex]
-                                  .data?[index]
-                                  .title
-                                  .toString() ??
-                              '',
-                          typeId: '',
-                          contentType: sectionList?[sectionindex]
-                                  .data?[index]
-                                  .type
-                                  .toString() ??
-                              '',
-                          productPackage: '',
-                          currency: '',
-                        );
-                      },
-                    ),
-                  );
-                } else {
-                  if (sectionList?[sectionindex].data?[index].type == 1) {
-                    /* Audio */
-                    musicManager.playSingleSong(
-                        sectionList?[sectionindex].data?[index].id.toString() ??
-                            "",
-                        sectionList?[sectionindex]
-                                .data?[index]
-                                .title
-                                .toString() ??
-                            "",
-                        sectionList?[sectionindex]
-                                .data?[index]
-                                .songUrl
-                                .toString() ??
-                            "",
-                        sectionList?[sectionindex]
-                                .data?[index]
-                                .landscapeImg
-                                .toString() ??
-                            "",
-                        "");
-                  } else {
-                    /* Video */
-                    Utils.openPlayer(
-                        context: context,
-                        videoId: sectionList?[sectionindex]
-                                .data?[index]
-                                .id
-                                .toString() ??
-                            "",
-                        videoUrl: sectionList?[sectionindex]
-                                .data?[index]
-                                .link
-                                .toString() ??
-                            "",
-                        vUploadType: "external",
-                        videoThumb: sectionList?[sectionindex]
-                                .data?[index]
-                                .landscapeImg
-                                .toString() ??
-                            "",
-                        stoptime: "",
-                        iscontinueWatching: false);
-                  }
-                }
-              }
+              // Login is only required to pay/unlock — free content plays
+              // straight away, same as the dedicated Films screen
+              // (Utils.handleVideoContentTap). This section only ever shows
+              // video items (is_vod=1 rows), so the item is adapted into
+              // the shared Result shape rather than duplicating the
+              // pay-or-play dispatch logic here.
+              final data = sectionList?[sectionindex].data?[index];
+              await Utils.handleVideoContentTap(
+                context,
+                Result(
+                  id: data?.id,
+                  title: data?.title,
+                  link: data?.link,
+                  landscapeImg: data?.landscapeImg,
+                  isPaid: data?.isPaid,
+                  isJoin: data?.isJoin,
+                  price: data?.price,
+                  type: data?.type,
+                ),
+              );
             },
             child: Container(
               width: Dimens.liveEventWidth,
