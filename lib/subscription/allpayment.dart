@@ -6,10 +6,11 @@ import 'dart:io';
 // import 'package:flutterwave_standard/models/requests/customizations.dart';
 // import 'package:flutterwave_standard/models/responses/charge_response.dart';
 import 'package:myBonus/music/musicdetails.dart';
-import 'package:myBonus/provider/liveeventsprovider.dart';
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/pages/nodata.dart';
 import 'package:myBonus/provider/paymentprovider.dart';
+import 'package:myBonus/provider/videoprovider.dart';
+import 'package:myBonus/provider/videoseriesprovider.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/dimens.dart';
@@ -226,10 +227,18 @@ class AllPaymentState extends State<AllPayment> {
         if (!mounted) return;
         Navigator.pop(context, isPaymentDone);
 
-        final liveEventProvider =
-            Provider.of<LiveEventProvider>(context, listen: false);
-        liveEventProvider.clearProvider();
-        await liveEventProvider.getLiveEventList("1");
+        final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+        videoProvider.clearProvider();
+        await videoProvider.getVideoList("1");
+
+        // Refresh an open series detail too, so a just-unlocked episode's
+        // lock state updates without leaving/re-entering the screen.
+        final videoSeriesProvider =
+            Provider.of<VideoSeriesProvider>(context, listen: false);
+        if (videoSeriesProvider.seriesDetail != null) {
+          await videoSeriesProvider
+              .getSeriesDetail(videoSeriesProvider.seriesDetail!.id);
+        }
       } else {
         isPaymentDone = false;
         if (!mounted) return;

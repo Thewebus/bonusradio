@@ -514,23 +514,8 @@ class ApiService {
 
 /* Version 1.5 Intigrate New Api Start */
 
-  Future<LiveEventModel> liveEventList(dynamic pageNo) async {
-    LiveEventModel liveEventModel;
-    String apiname = "get_live_event";
-    Response response = await dio.post(
-      '$baseurl$apiname',
-      data: FormData.fromMap({
-        'user_id': Constant.userID,
-        'page_no': pageNo,
-      }),
-      options: optHeaders,
-    );
-    liveEventModel = LiveEventModel.fromJson(response.data);
-    return liveEventModel;
-  }
-
-  // Video-on-demand rows live in the same table as live events and share
-  // its exact response shape (see get_video on the backend), so this reuses
+  // Video-on-demand rows live in the same table as (former) live events and
+  // share its exact response shape (see get_video on the backend), so this reuses
   // LiveEventModel instead of a dedicated one — one parser for both.
   Future<LiveEventModel> videoList(
       dynamic pageNo, dynamic categoryId, dynamic search) async {

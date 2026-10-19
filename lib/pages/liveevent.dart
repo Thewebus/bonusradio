@@ -6,7 +6,6 @@ import 'package:myBonus/pages/nodata.dart';
 import 'package:myBonus/model/videocategorymodel.dart' as videocategory;
 import 'package:myBonus/model/videoseriesmodel.dart' as videoseries;
 import 'package:myBonus/pages/videoseriesdetail.dart';
-import 'package:myBonus/provider/liveeventsprovider.dart';
 import 'package:myBonus/provider/videoprovider.dart';
 import 'package:myBonus/provider/videoseriesprovider.dart';
 import 'package:myBonus/utils/color.dart';
@@ -24,6 +23,10 @@ import 'package:myBonus/widget/liveneon_pill_filter.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
 
+// This screen is labelled "Films" to the user. It used to show two sources
+// (live events + videos) side by side; "live event" had no real live/
+// real-time behavior left, so the two were merged into one video catalog —
+// this screen is now a single catalog view, not a juxtaposition of two.
 class LiveEvent extends StatefulWidget {
   const LiveEvent({super.key});
 
@@ -34,7 +37,6 @@ class LiveEvent extends StatefulWidget {
 class _LiveEventState extends State<LiveEvent> {
   static const String _allVideoCategoriesOption = "Tous";
 
-  late LiveEventProvider liveEventProvider;
   late VideoProvider videoProvider;
   late VideoSeriesProvider videoSeriesProvider;
   final ScrollController categoryController = ScrollController();
@@ -42,13 +44,11 @@ class _LiveEventState extends State<LiveEvent> {
 
   @override
   void initState() {
-    liveEventProvider = Provider.of<LiveEventProvider>(context, listen: false);
     videoProvider = Provider.of<VideoProvider>(context, listen: false);
     videoSeriesProvider =
         Provider.of<VideoSeriesProvider>(context, listen: false);
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
-    _fetchData(0);
     videoProvider.getCategoryList();
     _fetchVideos(0);
     videoSeriesProvider.getSeriesList();
@@ -60,11 +60,6 @@ class _LiveEventState extends State<LiveEvent> {
     if (_scrollController.offset >=
             _scrollController.position.maxScrollExtent &&
         !_scrollController.position.outOfRange) {
-      if ((liveEventProvider.currentPage ?? 0) <
-          (liveEventProvider.totalPage ?? 0)) {
-        liveEventProvider.setLoadMore(true);
-        _fetchData(liveEventProvider.currentPage ?? 0);
-      }
       if ((videoProvider.currentPage ?? 0) < (videoProvider.totalPage ?? 0)) {
         videoProvider.setLoadMore(true);
         _fetchVideos(videoProvider.currentPage ?? 0);
@@ -72,25 +67,11 @@ class _LiveEventState extends State<LiveEvent> {
     }
   }
 
-  Future<void> _fetchData(int? nextPage) async {
-    printLog("isMorePage  ======> ${liveEventProvider.morePage}");
-    printLog("currentPage ======> ${liveEventProvider.currentPage}");
-    printLog("totalPage   ======> ${liveEventProvider.totalPage}");
-    printLog("nextpage   ======> $nextPage");
-    printLog("Call MyCourse");
-    printLog("Pageno:== ${(nextPage ?? 0) + 1}");
-    await liveEventProvider.getLiveEventList((nextPage ?? 0) + 1);
-    liveEventProvider.setLoadMore(false);
-  }
-
   Future<void> _fetchVideos(int? nextPage) async {
     await videoProvider.getVideoList((nextPage ?? 0) + 1);
     videoProvider.setLoadMore(false);
   }
 
-  // Real server-side category filter (unlike the live events pill above,
-  // which stays a single cosmetic "Tous" — LiveEventModel has no category
-  // field, but videos do via tbl_video_category).
   List<String> _videoCategoryOptions() {
     final names = (videoProvider.categoryList ?? [])
         .map((c) => c.name ?? '')
@@ -122,7 +103,6 @@ class _LiveEventState extends State<LiveEvent> {
 
   @override
   void dispose() {
-    liveEventProvider.clearProvider();
     videoProvider.clearProvider();
     super.dispose();
   }
@@ -133,10 +113,9 @@ class _LiveEventState extends State<LiveEvent> {
     return isNight ? _buildLiveNeonScaffold() : _buildAbidjanScaffold();
   }
 
-  // LIVE NEON (night theme): same structure as ABIDJAN (flat header, single
-  // cosmetic filter pill, featured card + "Tendances" strip) recolored for
-  // the neon palette. Tap-dispatch logic (_handleLiveEventTap) and data
-  // fetching are fully shared with day.
+  // LIVE NEON (night theme): same structure as ABIDJAN, recolored for the
+  // neon palette. Tap-dispatch logic (_handleVideoTap) and data fetching
+  // are fully shared with day.
   Widget _buildLiveNeonScaffold() {
     return Scaffold(
       backgroundColor: liveNeonBg,
@@ -147,14 +126,6 @@ class _LiveEventState extends State<LiveEvent> {
             const LiveNeonHeader(
               title: "liveevents",
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: LiveNeonPillFilterRow(
-                options: const ["Tous"],
-                selected: "Tous",
-                onSelected: (_) {},
-              ),
-            ),
             Expanded(
               child: RefreshIndicator(
                 backgroundColor: liveNeonCardBg,
@@ -164,25 +135,23 @@ class _LiveEventState extends State<LiveEvent> {
                 triggerMode: RefreshIndicatorTriggerMode.anywhere,
                 strokeWidth: 3,
                 onRefresh: () async {
-                  liveEventProvider.clearProvider();
-                  _fetchData(0);
+                  videoProvider.clearProvider();
+                  _fetchVideos(0);
                 },
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
                   scrollDirection: Axis.vertical,
                   physics: const BouncingScrollPhysics(),
-                  child: Consumer<LiveEventProvider>(
-                    builder: (context, liveeventprovider, child) {
-                      if (liveeventprovider.loading &&
-                          !liveeventprovider.loadMore) {
-                        return buildLiveEventListShimmer();
+                  child: Consumer<VideoProvider>(
+                    builder: (context, videoprovider, child) {
+                      if (videoprovider.loading && !videoprovider.loadMore) {
+                        return buildVideoListShimmer();
                       }
                       return Column(
                         children: [
                           _buildLiveNeonFeaturedCard(),
                           _buildLiveNeonTrendingStrip(),
-                          buildLiveEventList(),
                           _buildLiveNeonVideosSection(),
                         ],
                       );
@@ -197,10 +166,9 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // ABIDJAN (day theme): flat header, single cosmetic filter pill (decision:
-  // LiveEventModel has no category field, so no real filtering is possible),
-  // featured card + "Tendances" strip built from the same real event data
-  // and the same shared tap-dispatch logic as the grid below.
+  // ABIDJAN (day theme): flat header, featured card + "Tendances" strip
+  // built from the same video catalog and the same shared tap-dispatch
+  // logic as the grid below.
   Widget _buildAbidjanScaffold() {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
@@ -208,14 +176,6 @@ class _LiveEventState extends State<LiveEvent> {
         children: [
           const AbidjanHeader(
             title: "liveevents",
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: AbidjanPillFilterRow(
-              options: const ["Tous"],
-              selected: "Tous",
-              onSelected: (_) {},
-            ),
           ),
           Expanded(
             child: RefreshIndicator(
@@ -226,25 +186,23 @@ class _LiveEventState extends State<LiveEvent> {
               triggerMode: RefreshIndicatorTriggerMode.anywhere,
               strokeWidth: 3,
               onRefresh: () async {
-                liveEventProvider.clearProvider();
-                _fetchData(0);
+                videoProvider.clearProvider();
+                _fetchVideos(0);
               },
               child: SingleChildScrollView(
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
                 scrollDirection: Axis.vertical,
                 physics: const BouncingScrollPhysics(),
-                child: Consumer<LiveEventProvider>(
-                  builder: (context, liveeventprovider, child) {
-                    if (liveeventprovider.loading &&
-                        !liveeventprovider.loadMore) {
-                      return buildLiveEventListShimmer();
+                child: Consumer<VideoProvider>(
+                  builder: (context, videoprovider, child) {
+                    if (videoprovider.loading && !videoprovider.loadMore) {
+                      return buildVideoListShimmer();
                     }
                     return Column(
                       children: [
                         _buildAbidjanFeaturedCard(),
                         _buildAbidjanTrendingStrip(),
-                        buildLiveEventList(),
                         _buildAbidjanVideosSection(),
                       ],
                     );
@@ -258,13 +216,6 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  Future<void> _handleLiveEventTap(int index) async {
-    await _handleContentTap(liveEventProvider.liveEventList?[index]);
-  }
-
-  // Videos are rows of the exact same table/model as live events (is_vod=1),
-  // so tapping one reuses the identical pay-to-unlock / play dispatch logic —
-  // only the source list differs.
   Future<void> _handleVideoTap(int index) async {
     await _handleContentTap(videoProvider.videoList?[index]);
   }
@@ -274,7 +225,7 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Widget _buildAbidjanFeaturedCard() {
-    final list = liveEventProvider.liveEventList;
+    final list = videoProvider.videoList;
     if (list == null || list.isEmpty) return const SizedBox.shrink();
     final Result item = list.first;
     final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
@@ -291,7 +242,7 @@ class _LiveEventState extends State<LiveEvent> {
       padding: const EdgeInsets.fromLTRB(15, 10, 15, 20),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
-        onTap: () => _handleLiveEventTap(0),
+        onTap: () => _handleVideoTap(0),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
           child: SizedBox(
@@ -417,7 +368,7 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Widget _buildAbidjanTrendingStrip() {
-    final list = liveEventProvider.liveEventList;
+    final list = videoProvider.videoList;
     if (list == null || list.length < 2) return const SizedBox.shrink();
     final items = list.length > 8 ? list.sublist(0, 8) : list;
 
@@ -452,7 +403,7 @@ class _LiveEventState extends State<LiveEvent> {
                   item.isPaid == 1 && item.isJoin == 0;
               return InkWell(
                 borderRadius: BorderRadius.circular(18),
-                onTap: () => _handleLiveEventTap(originalIndex),
+                onTap: () => _handleVideoTap(originalIndex),
                 child: SizedBox(
                   width: 150,
                   child: AbidjanBokehCard(
@@ -605,9 +556,8 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // "Vidéos" section — added alongside the live events above, not replacing
-  // them. Real server-side category pills (tbl_video_category), unlike the
-  // single cosmetic "Tous" pill live events get.
+  // Filterable zone below "Tendances" — real server-side category pills
+  // (tbl_video_category), "Séries" strip, then the full catalog grid.
   Widget _buildAbidjanVideosSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,10 +600,10 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // LIVE NEON (night theme) featured card. Same shared _handleLiveEventTap
+  // LIVE NEON (night theme) featured card. Same shared _handleVideoTap
   // logic as ABIDJAN's version — only the palette differs.
   Widget _buildLiveNeonFeaturedCard() {
-    final list = liveEventProvider.liveEventList;
+    final list = videoProvider.videoList;
     if (list == null || list.isEmpty) return const SizedBox.shrink();
     final Result item = list.first;
     final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
@@ -670,7 +620,7 @@ class _LiveEventState extends State<LiveEvent> {
       padding: const EdgeInsets.fromLTRB(15, 10, 15, 20),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
-        onTap: () => _handleLiveEventTap(0),
+        onTap: () => _handleVideoTap(0),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
           child: SizedBox(
@@ -761,7 +711,7 @@ class _LiveEventState extends State<LiveEvent> {
                             label: isPaidLocked
                                 ? "${Constant.currencySymbol}${item.price ?? ""}"
                                 : "Regarder",
-                            onTap: () => _handleLiveEventTap(0),
+                            onTap: () => _handleVideoTap(0),
                           ),
                         ],
                       ),
@@ -777,7 +727,7 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Widget _buildLiveNeonTrendingStrip() {
-    final list = liveEventProvider.liveEventList;
+    final list = videoProvider.videoList;
     if (list == null || list.length < 2) return const SizedBox.shrink();
     final items = list.length > 8 ? list.sublist(0, 8) : list;
 
@@ -812,7 +762,7 @@ class _LiveEventState extends State<LiveEvent> {
                   item.isPaid == 1 && item.isJoin == 0;
               return InkWell(
                 borderRadius: BorderRadius.circular(18),
-                onTap: () => _handleLiveEventTap(originalIndex),
+                onTap: () => _handleVideoTap(originalIndex),
                 child: SizedBox(
                   width: 150,
                   child: LiveNeonBokehCard(
@@ -898,43 +848,10 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  Widget buildLiveEventList() {
-    return Consumer<LiveEventProvider>(
-        builder: (context, liveeventprovider, child) {
-      if (liveeventprovider.loading && !liveeventprovider.loadMore) {
-        return buildLiveEventListShimmer();
-      } else {
-        if (liveeventprovider.liveEventModel.status == 200 &&
-            liveeventprovider.liveEventList != null) {
-          if ((liveeventprovider.liveEventList?.length ?? 0) > 0) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                buildLiveEventListItem(),
-                if (liveeventprovider.loadMore)
-                  SizedBox(
-                    height: 50,
-                    child: Utils.pageLoader(),
-                  )
-                else
-                  const SizedBox.shrink(),
-              ],
-            );
-          } else {
-            return const NoData(text: "", subTitle: "");
-          }
-        } else {
-          return const NoData(text: "", subTitle: "");
-        }
-      }
-    });
-  }
-
   Widget buildVideoList() {
     return Consumer<VideoProvider>(builder: (context, videoprovider, child) {
       if (videoprovider.loading && !videoprovider.loadMore) {
-        return buildLiveEventListShimmer();
+        return buildVideoListShimmer();
       } else {
         if (videoprovider.videoModel.status == 200 &&
             videoprovider.videoList != null) {
@@ -963,28 +880,13 @@ class _LiveEventState extends State<LiveEvent> {
     });
   }
 
-  Widget buildLiveEventListItem() {
-    return buildContentGridItem(liveEventProvider.liveEventList,
-        _handleLiveEventTap,
-        showDateBadge: true);
-  }
-
   Widget buildVideoListItem() {
-    // The badge shows createdAt ("<date> onwards"), meaningful for an
-    // upcoming live event but not for on-demand video — and the "onwards"
-    // string has no French translation, so it rendered in English. Hidden
-    // for videos rather than mistranslated or repurposed to show something
-    // it was never wired to compute (e.g. the real expiry date).
-    return buildContentGridItem(videoProvider.videoList, _handleVideoTap,
-        showDateBadge: false);
+    return buildContentGridItem(videoProvider.videoList, _handleVideoTap);
   }
 
-  // Shared 2-column grid for both the live-event list and the video list —
-  // same Result type, same card layout, only the source list, the tap
-  // handler and the date badge differ.
+  // Shared 2-column grid for the video catalog.
   Widget buildContentGridItem(
-      List<Result>? items, void Function(int index) onTapItem,
-      {required bool showDateBadge}) {
+      List<Result>? items, void Function(int index) onTapItem) {
     return AlignedGridView.count(
       shrinkWrap: true,
       crossAxisCount: 2,
@@ -1018,45 +920,6 @@ class _LiveEventState extends State<LiveEvent> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (showDateBadge) ...[
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: colorPrimary.withValues(alpha: 0.09),
-                      ),
-                      child: Row(
-                        children: [
-                          MyText(
-                            color: colorPrimary,
-                            inter: 1,
-                            text: Utils.dateformat(DateTime.parse(
-                                item?.createdAt.toString() ?? "")),
-                            fontsize: Dimens.textSmall,
-                            fontwaight: FontWeight.w600,
-                            maxline: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textalign: TextAlign.center,
-                            fontstyle: FontStyle.normal,
-                          ),
-                          const SizedBox(width: 5),
-                          MyText(
-                            color: colorPrimary,
-                            inter: 1,
-                            text: "onwards",
-                            fontsize: Dimens.textSmall,
-                            multilanguage: true,
-                            fontwaight: FontWeight.w600,
-                            maxline: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textalign: TextAlign.center,
-                            fontstyle: FontStyle.normal,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                  ],
                   MyText(
                     color: Theme.of(context).colorScheme.surface,
                     inter: 1,
@@ -1125,7 +988,7 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  Widget buildLiveEventListShimmer() {
+  Widget buildVideoListShimmer() {
     return AlignedGridView.count(
       shrinkWrap: true,
       crossAxisCount: 2,

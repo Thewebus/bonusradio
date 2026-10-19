@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'package:myBonus/firebase_options.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/provider/addfavouriteprovider.dart';
-import 'package:myBonus/provider/liveeventsprovider.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
 import 'package:myBonus/provider/podcastprovider.dart';
 import 'package:myBonus/provider/podcastviewallprovider.dart';
@@ -112,7 +111,6 @@ Future<void> main() async {
             ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
             ChangeNotifierProvider(create: (_) => SubHistoryProvider()),
             ChangeNotifierProvider(create: (_) => PodcatsProvider()),
-            ChangeNotifierProvider(create: (_) => LiveEventProvider()),
             ChangeNotifierProvider(create: (_) => VideoProvider()),
             ChangeNotifierProvider(create: (_) => VideoSeriesProvider()),
             ChangeNotifierProvider(create: (_) => MusicDetailProvider()),

@@ -3,11 +3,12 @@ import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/model/videocategorymodel.dart' as videocategory;
 import 'package:myBonus/webservice/apiservices.dart';
 
-// Mirrors LiveEventProvider (same pagination/dedupe pattern), plus the
-// category filter and the separate category list that the Films screen's
-// pill row needs — the two are fetched independently since switching
-// category restarts the video pagination but never needs to refetch the
-// categories themselves.
+// Drives the whole Films screen catalog (former "live events" were merged
+// into the video catalog — there's no separate provider for them anymore).
+// Standard pagination/dedupe pattern, plus the category filter and the
+// separate category list that the Films screen's pill row needs — the two
+// are fetched independently since switching category restarts the video
+// pagination but never needs to refetch the categories themselves.
 class VideoProvider extends ChangeNotifier {
   /* Video Pagination */
   LiveEventModel videoModel = LiveEventModel();
