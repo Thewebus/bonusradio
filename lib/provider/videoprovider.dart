@@ -46,6 +46,23 @@ class VideoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /* "Tendances" strip — most viewed catalog entries (videos and series),
+     same category filter as the main list. */
+  bool trendingLoading = false;
+  List<Result> trendingList = [];
+
+  Future<void> getTrendingList() async {
+    trendingLoading = true;
+    final int? categoryId = selectedCategoryId;
+    final model = await ApiService()
+        .videoList(1, categoryId, '', sort: 'trending');
+    // A pill tapped while this was in flight already started a newer fetch.
+    if (categoryId != selectedCategoryId) return;
+    trendingList = model.status == 200 ? (model.result ?? []) : [];
+    trendingLoading = false;
+    notifyListeners();
+  }
+
   Future<void> getVideoList(dynamic pageNo) async {
     loading = true;
     videoModel =
@@ -88,6 +105,7 @@ class VideoProvider extends ChangeNotifier {
     currentPage = null;
     morePage = null;
     videoList = [];
+    trendingList = [];
     notifyListeners();
   }
 

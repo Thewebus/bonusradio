@@ -517,8 +517,10 @@ class ApiService {
   // Video-on-demand rows live in the same table as (former) live events and
   // share its exact response shape (see get_video on the backend), so this reuses
   // LiveEventModel instead of a dedicated one — one parser for both.
+  // sort: '' = newest first, 'trending' = most viewed first.
   Future<LiveEventModel> videoList(
-      dynamic pageNo, dynamic categoryId, dynamic search) async {
+      dynamic pageNo, dynamic categoryId, dynamic search,
+      {String sort = ''}) async {
     LiveEventModel liveEventModel;
     String apiname = "get_video";
     Response response = await dio.post(
@@ -530,11 +532,22 @@ class ApiService {
         // "" as "no filter", while a literal "null" string would not match.
         'category_id': categoryId ?? '',
         'search': search ?? '',
+        'sort': sort,
       }),
       options: optHeaders,
     );
     liveEventModel = LiveEventModel.fromJson(response.data);
     return liveEventModel;
+  }
+
+  // Fire-and-forget view count for a video/episode (feeds "Tendances").
+  Future<void> addVideoView(dynamic videoId) async {
+    String apiname = "add_video_view";
+    await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({'video_id': videoId}),
+      options: optHeaders,
+    );
   }
 
   Future<VideoCategoryModel> videoCategoryList() async {

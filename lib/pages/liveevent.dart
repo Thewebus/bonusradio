@@ -4,19 +4,14 @@ import 'package:provider/provider.dart';
 import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/pages/nodata.dart';
 import 'package:myBonus/model/videocategorymodel.dart' as videocategory;
-import 'package:myBonus/model/videoseriesmodel.dart' as videoseries;
-import 'package:myBonus/pages/videoseriesdetail.dart';
 import 'package:myBonus/provider/videoprovider.dart';
-import 'package:myBonus/provider/videoseriesprovider.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/customwidget.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/utils.dart';
-import 'package:myBonus/widget/abidjan_bokeh_card.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/abidjan_pill_filter.dart';
-import 'package:myBonus/widget/liveneon_bokeh_card.dart';
 import 'package:myBonus/widget/liveneon_buttons.dart';
 import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/liveneon_pill_filter.dart';
@@ -27,6 +22,9 @@ import 'package:myBonus/widget/mytext.dart';
 // (live events + videos) side by side; "live event" had no real live/
 // real-time behavior left, so the two were merged into one video catalog —
 // this screen is now a single catalog view, not a juxtaposition of two.
+// A series is listed like any video (its latest episode's cover) and opens
+// its episode list on tap; standalone videos play directly. The category
+// pills filter everything below them: banner, Tendances, and the catalog.
 class LiveEvent extends StatefulWidget {
   const LiveEvent({super.key});
 
@@ -38,22 +36,19 @@ class _LiveEventState extends State<LiveEvent> {
   static const String _allVideoCategoriesOption = "Tous";
 
   late VideoProvider videoProvider;
-  late VideoSeriesProvider videoSeriesProvider;
   final ScrollController categoryController = ScrollController();
   late ScrollController _scrollController;
 
   @override
   void initState() {
     videoProvider = Provider.of<VideoProvider>(context, listen: false);
-    videoSeriesProvider =
-        Provider.of<VideoSeriesProvider>(context, listen: false);
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     videoProvider
         .getCategoryList()
         .then((_) => videoProvider.getCategoryVideos());
     _fetchVideos(0);
-    videoSeriesProvider.getSeriesList();
+    videoProvider.getTrendingList();
     super.initState();
   }
 
@@ -101,6 +96,14 @@ class _LiveEventState extends State<LiveEvent> {
             .id;
     videoProvider.selectCategory(categoryId);
     _fetchVideos(0);
+    videoProvider.getTrendingList();
+  }
+
+  Future<void> _refresh() async {
+    videoProvider.clearProvider();
+    _fetchVideos(0);
+    videoProvider.getTrendingList();
+    videoProvider.getCategoryVideos();
   }
 
   @override
@@ -136,10 +139,7 @@ class _LiveEventState extends State<LiveEvent> {
                 edgeOffset: 1.0,
                 triggerMode: RefreshIndicatorTriggerMode.anywhere,
                 strokeWidth: 3,
-                onRefresh: () async {
-                  videoProvider.clearProvider();
-                  _fetchVideos(0);
-                },
+                onRefresh: _refresh,
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
@@ -192,10 +192,7 @@ class _LiveEventState extends State<LiveEvent> {
               edgeOffset: 1.0,
               triggerMode: RefreshIndicatorTriggerMode.anywhere,
               strokeWidth: 3,
-              onRefresh: () async {
-                videoProvider.clearProvider();
-                _fetchVideos(0);
-              },
+              onRefresh: _refresh,
               child: SingleChildScrollView(
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(0, 5, 0, 160),
@@ -232,14 +229,46 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   Future<void> _handleContentTap(Result? item) async {
-    await Utils.handleVideoContentTap(context, item);
+    await Utils.openVideoCatalogItem(context, item);
+  }
+
+  // Caption under a catalog tile: episode count for a series, otherwise
+  // the price (locked paid video) or "free".
+  Widget _buildTileCaption(Result item) {
+    final bool isSeries = item.isSeries == 1;
+    final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
+    final int episodes = item.episodeCount ?? 0;
+    return MyText(
+      color: colorPrimary,
+      inter: 1,
+      text: isSeries
+          ? "Série · $episodes épisode${episodes > 1 ? 's' : ''}"
+          : isPaidLocked
+              ? "${Constant.currencySymbol}${item.price ?? ""}"
+              : "free",
+      fontsize: Dimens.textExtraSmall,
+      multilanguage: !isSeries && !isPaidLocked,
+      fontwaight: FontWeight.w600,
+      maxline: 1,
+      overflow: TextOverflow.ellipsis,
+      textalign: TextAlign.left,
+      fontstyle: FontStyle.normal,
+    );
+  }
+
+  // Label of the featured card's button.
+  String _featuredButtonLabel(Result item) {
+    if (item.isSeries == 1) return "Voir les épisodes";
+    if (item.isPaid == 1 && item.isJoin == 0) {
+      return "${Constant.currencySymbol}${item.price ?? ""}";
+    }
+    return "Regarder";
   }
 
   Widget _buildAbidjanFeaturedCard() {
     final list = videoProvider.videoList;
     if (list == null || list.isEmpty) return const SizedBox.shrink();
     final Result item = list.first;
-    final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
     bool isNew = false;
     final createdAt = item.createdAt;
     if (createdAt != null) {
@@ -353,9 +382,7 @@ class _LiveEventState extends State<LiveEvent> {
                                     color: black, size: 16),
                                 const SizedBox(width: 6),
                                 Text(
-                                  isPaidLocked
-                                      ? "${Constant.currencySymbol}${item.price ?? ""}"
-                                      : "Regarder",
+                                  _featuredButtonLabel(item),
                                   style: const TextStyle(
                                     color: black,
                                     fontSize: 12,
@@ -378,14 +405,13 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // Series are their own, separately-fetched list (get_video_series) — a
-  // series header, not a Result row, so it needs its own Consumer and its
-  // own tap target (the series detail screen) rather than reusing
-  // _handleContentTap/buildContentGridItem built for single videos.
-  Widget _buildSeriesStrip({required bool isNight}) {
-    return Consumer<VideoSeriesProvider>(
+  // "Tendances" — most viewed catalog entries (series count the views of
+  // all their episodes), following the selected category pill like the
+  // rest of the screen. Hidden when nothing matches.
+  Widget _buildTrendingStrip({required bool isNight}) {
+    return Consumer<VideoProvider>(
       builder: (context, provider, child) {
-        final list = provider.seriesList ?? [];
+        final list = provider.trendingList;
         if (list.isEmpty) return const SizedBox.shrink();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +420,7 @@ class _LiveEventState extends State<LiveEvent> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
               child: MyText(
                 color: isNight ? white : black,
-                text: "Séries",
+                text: "Tendances",
                 multilanguage: false,
                 inter: isNight ? 1 : 4,
                 fontsize: Dimens.textBig,
@@ -405,42 +431,14 @@ class _LiveEventState extends State<LiveEvent> {
               ),
             ),
             SizedBox(
-              height: 130,
+              height: 230,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 itemCount: list.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  final series = list[index];
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => VideoSeriesDetail(
-                          seriesId: series.id ?? 0,
-                          title: series.title ?? "",
-                          landscapeImg: series.landscapeImg,
-                        ),
-                      ),
-                    ),
-                    child: SizedBox(
-                      width: 150,
-                      child: isNight
-                          ? LiveNeonBokehCard(
-                              index: index,
-                              borderRadius: BorderRadius.circular(18),
-                              child: _buildSeriesCardContent(series),
-                            )
-                          : AbidjanBokehCard(
-                              index: index,
-                              borderRadius: BorderRadius.circular(18),
-                              child: _buildSeriesCardContent(series),
-                            ),
-                    ),
-                  );
-                },
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) =>
+                    _buildPortraitTile(list[index], rank: index + 1),
               ),
             ),
             const SizedBox(height: 10),
@@ -450,47 +448,91 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  Widget _buildSeriesCardContent(videoseries.Result series) {
-    final episodeCount = series.episodeCount ?? 0;
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            series.title ?? "",
-            style: const TextStyle(
-              color: white,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+  // Portrait cover tile shared by Tendances and the per-category rows.
+  // `rank` adds the Tendances position badge.
+  Widget _buildPortraitTile(Result item, {int? rank}) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => _handleContentTap(item),
+      child: SizedBox(
+        width: 130,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: MyNetworkImage(
+                    imgWidth: 130,
+                    imgHeight: 180,
+                    fit: BoxFit.cover,
+                    imageUrl: item.portraitImg?.toString() ?? "",
+                  ),
+                ),
+                if (rank != null)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colorPrimary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "#$rank",
+                        style: const TextStyle(
+                          color: white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (item.isSeries == 1)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.video_library_outlined,
+                          color: white, size: 14),
+                    ),
+                  ),
+              ],
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            episodeCount > 1
-                ? "$episodeCount épisodes"
-                : "$episodeCount épisode",
-            style: TextStyle(
-              color: white.withValues(alpha: 0.85),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 6),
+            MyText(
+              color: Theme.of(context).colorScheme.surface,
+              inter: 1,
+              text: item.title?.toString() ?? "",
+              fontsize: Dimens.textSmall,
+              fontwaight: FontWeight.w600,
+              maxline: 1,
+              overflow: TextOverflow.ellipsis,
+              textalign: TextAlign.left,
+              fontstyle: FontStyle.normal,
             ),
-          ),
-        ],
+            _buildTileCaption(item),
+          ],
+        ),
       ),
     );
   }
 
-  // Filterable zone below "Tendances" — real server-side category pills
-  // (tbl_video_category), "Séries" strip, then the full catalog grid.
+  // Below the featured card: Tendances, then the catalog — one row per
+  // category for "Tous", or the selected category as a grid.
   Widget _buildAbidjanVideosSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSeriesStrip(isNight: false),
+        _buildTrendingStrip(isNight: false),
         _selectedVideoCategoryLabel == _allVideoCategoriesOption
             ? _buildCategoryRows(isNight: false)
             : buildVideoList(),
@@ -504,7 +546,6 @@ class _LiveEventState extends State<LiveEvent> {
     final list = videoProvider.videoList;
     if (list == null || list.isEmpty) return const SizedBox.shrink();
     final Result item = list.first;
-    final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
     bool isNew = false;
     final createdAt = item.createdAt;
     if (createdAt != null) {
@@ -606,9 +647,7 @@ class _LiveEventState extends State<LiveEvent> {
                         children: [
                           LiveNeonGradientButton(
                             icon: Icons.play_arrow,
-                            label: isPaidLocked
-                                ? "${Constant.currencySymbol}${item.price ?? ""}"
-                                : "Regarder",
+                            label: _featuredButtonLabel(item),
                             onTap: () => _handleVideoTap(0),
                           ),
                         ],
@@ -628,7 +667,7 @@ class _LiveEventState extends State<LiveEvent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSeriesStrip(isNight: true),
+        _buildTrendingStrip(isNight: true),
         _selectedVideoCategoryLabel == _allVideoCategoriesOption
             ? _buildCategoryRows(isNight: true)
             : buildVideoList(),
@@ -666,8 +705,8 @@ class _LiveEventState extends State<LiveEvent> {
   }
 
   // "Tous" browse view — one horizontal row per video category, each
-  // showing the videos' own real portrait covers (not a gradient
-  // placeholder like the Séries strip). Replaces the flat grid only when
+  // showing real portrait covers (a series shows its latest episode's
+  // cover and sits among the category's videos). Replaces the flat grid only when
   // no specific category pill is selected; picking a pill still shows
   // that one category as the existing flat grid below.
   Widget _buildCategoryRows({required bool isNight}) {
@@ -721,57 +760,7 @@ class _LiveEventState extends State<LiveEvent> {
             padding: const EdgeInsets.symmetric(horizontal: 15),
             itemCount: items.length,
             separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () => Utils.handleVideoContentTap(context, item),
-                child: SizedBox(
-                  width: 130,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: MyNetworkImage(
-                          imgWidth: 130,
-                          imgHeight: 180,
-                          fit: BoxFit.cover,
-                          imageUrl: item.portraitImg?.toString() ?? "",
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      MyText(
-                        color: Theme.of(context).colorScheme.surface,
-                        inter: 1,
-                        text: item.title?.toString() ?? "",
-                        fontsize: Dimens.textSmall,
-                        fontwaight: FontWeight.w600,
-                        maxline: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textalign: TextAlign.left,
-                        fontstyle: FontStyle.normal,
-                      ),
-                      MyText(
-                        color: colorPrimary,
-                        inter: 1,
-                        text: isPaidLocked
-                            ? "${Constant.currencySymbol}${item.price ?? ""}"
-                            : "free",
-                        fontsize: Dimens.textExtraSmall,
-                        multilanguage: !isPaidLocked,
-                        fontwaight: FontWeight.w600,
-                        maxline: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textalign: TextAlign.left,
-                        fontstyle: FontStyle.normal,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+            itemBuilder: (context, index) => _buildPortraitTile(items[index]),
           ),
         ),
         const SizedBox(height: 10),
@@ -863,7 +852,9 @@ class _LiveEventState extends State<LiveEvent> {
                     fontstyle: FontStyle.normal,
                   ),
                   const SizedBox(height: 4),
-                  if (item?.isPaid.toString() == "1" &&
+                  if (item?.isSeries == 1)
+                    _buildTileCaption(item!)
+                  else if (item?.isPaid.toString() == "1" &&
                       item?.isJoin.toString() == "0")
                     MyText(
                       color: colorPrimary,

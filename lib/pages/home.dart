@@ -3857,14 +3857,13 @@ class _HomeState extends State<Home> {
             hoverColor: transparent,
             highlightColor: transparent,
             onTap: () async {
-              // Login is only required to pay/unlock — free content plays
-              // straight away, same as the dedicated Films screen
-              // (Utils.handleVideoContentTap). This section only ever shows
-              // video items (is_vod=1 rows), so the item is adapted into
-              // the shared Result shape rather than duplicating the
-              // pay-or-play dispatch logic here.
+              // Same catalog tap as the Films screen
+              // (Utils.openVideoCatalogItem): a series tile opens its
+              // episode list, a video plays (login only required to pay).
+              // The item is adapted into the shared Result shape rather
+              // than duplicating that dispatch logic here.
               final data = sectionList?[sectionindex].data?[index];
-              await Utils.handleVideoContentTap(
+              await Utils.openVideoCatalogItem(
                 context,
                 Result(
                   id: data?.id,
@@ -3875,6 +3874,8 @@ class _HomeState extends State<Home> {
                   isJoin: data?.isJoin,
                   price: data?.price,
                   type: data?.type,
+                  videoSeriesId: data?.videoSeriesId,
+                  isSeries: data?.isSeries,
                 ),
               );
             },
@@ -3951,7 +3952,21 @@ class _HomeState extends State<Home> {
                               overflow: TextOverflow.ellipsis,
                               fontstyle: FontStyle.normal),
                           const SizedBox(height: 5),
-                          if (sectionList?[sectionindex]
+                          if (sectionList?[sectionindex].data?[index].isSeries ==
+                              1)
+                            MyText(
+                              color: colorPrimary,
+                              inter: 1,
+                              text:
+                                  "Série · ${sectionList?[sectionindex].data?[index].episodeCount ?? 0} épisode${(sectionList?[sectionindex].data?[index].episodeCount ?? 0) > 1 ? 's' : ''}",
+                              fontsize: Dimens.textSmall,
+                              fontwaight: FontWeight.w700,
+                              maxline: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textalign: TextAlign.left,
+                              fontstyle: FontStyle.normal,
+                            )
+                          else if (sectionList?[sectionindex]
                                       .data?[index]
                                       .isPaid
                                       .toString() ==

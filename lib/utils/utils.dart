@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/settings.dart';
+import 'package:myBonus/pages/videoseriesdetail.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/players/player_video.dart';
 import 'package:myBonus/players/player_vimeo.dart';
@@ -28,6 +29,7 @@ import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 import 'package:myBonus/widget/mytext.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:share_plus/share_plus.dart';
@@ -1062,6 +1064,29 @@ class Utils {
   // tbl_live_event/LiveEventModel.Result shape. Login is only required to
   // pay/unlock; free content (and anything already unlocked) plays straight
   // away, same as podcasts and radios elsewhere in the app.
+  // Tap on a video *catalog* tile (Films screen, home video section): a
+  // series tile opens its episode list, anything else goes through the
+  // pay-or-play dispatch below. Not for episodes inside a series' own
+  // screen — those carry videoSeriesId too but must play directly.
+  static Future<void> openVideoCatalogItem(
+      BuildContext context, Result? item) async {
+    if (item == null) return;
+    if (item.isSeries == 1 && item.videoSeriesId != null) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VideoSeriesDetail(
+            seriesId: item.videoSeriesId!,
+            title: item.title ?? "",
+            landscapeImg: item.landscapeImg,
+          ),
+        ),
+      );
+      return;
+    }
+    await handleVideoContentTap(context, item);
+  }
+
   static Future<void> handleVideoContentTap(
       BuildContext context, Result? item) async {
     if (item == null) return;
@@ -1095,6 +1120,7 @@ class Utils {
         ),
       );
     } else {
+      ApiService().addVideoView(item.id).catchError((_) {});
       if (item.type == 1) {
         /* Audio */
         musicManager.playSingleSong(

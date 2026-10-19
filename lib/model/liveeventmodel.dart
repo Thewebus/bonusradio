@@ -84,6 +84,14 @@ class Result {
   // Only present on get_video (joined server-side from tbl_video_category);
   // null for plain live events.
   String? categoryName;
+  // Catalog rows (get_video / home video section): a series is listed as
+  // its most recent episode with isSeries=1 — title is then the series'
+  // title (episodeTitle keeps the episode's own) and episodeCount is set.
+  // totalView is the video's views, or the sum over a series' episodes.
+  int? isSeries;
+  int? episodeCount;
+  String? episodeTitle;
+  int? totalView;
 
   Result({
     this.id,
@@ -108,6 +116,10 @@ class Result {
     this.updatedAt,
     this.isJoin,
     this.categoryName,
+    this.isSeries,
+    this.episodeCount,
+    this.episodeTitle,
+    this.totalView,
   });
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
@@ -133,6 +145,10 @@ class Result {
         updatedAt: json["updated_at"],
         isJoin: json["is_join"],
         categoryName: json["category_name"],
+        isSeries: json["is_series"],
+        episodeCount: json["episode_count"],
+        episodeTitle: json["episode_title"],
+        totalView: json["total_view"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -158,5 +174,9 @@ class Result {
         "updated_at": updatedAt,
         "is_join": isJoin,
         "category_name": categoryName,
+        "is_series": isSeries,
+        "episode_count": episodeCount,
+        "episode_title": episodeTitle,
+        "total_view": totalView,
       };
 }
