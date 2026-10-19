@@ -2040,6 +2040,12 @@ class _HomeState extends State<Home> {
             .toUpperCase()
         : (item?.artistName?.toString() ?? "");
     final bool isPremiumLocked = item?.isPremium == 1 && item?.isBuy == 0;
+    // Radio banners use `image` (tbl_song), others `landscape_img` (tbl_podcast);
+    // falls back to the bokeh gradient only when the admin hasn't set one.
+    final String bannerImageUrl =
+        (isRadio ? item?.image : item?.landscapeImg ?? item?.image)
+                ?.toString() ??
+            "";
 
     Widget pillButton({
       required Color background,
@@ -2085,16 +2091,14 @@ class _HomeState extends State<Home> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            isRadio
-                ? const AbidjanBokehCard(index: 1)
-                : MyNetworkImage(
+            bannerImageUrl.isNotEmpty
+                ? MyNetworkImage(
                     fit: BoxFit.cover,
                     imgWidth: double.infinity,
                     imgHeight: double.infinity,
-                    imageUrl: item?.landscapeImg?.toString() ??
-                        item?.image?.toString() ??
-                        "",
-                  ),
+                    imageUrl: bannerImageUrl,
+                  )
+                : const AbidjanBokehCard(index: 1),
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -2259,6 +2263,10 @@ class _HomeState extends State<Home> {
             .toUpperCase()
         : (item?.artistName?.toString() ?? "");
     final bool isPremiumLocked = item?.isPremium == 1 && item?.isBuy == 0;
+    final String bannerImageUrl =
+        (isRadio ? item?.image : item?.landscapeImg ?? item?.image)
+                ?.toString() ??
+            "";
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -2267,16 +2275,14 @@ class _HomeState extends State<Home> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            isRadio
-                ? const LiveNeonBokehCard(index: 1)
-                : MyNetworkImage(
+            bannerImageUrl.isNotEmpty
+                ? MyNetworkImage(
                     fit: BoxFit.cover,
                     imgWidth: double.infinity,
                     imgHeight: double.infinity,
-                    imageUrl: item?.landscapeImg?.toString() ??
-                        item?.image?.toString() ??
-                        "",
-                  ),
+                    imageUrl: bannerImageUrl,
+                  )
+                : const LiveNeonBokehCard(index: 1),
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
