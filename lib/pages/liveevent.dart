@@ -49,7 +49,9 @@ class _LiveEventState extends State<LiveEvent> {
         Provider.of<VideoSeriesProvider>(context, listen: false);
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
-    videoProvider.getCategoryList();
+    videoProvider
+        .getCategoryList()
+        .then((_) => videoProvider.getCategoryVideos());
     _fetchVideos(0);
     videoSeriesProvider.getSeriesList();
     super.initState();
@@ -489,7 +491,9 @@ class _LiveEventState extends State<LiveEvent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSeriesStrip(isNight: false),
-        buildVideoList(),
+        _selectedVideoCategoryLabel == _allVideoCategoriesOption
+            ? _buildCategoryRows(isNight: false)
+            : buildVideoList(),
       ],
     );
   }
@@ -625,7 +629,9 @@ class _LiveEventState extends State<LiveEvent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSeriesStrip(isNight: true),
-        buildVideoList(),
+        _selectedVideoCategoryLabel == _allVideoCategoriesOption
+            ? _buildCategoryRows(isNight: true)
+            : buildVideoList(),
       ],
     );
   }
@@ -656,6 +662,120 @@ class _LiveEventState extends State<LiveEvent> {
                 ),
         );
       },
+    );
+  }
+
+  // "Tous" browse view — one horizontal row per video category, each
+  // showing the videos' own real portrait covers (not a gradient
+  // placeholder like the Séries strip). Replaces the flat grid only when
+  // no specific category pill is selected; picking a pill still shows
+  // that one category as the existing flat grid below.
+  Widget _buildCategoryRows({required bool isNight}) {
+    return Consumer<VideoProvider>(
+      builder: (context, provider, child) {
+        if (provider.categoryRowsLoading && provider.categoryVideos.isEmpty) {
+          return buildVideoListShimmer();
+        }
+        final categories = provider.categoryList ?? [];
+        final rows = categories
+            .where((c) =>
+                c.id != null && (provider.categoryVideos[c.id] ?? []).isNotEmpty)
+            .toList();
+        if (rows.isEmpty) {
+          return const NoData(text: "", subTitle: "");
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rows
+              .map((category) => _buildCategoryRow(category, isNight: isNight))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryRow(videocategory.Result category,
+      {required bool isNight}) {
+    final items = videoProvider.categoryVideos[category.id] ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+          child: MyText(
+            color: isNight ? white : black,
+            text: category.name ?? "",
+            multilanguage: false,
+            inter: isNight ? 1 : 4,
+            fontsize: Dimens.textBig,
+            fontwaight: FontWeight.w700,
+            maxline: 1,
+            textalign: TextAlign.left,
+            fontstyle: FontStyle.normal,
+          ),
+        ),
+        SizedBox(
+          height: 230,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              final bool isPaidLocked = item.isPaid == 1 && item.isJoin == 0;
+              return InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => Utils.handleVideoContentTap(context, item),
+                child: SizedBox(
+                  width: 130,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: MyNetworkImage(
+                          imgWidth: 130,
+                          imgHeight: 180,
+                          fit: BoxFit.cover,
+                          imageUrl: item.portraitImg?.toString() ?? "",
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      MyText(
+                        color: Theme.of(context).colorScheme.surface,
+                        inter: 1,
+                        text: item.title?.toString() ?? "",
+                        fontsize: Dimens.textSmall,
+                        fontwaight: FontWeight.w600,
+                        maxline: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textalign: TextAlign.left,
+                        fontstyle: FontStyle.normal,
+                      ),
+                      MyText(
+                        color: colorPrimary,
+                        inter: 1,
+                        text: isPaidLocked
+                            ? "${Constant.currencySymbol}${item.price ?? ""}"
+                            : "free",
+                        fontsize: Dimens.textExtraSmall,
+                        multilanguage: !isPaidLocked,
+                        fontwaight: FontWeight.w600,
+                        maxline: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textalign: TextAlign.left,
+                        fontstyle: FontStyle.normal,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 

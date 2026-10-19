@@ -21,6 +21,31 @@ class VideoProvider extends ChangeNotifier {
   bool categoriesLoading = false;
   List<videocategory.Result>? categoryList = [];
 
+  /* Browse-by-category rows ("Tous" view) — one short list per category,
+     fetched via the same get_video endpoint as the main list, just called
+     once per category instead of once overall. Independent of the
+     paginated videoList above, which only ever holds one category (or
+     none) at a time. */
+  bool categoryRowsLoading = false;
+  Map<int, List<Result>> categoryVideos = {};
+
+  Future<void> getCategoryVideos() async {
+    if ((categoryList ?? []).isEmpty) return;
+    categoryRowsLoading = true;
+    notifyListeners();
+    final Map<int, List<Result>> rows = {};
+    for (final category in categoryList!) {
+      if (category.id == null) continue;
+      final model = await ApiService().videoList(1, category.id, '');
+      if (model.status == 200) {
+        rows[category.id!] = model.result ?? [];
+      }
+    }
+    categoryVideos = rows;
+    categoryRowsLoading = false;
+    notifyListeners();
+  }
+
   Future<void> getVideoList(dynamic pageNo) async {
     loading = true;
     videoModel =
