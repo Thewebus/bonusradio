@@ -150,8 +150,13 @@ class _LiveEventState extends State<LiveEvent> {
                       }
                       return Column(
                         children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20),
+                            child:
+                                _buildCategoryPillRow(isNight: true),
+                          ),
                           _buildLiveNeonFeaturedCard(),
-                          _buildLiveNeonTrendingStrip(),
                           _buildLiveNeonVideosSection(),
                         ],
                       );
@@ -166,9 +171,9 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // ABIDJAN (day theme): flat header, featured card + "Tendances" strip
-  // built from the same video catalog and the same shared tap-dispatch
-  // logic as the grid below.
+  // ABIDJAN (day theme): header, real category pills, featured card, then
+  // the series strip and grid below — all one catalog, same shared
+  // tap-dispatch logic throughout.
   Widget _buildAbidjanScaffold() {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
@@ -201,8 +206,12 @@ class _LiveEventState extends State<LiveEvent> {
                     }
                     return Column(
                       children: [
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child: _buildCategoryPillRow(isNight: false),
+                        ),
                         _buildAbidjanFeaturedCard(),
-                        _buildAbidjanTrendingStrip(),
                         _buildAbidjanVideosSection(),
                       ],
                     );
@@ -367,89 +376,6 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  Widget _buildAbidjanTrendingStrip() {
-    final list = videoProvider.videoList;
-    if (list == null || list.length < 2) return const SizedBox.shrink();
-    final items = list.length > 8 ? list.sublist(0, 8) : list;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-          child: MyText(
-            color: black,
-            text: "Tendances",
-            multilanguage: false,
-            inter: 4,
-            fontsize: Dimens.textBig,
-            fontwaight: FontWeight.w700,
-            maxline: 1,
-            textalign: TextAlign.left,
-            fontstyle: FontStyle.normal,
-          ),
-        ),
-        SizedBox(
-          height: 130,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final originalIndex = list.indexOf(item);
-              final bool isPaidLocked =
-                  item.isPaid == 1 && item.isJoin == 0;
-              return InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () => _handleVideoTap(originalIndex),
-                child: SizedBox(
-                  width: 150,
-                  child: AbidjanBokehCard(
-                    index: index,
-                    borderRadius: BorderRadius.circular(18),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            item.title?.toString() ?? "",
-                            style: const TextStyle(
-                              color: white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isPaidLocked
-                                ? "${Constant.currencySymbol}${item.price ?? ""}"
-                                : "Gratuit",
-                            style: TextStyle(
-                              color: white.withValues(alpha: 0.85),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
-
   // Series are their own, separately-fetched list (get_video_series) — a
   // series header, not a Result row, so it needs its own Consumer and its
   // own tap target (the series detail screen) rather than reusing
@@ -562,38 +488,6 @@ class _LiveEventState extends State<LiveEvent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-          child: MyText(
-            color: black,
-            text: "Vidéos",
-            multilanguage: false,
-            inter: 4,
-            fontsize: Dimens.textBig,
-            fontwaight: FontWeight.w700,
-            maxline: 1,
-            textalign: TextAlign.left,
-            fontstyle: FontStyle.normal,
-          ),
-        ),
-        // Consumer, not a direct read — getCategoryList() resolves after this
-        // section's first (synchronous) build, so the pill row needs its own
-        // listener to appear once the categories actually arrive.
-        Consumer<VideoProvider>(
-          builder: (context, videoprovider, child) {
-            if ((videoprovider.categoryList ?? []).isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: AbidjanPillFilterRow(
-                options: _videoCategoryOptions(),
-                selected: _selectedVideoCategoryLabel,
-                onSelected: _onVideoCategorySelected,
-              ),
-            );
-          },
-        ),
         _buildSeriesStrip(isNight: false),
         buildVideoList(),
       ],
@@ -726,125 +620,42 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  Widget _buildLiveNeonTrendingStrip() {
-    final list = videoProvider.videoList;
-    if (list == null || list.length < 2) return const SizedBox.shrink();
-    final items = list.length > 8 ? list.sublist(0, 8) : list;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-          child: MyText(
-            color: white,
-            text: "Tendances",
-            multilanguage: false,
-            inter: 4,
-            fontsize: Dimens.textBig,
-            fontwaight: FontWeight.w700,
-            maxline: 1,
-            textalign: TextAlign.left,
-            fontstyle: FontStyle.normal,
-          ),
-        ),
-        SizedBox(
-          height: 130,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            itemCount: items.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final originalIndex = list.indexOf(item);
-              final bool isPaidLocked =
-                  item.isPaid == 1 && item.isJoin == 0;
-              return InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () => _handleVideoTap(originalIndex),
-                child: SizedBox(
-                  width: 150,
-                  child: LiveNeonBokehCard(
-                    index: index,
-                    borderRadius: BorderRadius.circular(18),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            item.title?.toString() ?? "",
-                            style: const TextStyle(
-                              color: white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isPaidLocked
-                                ? "${Constant.currencySymbol}${item.price ?? ""}"
-                                : "Gratuit",
-                            style: TextStyle(
-                              color: white.withValues(alpha: 0.85),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
-
   Widget _buildLiveNeonVideosSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-          child: MyText(
-            color: white,
-            text: "Vidéos",
-            multilanguage: false,
-            inter: 4,
-            fontsize: Dimens.textBig,
-            fontwaight: FontWeight.w700,
-            maxline: 1,
-            textalign: TextAlign.left,
-            fontstyle: FontStyle.normal,
-          ),
-        ),
-        Consumer<VideoProvider>(
-          builder: (context, videoprovider, child) {
-            if ((videoprovider.categoryList ?? []).isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: LiveNeonPillFilterRow(
-                options: _videoCategoryOptions(),
-                selected: _selectedVideoCategoryLabel,
-                onSelected: _onVideoCategorySelected,
-              ),
-            );
-          },
-        ),
         _buildSeriesStrip(isNight: true),
         buildVideoList(),
       ],
+    );
+  }
+
+  // Real server-side category pills (tbl_video_category) — sit right below
+  // the header, above the featured card, same spot the target design
+  // mockup shows them. Consumer, not a direct read — getCategoryList()
+  // resolves after this section's first (synchronous) build, so the row
+  // needs its own listener to appear once the categories actually arrive.
+  Widget _buildCategoryPillRow({required bool isNight}) {
+    return Consumer<VideoProvider>(
+      builder: (context, videoprovider, child) {
+        if ((videoprovider.categoryList ?? []).isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+          child: isNight
+              ? LiveNeonPillFilterRow(
+                  options: _videoCategoryOptions(),
+                  selected: _selectedVideoCategoryLabel,
+                  onSelected: _onVideoCategorySelected,
+                )
+              : AbidjanPillFilterRow(
+                  options: _videoCategoryOptions(),
+                  selected: _selectedVideoCategoryLabel,
+                  onSelected: _onVideoCategorySelected,
+                ),
+        );
+      },
     );
   }
 

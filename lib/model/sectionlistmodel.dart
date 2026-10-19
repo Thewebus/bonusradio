@@ -188,6 +188,9 @@ class Datum {
   int? isBuy;
   int? totalComment;
   String? bio;
+  // Only present on Category (type=5) rows — number of songs in that
+  // category, for the "<N> titres" caption under a Rubrique.
+  int? songCount;
 
   Datum({
     this.id,
@@ -224,6 +227,7 @@ class Datum {
     this.isBuy,
     this.totalComment,
     this.bio,
+    this.songCount,
   });
 
   factory Datum.fromJson(Map<String, dynamic> json) => Datum(
@@ -261,6 +265,7 @@ class Datum {
         isBuy: json["is_buy"],
         totalComment: json["total_comment"],
         bio: json["bio"],
+        songCount: json["song_count"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -298,6 +303,7 @@ class Datum {
         "is_buy": isBuy,
         "total_comment": totalComment,
         "bio": bio,
+        "song_count": songCount,
       };
 
   Map<String, dynamic> toMap() {

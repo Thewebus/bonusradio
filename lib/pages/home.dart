@@ -1628,6 +1628,10 @@ class _HomeState extends State<Home> {
                                     text: homeProvider.sectionList?[index].title
                                             .toString() ??
                                         "",
+                                    inter: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? 1
+                                        : 4,
                                     fontsize: Dimens.textBig,
                                     fontwaight: FontWeight.w600,
                                     maxline: 1,
@@ -3263,6 +3267,8 @@ class _HomeState extends State<Home> {
                         .name
                         .toString() ??
                     "";
+                final songCount =
+                    sectionList?[sectionindex].data?[index].songCount ?? 0;
                 void openCategory() {
                   Navigator.push(
                     context,
@@ -3340,9 +3346,9 @@ class _HomeState extends State<Home> {
                               overflow: TextOverflow.ellipsis,
                               fontstyle: FontStyle.normal,
                             ),
-                            const Text(
-                              "Titres",
-                              style: TextStyle(
+                            Text(
+                              "$songCount titre${songCount > 1 ? 's' : ''}",
+                              style: const TextStyle(
                                 color: liveNeonTextSecondary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
@@ -3356,8 +3362,7 @@ class _HomeState extends State<Home> {
                 }
 
                 // ABIDJAN (day theme): solid-color block with a small
-                // representative icon badge, count caption below
-                // (visual-only — no per-category count data exists).
+                // representative icon badge, real song-count caption below.
                 final Color cardColor = abidjanBokehGradients[
                         index % abidjanBokehGradients.length]
                     .first;
@@ -3410,10 +3415,8 @@ class _HomeState extends State<Home> {
                             overflow: TextOverflow.ellipsis,
                             fontstyle: FontStyle.normal,
                           ),
-                          // Visual-only — no per-category title count exists
-                          // in the API.
                           Text(
-                            "Titres",
+                            "$songCount titre${songCount > 1 ? 's' : ''}",
                             style: TextStyle(
                               color: gray,
                               fontSize: 10,
