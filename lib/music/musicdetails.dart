@@ -175,10 +175,6 @@ class LectResponsiveConfig {
   static const double largeNotesOffsetMin = 100.0;
   static const double largeNotesOffsetMax = 220.0;
 
-  // Hauteurs pour la zone slideshow (pub)
-  static const double pubSlideshowHeightSmall = 195.0;
-  static const double pubSlideshowHeightMedium = 270.0;
-  static const double pubSlideshowHeightLarge = 300.0;
 }
 
 Stream<PositionData> get positionDataStream {
@@ -244,6 +240,7 @@ class _MusicDetailsState extends State<MusicDetails>
   // and view counting only run while the slideshow is actually on screen.
   final Duration _pubFadeDuration = const Duration(seconds: 1);
   static const int _pubDefaultSeconds = 12;
+  static const double _pubAspectRatio = 4 / 3;
 
   List<ads.Result> _pubAds = [];
   int _pubIndex = 0;
@@ -251,6 +248,11 @@ class _MusicDetailsState extends State<MusicDetails>
   bool _pubVisible = false;
   bool _pubAdsRequested = false;
   double _pubVisibleFraction = 0;
+  // Set by the persistent player overlay (ishomepage: true) while its own
+  // Radios slideshow is on screen — the Radios tab's base layer, then
+  // hidden underneath, pauses its slideshow meanwhile.
+  static final ValueNotifier<bool> _overlayPubOnScreen =
+      ValueNotifier<bool>(false);
 
   // Animation types for notesLect
   static const String animationFlutter =
@@ -285,9 +287,11 @@ class _MusicDetailsState extends State<MusicDetails>
     );
 
     // The Radios tab's base layer is hidden under the persistent player
-    // overlay as soon as something plays — its slideshow must stop
-    // counting then (see _updatePubVisibility).
-    if (!widget.ishomepage) currentlyPlaying.addListener(_updatePubVisibility);
+    // overlay whenever the overlay shows the Radios screen — its slideshow
+    // must stop counting then (see _updatePubVisibility).
+    if (!widget.ishomepage) {
+      _overlayPubOnScreen.addListener(_updatePubVisibility);
+    }
   }
 
   @override
@@ -297,7 +301,9 @@ class _MusicDetailsState extends State<MusicDetails>
     _notesController.dispose();
     _pubTimer?.cancel();
     if (!widget.ishomepage) {
-      currentlyPlaying.removeListener(_updatePubVisibility);
+      _overlayPubOnScreen.removeListener(_updatePubVisibility);
+    } else if (_pubVisible) {
+      _overlayPubOnScreen.value = false;
     }
     super.dispose();
   }
@@ -332,14 +338,15 @@ class _MusicDetailsState extends State<MusicDetails>
   // VisibilityDetector only knows about clipping/scrolling, not about
   // another widget painted on top. Two instances can render the Radios
   // screen: the tab's own base layer (ishomepage: false) and the persistent
-  // player overlay (home.dart), which covers it whenever something plays.
+  // player overlay (home.dart), drawn on top of it once it's expanded.
   void _updatePubVisibility() {
     if (!mounted) return;
     final bool coveredByOverlay =
-        !widget.ishomepage && currentlyPlaying.value?.audioSource != null;
+        !widget.ishomepage && _overlayPubOnScreen.value;
     final bool visible = _pubVisibleFraction >= 0.5 && !coveredByOverlay;
     if (visible == _pubVisible) return;
     _pubVisible = visible;
+    if (widget.ishomepage) _overlayPubOnScreen.value = visible;
     if (visible) {
       _onPubShown();
     } else {
@@ -2294,22 +2301,9 @@ class _MusicDetailsState extends State<MusicDetails>
       _pubAdsRequested = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadPubAds());
     }
-    final size = MediaQuery.of(context).size;
-    final diagonalLogical =
-        math.sqrt(size.width * size.width + size.height * size.height);
-    final diagonalInches = diagonalLogical / 160.0;
-    double pubHeight;
-    if (diagonalInches < LectResponsiveConfig.smallDiagonalInches) {
-      pubHeight = LectResponsiveConfig.pubSlideshowHeightSmall;
-    } else if (diagonalInches < LectResponsiveConfig.largeDiagonalInches) {
-      pubHeight = LectResponsiveConfig.pubSlideshowHeightMedium;
-    } else {
-      pubHeight = LectResponsiveConfig.pubSlideshowHeightLarge;
-    }
-
     final placeholder = Container(
       width: double.infinity,
-      height: pubHeight,
+      height: double.infinity,
       color: black.withValues(alpha: 0.9),
       alignment: Alignment.center,
       child: const Text(
@@ -2331,7 +2325,7 @@ class _MusicDetailsState extends State<MusicDetails>
               key: ValueKey<int?>(ad.id),
               imageUrl: ad.imageUrl ?? "",
               imgWidth: double.infinity,
-              imgHeight: pubHeight,
+              imgHeight: double.infinity,
               fit: BoxFit.cover,
             ),
           );
@@ -2339,7 +2333,9 @@ class _MusicDetailsState extends State<MusicDetails>
     // Visibility drives both rotation and view counting, so a slideshow
     // kept alive off-screen (another tab, scrolled away) counts nothing.
     return VisibilityDetector(
-      key: const Key('zone-lect-pub'),
+      // Must be unique per detector — the overlay and the base layer can
+      // both have one mounted at the same time.
+      key: Key('zone-lect-pub-${identityHashCode(this)}'),
       onVisibilityChanged: _onPubVisibilityChanged,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2369,7 +2365,12 @@ class _MusicDetailsState extends State<MusicDetails>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: content,
+                // Fixed 4:3 on every phone, matching the posters' format
+                // (1080×810) — nothing gets cropped.
+                child: AspectRatio(
+                  aspectRatio: _pubAspectRatio,
+                  child: content,
+                ),
               ),
             ),
           ),
