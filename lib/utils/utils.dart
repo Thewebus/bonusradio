@@ -959,6 +959,25 @@ class Utils {
     return lower.contains('youtube') || lower.contains('youtu.be');
   }
 
+  // In-app YouTube playback (the video alone, not the YouTube app). Works
+  // once the player sends a valid embed origin — see PlayerYoutube.
+  static void _openYoutubePlayer(
+      BuildContext context,
+      String videoId,
+      String videoUrl,
+      String vUploadType,
+      String videoThumb,
+      String stoptime,
+      bool iscontinueWatching) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlayerYoutube(videoId, videoUrl, vUploadType,
+            videoThumb, stoptime, iscontinueWatching),
+      ),
+    );
+  }
+
   static void openPlayer({
     required BuildContext context,
     required String videoId,
@@ -1017,11 +1036,8 @@ class Utils {
     } else {
       /* Better, Youtube & Vimeo Players */
       if (vUploadType == "youtube") {
-        // The in-app WebView-based YouTube player fails to load playback on
-        // both iOS (WKWebView Referer bug, WebKit #206521) and Android.
-        // Open the video in the native YouTube app / browser instead, where
-        // playback always works.
-        redirectToUrl(videoUrl);
+        _openYoutubePlayer(context, videoId, videoUrl, vUploadType,
+            videoThumb, stoptime, iscontinueWatching);
       } else if (vUploadType == "vimeo") {
         Navigator.push(
           context,
@@ -1033,7 +1049,8 @@ class Utils {
         );
       } else if (vUploadType == "external") {
         if (isYoutubeUrl(videoUrl)) {
-          redirectToUrl(videoUrl);
+          _openYoutubePlayer(context, videoId, videoUrl, vUploadType,
+              videoThumb, stoptime, iscontinueWatching);
         } else {
           Navigator.push(
             context,

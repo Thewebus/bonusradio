@@ -5,6 +5,13 @@ import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
+// youtube_player_iframe 5.x uses `origin` both as the WebView page's base
+// URL and as the iframe host. Its default (https://www.youtube.com) makes
+// the page claim to *be* YouTube, which YouTube rejects (Error 152); with
+// no origin at all it gets no Referer (Error 153). The privacy-enhanced
+// domain is a real YouTube embed host that also gives a valid origin.
+const String _kYoutubeOrigin = 'https://www.youtube-nocookie.com';
+
 class PlayerYoutube extends StatefulWidget {
   final String? videoId, videoUrl, vUploadType, videoThumb, stoptime;
   final bool? iscontinueWatching;
@@ -41,6 +48,7 @@ class PlayerYoutubeState extends State<PlayerYoutube> {
         // same channel instead (the strictest the iframe API allows since
         // YouTube removed full related-video suppression in 2018).
         strictRelatedVideos: true,
+        origin: _kYoutubeOrigin,
       ),
     );
     debugPrint("videoUrl :===> ${widget.videoUrl}");
@@ -58,6 +66,7 @@ class PlayerYoutubeState extends State<PlayerYoutube> {
         showFullscreenButton: true,
         loop: false,
         strictRelatedVideos: true,
+        origin: _kYoutubeOrigin,
       ),
     );
     debugPrint("Start Playing :====> $videoId");
