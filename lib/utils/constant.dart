@@ -13,6 +13,11 @@ class Constant {
   static String? userID;
   static String? userImage;
   static String currencySymbol = "";
+  // Weight of the serif headline font (Playfair Display, MyText inter: 4),
+  // set in admin Settings > App (general_setting "title_font_weight").
+  static int titleFontWeight = 700;
+  // Anonymous random id of this install — ads' unique-users stats.
+  static String? deviceId;
   static String currency = "";
   static String themeMode = "auto";
   static String radioType = "radio";

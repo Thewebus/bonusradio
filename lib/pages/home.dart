@@ -110,6 +110,8 @@ class _HomeState extends State<Home> {
   Future<void> getApi() async {
     // initializeOneSignal();
     homeProvider.setLoading(true);
+    await generalProvider.loadAppSettings();
+    if (!mounted) return;
     if (Constant.userID != null) {
       await profileprovider.getProfile(context);
     } else {
@@ -1711,12 +1713,10 @@ class _HomeState extends State<Home> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(10.0),
                                     child: MyText(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .surface,
-                                        text: "viewall",
+                                        color: colorPrimary,
+                                        text: "seeallhome",
                                         fontsize: Dimens.textMedium,
-                                        fontwaight: FontWeight.w500,
+                                        fontwaight: FontWeight.w600,
                                         maxline: 1,
                                         overflow: TextOverflow.ellipsis,
                                         textalign: TextAlign.right,
@@ -1797,6 +1797,8 @@ class _HomeState extends State<Home> {
         // — otherwise the caption gets clipped into (and painted over) the
         // section below it.
         return Dimens.categoryheight + 60;
+      } else if (screenLayout == "category_compact") {
+        return _compactCategoryRowHeight;
       } else if (screenLayout == "language") {
         return Dimens.languageheight;
       } else if (screenLayout == "artist") {
@@ -1848,6 +1850,9 @@ class _HomeState extends State<Home> {
     } else {
       if ((sectionList?[index].screenLayout.toString() ?? "") == "category") {
         return category(index, sectionList);
+      } else if ((sectionList?[index].screenLayout.toString() ?? "") ==
+          "category_compact") {
+        return categoryCompact(index, sectionList);
       } else if ((sectionList?[index].screenLayout.toString() ?? "") ==
           "language") {
         return language(index, sectionList);
@@ -3265,6 +3270,110 @@ class _HomeState extends State<Home> {
   }
 
   /* Category */
+  static const double _compactCategoryRowHeight = 76;
+
+  // "Rubriques compactes" (admin section layout "category_compact"): small
+  // horizontal chips — colored icon tile, name and real song count — as in
+  // the home mockup, instead of the big category blocks.
+  Widget categoryCompact(int sectionindex, List<section.Result>? sectionList) {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    final items = sectionList?[sectionindex].data ?? [];
+    return SizedBox(
+      height: _compactCategoryRowHeight,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(15, 6, 15, 10),
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: items.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final String name = item.name?.toString() ?? "";
+          final int songCount = item.songCount ?? 0;
+          final Color tileColor = isNight
+              ? liveNeonBokehGradients[index % liveNeonBokehGradients.length]
+                  .first
+              : abidjanBokehGradients[index % abidjanBokehGradients.length]
+                  .first;
+          return InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RadioById(
+                    itemId: item.id?.toString() ?? "",
+                    viewType: "category",
+                    title: name,
+                    languagegId: "",
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+              decoration: BoxDecoration(
+                color: isNight ? liveNeonCardBg : white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isNight
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: black.withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tileColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(_categoryIcon(name), color: white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MyText(
+                        color: isNight ? white : black,
+                        text: name,
+                        multilanguage: false,
+                        inter: 1,
+                        fontsize: Dimens.textMedium,
+                        fontwaight: FontWeight.w700,
+                        maxline: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textalign: TextAlign.left,
+                        fontstyle: FontStyle.normal,
+                      ),
+                      Text(
+                        "$songCount titre${songCount > 1 ? 's' : ''}",
+                        style: TextStyle(
+                          color: isNight ? liveNeonTextSecondary : gray,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget category(int sectionindex, List<section.Result>? sectionList) {
     return Column(
       children: [

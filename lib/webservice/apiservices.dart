@@ -557,7 +557,10 @@ class ApiService {
     String apiname = "add_ad_view";
     await dio.post(
       '$baseurl$apiname',
-      data: FormData.fromMap({'ad_id': adId}),
+      data: FormData.fromMap({
+        'ad_id': adId,
+        'device_id': Constant.deviceId ?? '',
+      }),
       options: optHeaders,
     );
   }

@@ -10,6 +10,7 @@ import 'package:myBonus/utils/adhelper.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/utils/sharedpref.dart';
+import 'package:uuid/uuid.dart';
 import 'package:myBonus/webservice/apiservices.dart';
 
 class GeneralProvider extends ChangeNotifier {
@@ -23,7 +24,44 @@ class GeneralProvider extends ChangeNotifier {
   SharedPref sharedPre = SharedPref();
   bool isProgressLoading = false;
 
+  // Anonymous id generated once per install (no personal data) — lets the
+  // backend tell unique users from repeat impressions in ad stats.
+  Future<void> _loadDeviceId() async {
+    String? id = await sharedPre.read('device_uid');
+    if (id == null || id.isEmpty) {
+      id = const Uuid().v4();
+      await sharedPre.save('device_uid', id);
+    }
+    Constant.deviceId = id;
+  }
+
+  // Startup settings the app needs everywhere, without the side effects of
+  // getGeneralsetting (AdMob/OneSignal init — Splash, which used to call
+  // it, is no longer the entry screen). Device id first (ad stats), then
+  // the last saved headline weight, then fresh values from the backend.
+  Future<void> loadAppSettings() async {
+    await _loadDeviceId();
+    Constant.titleFontWeight =
+        int.tryParse(await sharedPre.read('title_font_weight') ?? '') ?? 700;
+    try {
+      final model = await ApiService().generalSetting();
+      if (model.status == 200) {
+        for (final setting in model.result ?? []) {
+          await sharedPre.save(
+              setting.key.toString(), setting.value.toString());
+        }
+        Constant.titleFontWeight = int.tryParse(
+                await sharedPre.read('title_font_weight') ?? '') ??
+            700;
+      }
+    } catch (e) {
+      printLog('loadAppSettings error: $e');
+    }
+    notifyListeners();
+  }
+
   Future<void> getGeneralsetting(BuildContext context) async {
+    await _loadDeviceId();
     loading = true;
     generalSettingModel = await ApiService().generalSetting();
     printLog("genaral_setting status :==> ${generalSettingModel.status}");
@@ -39,6 +77,9 @@ class GeneralProvider extends ChangeNotifier {
         }
         Constant.userID = await sharedPre.read('userid');
         Constant.userImage = await sharedPre.read('userimage');
+        Constant.titleFontWeight =
+            int.tryParse(await sharedPre.read('title_font_weight') ?? '') ??
+                700;
 
         /* Get Ads Init */
         if (context.mounted && !kIsWeb) {

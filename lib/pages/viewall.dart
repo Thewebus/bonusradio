@@ -166,7 +166,9 @@ class _ViewAllState extends State<ViewAll> {
             screenLayout == "portrait")) {
       return _buildPodcast();
     } else {
-      if (screenLayout == "category") {
+      // "category_compact" is a home-only presentation; the full list
+      // uses the regular category grid.
+      if (screenLayout == "category" || screenLayout == "category_compact") {
         return _buildCategory();
       } else if (screenLayout == "language") {
         return _buildLanguage();
@@ -188,7 +190,8 @@ class _ViewAllState extends State<ViewAll> {
     } else if (widget.sectionType == 2) {
       return podcastShimmer();
     } else {
-      if (widget.screenLayout == "category") {
+      if (widget.screenLayout == "category" ||
+          widget.screenLayout == "category_compact") {
         return categoryShimmer();
       } else if (widget.screenLayout == "language") {
         return languageShimmer();

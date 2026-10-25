@@ -585,7 +585,7 @@ class Utils {
           fontSize: fontsize,
           fontStyle: fontstyle,
           color: color,
-          fontWeight: fontwaight);
+          fontWeight: Utils.headlineWeight(fontwaight));
     } else {
       return GoogleFonts.inter(
           fontSize: fontsize,
@@ -669,6 +669,14 @@ class Utils {
     }
     Constant.userID = await sharedPref.read("userid");
     printLog('setUserId userID ==> ${Constant.userID}');
+  }
+
+  // Headline (Playfair Display) weight: bold-ish requests follow the weight
+  // chosen in the admin; deliberately light text keeps its own weight.
+  static FontWeight? headlineWeight(FontWeight? requested) {
+    if (requested != null && requested.value < 600) return requested;
+    final int index = (Constant.titleFontWeight ~/ 100).clamp(1, 9) - 1;
+    return FontWeight.values[index];
   }
 
   static void getCurrencySymbol() async {

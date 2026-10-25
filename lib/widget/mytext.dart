@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:myBonus/utils/utils.dart';
 
 class MyText extends StatelessWidget {
   final String text;
@@ -77,7 +78,7 @@ class MyText extends StatelessWidget {
           fontSize: fontsize,
           fontStyle: fontstyle,
           color: color,
-          fontWeight: fontwaight);
+          fontWeight: Utils.headlineWeight(fontwaight));
     } else {
       return GoogleFonts.inter(
           fontSize: fontsize,
