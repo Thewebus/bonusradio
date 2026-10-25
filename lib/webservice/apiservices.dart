@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:myBonus/model/adspremiummodel.dart';
 import 'package:myBonus/model/bannermodel.dart';
 import 'package:myBonus/model/commentlistmodel.dart';
 import 'package:myBonus/model/introscreenmodel.dart';
@@ -538,6 +539,36 @@ class ApiService {
     );
     liveEventModel = LiveEventModel.fromJson(response.data);
     return liveEventModel;
+  }
+
+  // Posters of the radio screen's "zone pub" slideshow (admin: Ads Premium).
+  Future<AdsPremiumModel> adsPremiumList() async {
+    String apiname = "get_ads_premium";
+    Response response = await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({'page_no': 1}),
+      options: optHeaders,
+    );
+    return AdsPremiumModel.fromJson(response.data);
+  }
+
+  // Fire-and-forget: one ad shown on screen / tapped (daily stats).
+  Future<void> addAdView(dynamic adId) async {
+    String apiname = "add_ad_view";
+    await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({'ad_id': adId}),
+      options: optHeaders,
+    );
+  }
+
+  Future<void> addAdClick(dynamic adId) async {
+    String apiname = "add_ad_click";
+    await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({'ad_id': adId}),
+      options: optHeaders,
+    );
   }
 
   // Fire-and-forget view count for a video/episode (feeds "Tendances").

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
@@ -10,6 +9,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:miniplayer/miniplayer.dart';
 import 'package:provider/provider.dart';
+import 'package:myBonus/model/adspremiummodel.dart' as ads;
 import 'package:myBonus/model/bannermodel.dart' as banner;
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/pages/login.dart';
@@ -34,6 +34,8 @@ import 'package:myBonus/widget/mytext.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:text_scroll/text_scroll.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+import 'package:myBonus/webservice/apiservices.dart';
 
 AudioPlayer audioPlayer = AudioPlayer();
 late MusicManager musicManager;
@@ -237,15 +239,18 @@ class _MusicDetailsState extends State<MusicDetails>
   late AnimationController _bounceController;
   late AnimationController _notesController;
 
-  // zoneLectPub slideshow settings (reglables)
-  final String _pubAssetsDir = 'assets/images/pubs/';
-  final bool _pubLoop = true;
-  final Duration _pubDisplayDuration = const Duration(seconds: 12);
+  // zoneLectPub slideshow — posters, per-poster display duration and
+  // click-through links all come from the admin (Ads Premium). Rotation
+  // and view counting only run while the slideshow is actually on screen.
   final Duration _pubFadeDuration = const Duration(seconds: 1);
+  static const int _pubDefaultSeconds = 12;
 
-  List<String> _pubImages = [];
+  List<ads.Result> _pubAds = [];
   int _pubIndex = 0;
   Timer? _pubTimer;
+  bool _pubVisible = false;
+  bool _pubAdsRequested = false;
+  double _pubVisibleFraction = 0;
 
   // Animation types for notesLect
   static const String animationFlutter =
@@ -279,7 +284,10 @@ class _MusicDetailsState extends State<MusicDetails>
       vsync: this,
     );
 
-    _initPubImages();
+    // The Radios tab's base layer is hidden under the persistent player
+    // overlay as soon as something plays — its slideshow must stop
+    // counting then (see _updatePubVisibility).
+    if (!widget.ishomepage) currentlyPlaying.addListener(_updatePubVisibility);
   }
 
   @override
@@ -288,130 +296,94 @@ class _MusicDetailsState extends State<MusicDetails>
     _bounceController.dispose();
     _notesController.dispose();
     _pubTimer?.cancel();
+    if (!widget.ishomepage) {
+      currentlyPlaying.removeListener(_updatePubVisibility);
+    }
     super.dispose();
   }
 
-  Future<void> _initPubImages() async {
+  Future<void> _loadPubAds() async {
     try {
-      printLog('=== START _initPubImages ===');
-
-      // List of pub image filenames (hardcoded or discovered)
-      // This is more reliable than AssetManifest.json in debug mode
-      List<String> pubImageNames = [];
-
-      // Method 1: Try AssetManifest first (works in release)
-      try {
-        final manifestJson = await rootBundle.loadString('AssetManifest.json');
-        final Map<String, dynamic> manifestMap = json.decode(manifestJson);
-        printLog(
-            '📦 AssetManifest loaded, total keys: ${manifestMap.keys.length}');
-
-        pubImageNames = manifestMap.keys
-            .where((key) => key.startsWith(_pubAssetsDir))
-            .toList()
-          ..sort();
-
-        printLog('✅ From AssetManifest: ${pubImageNames.length} images found');
-      } catch (e) {
-        printLog('⚠️ AssetManifest failed: $e - Trying direct file loading');
-
-        // Method 2: Try direct asset loading if AssetManifest fails
-        // Create the list manually based on known patterns
-        // This is a fallback for debug mode
-        List<String> possibleImages = [
-          'assets/images/pubs/pubs-didib-okalamar-1.jpg',
-          'assets/images/pubs/pubs-djamo-1.jpg',
-          'assets/images/pubs/pubs-garagistes-chateau-de-france-1.jpg',
-          'assets/images/pubs/pubs-meiway-chateau-bernard-1.jpg',
-          'assets/images/pubs/pubs-nsia-1.jpg',
-          'assets/images/pubs/pubs-sgci-1.jpg',
-          'assets/images/pubs/pubs-wave-1.jpg',
-        ];
-
-        // Verify each image exists
-        for (String imagePath in possibleImages) {
-          try {
-            await rootBundle.load(imagePath);
-            pubImageNames.add(imagePath);
-            printLog('✓ Found: $imagePath');
-          } catch (e) {
-            printLog('✗ Not found: $imagePath');
-          }
-        }
-      }
-
-      printLog('🔍 Searching in: $_pubAssetsDir');
-      printLog('✅ Images found: ${pubImageNames.length}');
-      for (int i = 0; i < pubImageNames.length; i++) {
-        printLog('   [$i] ${pubImageNames[i]}');
-      }
-
-      if (pubImageNames.isEmpty) {
-        printLog('⚠️ NO IMAGES FOUND - will show "Espace Pub" placeholder');
-      }
-
+      final model = await ApiService().adsPremiumList();
       if (!mounted) return;
       setState(() {
-        _pubImages = pubImageNames;
-        _pubIndex = 0;
-        printLog('✓ State updated: _pubImages.length=${pubImageNames.length}');
-      });
-      if (pubImageNames.isNotEmpty) {
-        _startPubRotation();
-      }
-    } catch (error, stacktrace) {
-      printLog('❌ FATAL ERROR in _initPubImages: $error');
-      printLog('Stack: $stacktrace');
-      if (!mounted) return;
-      setState(() {
-        _pubImages = [];
+        _pubAds = model.status == 200
+            ? (model.result ?? [])
+                .where((ad) => (ad.imageUrl ?? "").isNotEmpty)
+                .toList()
+            : [];
         _pubIndex = 0;
       });
+      // Already on screen when the list arrives: count + start rotating.
+      if (_pubVisible) _onPubShown();
+    } catch (error) {
+      printLog('_loadPubAds error: $error');
     }
   }
 
-  void _startPubRotation() {
+  ads.Result? get _currentPub =>
+      _pubAds.isEmpty ? null : _pubAds[_pubIndex % _pubAds.length];
+
+  void _onPubVisibilityChanged(VisibilityInfo info) {
+    _pubVisibleFraction = info.visibleFraction;
+    _updatePubVisibility();
+  }
+
+  // VisibilityDetector only knows about clipping/scrolling, not about
+  // another widget painted on top. Two instances can render the Radios
+  // screen: the tab's own base layer (ishomepage: false) and the persistent
+  // player overlay (home.dart), which covers it whenever something plays.
+  void _updatePubVisibility() {
+    if (!mounted) return;
+    final bool coveredByOverlay =
+        !widget.ishomepage && currentlyPlaying.value?.audioSource != null;
+    final bool visible = _pubVisibleFraction >= 0.5 && !coveredByOverlay;
+    if (visible == _pubVisible) return;
+    _pubVisible = visible;
+    if (visible) {
+      _onPubShown();
+    } else {
+      _pubTimer?.cancel();
+    }
+  }
+
+  // The current poster just appeared on screen: count one view, then keep
+  // it up for its own duration before moving to the next.
+  void _onPubShown() {
+    final ad = _currentPub;
+    if (ad == null) return;
+    ApiService().addAdView(ad.id).catchError((_) {});
+    _schedulePubRotation();
+  }
+
+  void _schedulePubRotation() {
     _pubTimer?.cancel();
-    if (_pubImages.length <= 1) return;
-
-    _pubTimer = Timer.periodic(_pubDisplayDuration, (_) {
-      if (!mounted) return;
-      setState(() {
-        if (_pubIndex < _pubImages.length - 1) {
-          _pubIndex += 1;
-        } else if (_pubLoop) {
-          _pubIndex = 0;
-        }
-      });
-
-      if (!_pubLoop && _pubIndex >= _pubImages.length - 1) {
-        _pubTimer?.cancel();
-      }
-    });
+    final ad = _currentPub;
+    if (ad == null || _pubAds.length <= 1 || !_pubVisible) return;
+    final seconds = (ad.displayDuration ?? 0) > 0
+        ? ad.displayDuration!
+        : _pubDefaultSeconds;
+    _pubTimer = Timer(Duration(seconds: seconds), _goToNextPub);
   }
 
-  void _goToNextPub() {
-    if (_pubImages.length <= 1) return;
+  void _showPub(int index) {
+    if (!mounted || _pubAds.length <= 1) return;
     setState(() {
-      if (_pubIndex < _pubImages.length - 1) {
-        _pubIndex += 1;
-      } else if (_pubLoop) {
-        _pubIndex = 0;
-      }
+      _pubIndex = (index + _pubAds.length) % _pubAds.length;
     });
-    _startPubRotation();
+    if (_pubVisible) _onPubShown();
   }
 
-  void _goToPreviousPub() {
-    if (_pubImages.length <= 1) return;
-    setState(() {
-      if (_pubIndex > 0) {
-        _pubIndex -= 1;
-      } else if (_pubLoop) {
-        _pubIndex = _pubImages.length - 1;
-      }
-    });
-    _startPubRotation();
+  void _goToNextPub() => _showPub(_pubIndex + 1);
+
+  void _goToPreviousPub() => _showPub(_pubIndex - 1);
+
+  void _onPubTap() {
+    final ad = _currentPub;
+    final link = ad?.linkUrl ?? "";
+    if (ad == null || link.isEmpty) return;
+    ApiService().addAdClick(ad.id).catchError((_) {});
+    Utils.redirectToUrl(link);
   }
 
   @override
@@ -2316,70 +2288,12 @@ class _MusicDetailsState extends State<MusicDetails>
   }
 
   Widget _buildPubSlideshow({required bool showIndicators}) {
-    if (_pubImages.isEmpty) {
-      printLog(
-          '🎬 _buildPubSlideshow: EMPTY - showing "Espace Pub" placeholder');
-      final size = MediaQuery.of(context).size;
-      final diagonalLogical =
-          math.sqrt(size.width * size.width + size.height * size.height);
-      final diagonalInches = diagonalLogical / 160.0;
-      double pubHeight;
-      if (diagonalInches < LectResponsiveConfig.smallDiagonalInches) {
-        pubHeight = LectResponsiveConfig.pubSlideshowHeightSmall;
-      } else if (diagonalInches < LectResponsiveConfig.largeDiagonalInches) {
-        pubHeight = LectResponsiveConfig.pubSlideshowHeightMedium;
-      } else {
-        pubHeight = LectResponsiveConfig.pubSlideshowHeightLarge;
-      }
-
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: black.withValues(alpha: 0.16),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: double.infinity,
-                height: pubHeight,
-                color: black.withValues(alpha: 0.9),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Espace Pub',
-                  style: TextStyle(
-                    color: white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (showIndicators) const SizedBox(height: 10),
-          if (showIndicators)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildPubIndicatorDot(isActive: true),
-              ],
-            ),
-        ],
-      );
+    // Fetched by whichever instance actually renders the slideshow, the
+    // first time it does — not by every mini-player on every page.
+    if (!_pubAdsRequested) {
+      _pubAdsRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadPubAds());
     }
-
-    final String currentImage = _pubImages[_pubIndex];
-    printLog(
-        '🎬 _buildPubSlideshow: Image $_pubIndex/${_pubImages.length}: $currentImage');
-
     final size = MediaQuery.of(context).size;
     final diagonalLogical =
         math.sqrt(size.width * size.width + size.height * size.height);
@@ -2393,73 +2307,86 @@ class _MusicDetailsState extends State<MusicDetails>
       pubHeight = LectResponsiveConfig.pubSlideshowHeightLarge;
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onHorizontalDragEnd: (details) {
-            final velocity = details.primaryVelocity ?? 0;
-            if (velocity > 0) {
-              // Swipe vers la droite => slide suivante (comme demandé)
-              _goToNextPub();
-            } else if (velocity < 0) {
-              // Swipe vers la gauche => slide précédente (comme demandé)
-              _goToPreviousPub();
-            }
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: black.withValues(alpha: 0.16),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+    final placeholder = Container(
+      width: double.infinity,
+      height: pubHeight,
+      color: black.withValues(alpha: 0.9),
+      alignment: Alignment.center,
+      child: const Text(
+        'Espace Pub',
+        style: TextStyle(
+          color: white,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+
+    final ad = _currentPub;
+    final Widget content = ad == null
+        ? placeholder
+        : AnimatedSwitcher(
+            duration: _pubFadeDuration,
+            child: MyNetworkImage(
+              key: ValueKey<int?>(ad.id),
+              imageUrl: ad.imageUrl ?? "",
+              imgWidth: double.infinity,
+              imgHeight: pubHeight,
+              fit: BoxFit.cover,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: AnimatedSwitcher(
-                duration: _pubFadeDuration,
-                child: Image.asset(
-                  currentImage,
-                  key: ValueKey<String>(currentImage),
-                  width: double.infinity,
-                  height: pubHeight,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    printLog('❌ ERROR loading image $currentImage: $error');
-                    return Container(
-                      width: double.infinity,
-                      height: pubHeight,
-                      color: black.withValues(alpha: 0.9),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Espace Pub',
-                        style: TextStyle(
-                          color: white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  },
-                ),
+          );
+
+    // Visibility drives both rotation and view counting, so a slideshow
+    // kept alive off-screen (another tab, scrolled away) counts nothing.
+    return VisibilityDetector(
+      key: const Key('zone-lect-pub'),
+      onVisibilityChanged: _onPubVisibilityChanged,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: _onPubTap,
+            onHorizontalDragEnd: (details) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity > 0) {
+                // Swipe vers la droite => slide suivante (comme demandé)
+                _goToNextPub();
+              } else if (velocity < 0) {
+                // Swipe vers la gauche => slide précédente (comme demandé)
+                _goToPreviousPub();
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: black.withValues(alpha: 0.16),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: content,
               ),
             ),
           ),
-        ),
-        if (showIndicators) const SizedBox(height: 10),
-        if (showIndicators && _pubImages.length > 1)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _pubImages.length,
-              (index) => _buildPubIndicatorDot(isActive: index == _pubIndex),
+          if (showIndicators) const SizedBox(height: 10),
+          if (showIndicators)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _pubAds.length > 1
+                  ? List.generate(
+                      _pubAds.length,
+                      (index) =>
+                          _buildPubIndicatorDot(isActive: index == _pubIndex),
+                    )
+                  : [_buildPubIndicatorDot(isActive: true)],
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
