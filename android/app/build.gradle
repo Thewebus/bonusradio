@@ -25,8 +25,9 @@ android {
         applicationId "com.bonusmultimedia.mybonus"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        // Read from pubspec.yaml's `version: <name>+<code>` — bump it there.
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
         multiDexEnabled true
     }
 

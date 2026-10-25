@@ -93,7 +93,10 @@ class _VideoSeriesDetailState extends State<VideoSeriesDetail> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildBanner(detail.landscapeImg),
+                          _buildBanner(detail.landscapeImg,
+                              episodes.isEmpty
+                                  ? null
+                                  : episodes.first.landscapeImg),
                           if ((detail.description ?? "").isNotEmpty)
                             Padding(
                               padding:
@@ -144,10 +147,15 @@ class _VideoSeriesDetailState extends State<VideoSeriesDetail> {
     );
   }
 
-  Widget _buildBanner(String? landscapeImg) {
-    final image = (landscapeImg ?? "").isNotEmpty
-        ? landscapeImg
-        : widget.landscapeImg;
+  // The series' own image if it has one, else the image the catalog tile
+  // showed, else the latest episode's (episodes come newest first). The
+  // backend returns a placeholder URL (".../no_img.png") rather than an
+  // empty string when no image was uploaded, so that counts as missing.
+  Widget _buildBanner(String? landscapeImg, String? latestEpisodeImg) {
+    bool hasImage(String? url) =>
+        (url ?? "").isNotEmpty && !(url ?? "").endsWith("no_img.png");
+    final image = [landscapeImg, widget.landscapeImg, latestEpisodeImg]
+        .firstWhere(hasImage, orElse: () => landscapeImg);
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Padding(
