@@ -49,6 +49,8 @@ import 'package:myBonus/widget/mynetworkimg2.dart';
 import 'package:myBonus/widget/mytext.dart';
 import 'package:myBonus/widget/sectionrowtile.dart';
 import 'package:myBonus/model/liveeventmodel.dart';
+import 'package:myBonus/music/nowplaying.dart';
+import 'package:myBonus/pages/categorycontent.dart';
 import 'package:myBonus/model/sectionlistmodel.dart' as section;
 
 ValueNotifier<AudioPlayer?> currentlyPlaying = ValueNotifier(null);
@@ -102,6 +104,8 @@ class _HomeState extends State<Home> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getApi();
     });
+    // Live radio metadata (song, cover, listeners) from AzuraCast.
+    NowPlayingService.start();
     // if (!kIsWeb) {
     //   OneSignal.Notifications.addClickListener(_handleNotificationOpened);
     // }
@@ -3264,6 +3268,21 @@ class _HomeState extends State<Home> {
       return Icons.child_care;
     } else if (n.contains('musi') || n.contains('music')) {
       return Icons.music_note;
+    } else if (n.contains('sitcom') || n.contains('sit-com') ||
+        n.contains('shortcom') || n.contains('shot com') ||
+        n.contains('short com')) {
+      return Icons.theater_comedy;
+    } else if (n.contains('série') || n.contains('serie') ||
+        n.contains('saison')) {
+      return Icons.video_library;
+    } else if (n.contains('film') || n.contains('cinéma') ||
+        n.contains('cinema') || n.contains('vidéo') || n.contains('video') ||
+        n.contains('webtv') || n.contains('web tv')) {
+      return Icons.movie;
+    } else if (n.contains('podcast') || n.contains('débat') ||
+        n.contains('debat') || n.contains('émission') ||
+        n.contains('emission')) {
+      return Icons.mic;
     } else {
       return Icons.radio;
     }
@@ -3271,6 +3290,18 @@ class _HomeState extends State<Home> {
 
   /* Category */
   static const double _compactCategoryRowHeight = 76;
+
+  // "3 titres · 1 podcast · 2 vidéos" — only the kinds the rubrique holds
+  // (categories are shared by songs, podcasts, videos and series).
+  String _categoryCountsLabel(section.Datum? item) {
+    String part(int n, String word) => "$n $word${n > 1 ? 's' : ''}";
+    final parts = <String>[
+      if ((item?.songCount ?? 0) > 0) part(item!.songCount!, "titre"),
+      if ((item?.podcastCount ?? 0) > 0) part(item!.podcastCount!, "podcast"),
+      if ((item?.videoCount ?? 0) > 0) part(item!.videoCount!, "vidéo"),
+    ];
+    return parts.isEmpty ? "Bientôt disponible" : parts.join(" · ");
+  }
 
   // "Rubriques compactes" (admin section layout "category_compact"): small
   // horizontal chips — colored icon tile, name and real song count — as in
@@ -3289,7 +3320,6 @@ class _HomeState extends State<Home> {
         itemBuilder: (context, index) {
           final item = items[index];
           final String name = item.name?.toString() ?? "";
-          final int songCount = item.songCount ?? 0;
           final Color tileColor = isNight
               ? liveNeonBokehGradients[index % liveNeonBokehGradients.length]
                   .first
@@ -3301,12 +3331,9 @@ class _HomeState extends State<Home> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => RadioById(
-                    itemId: item.id?.toString() ?? "",
-                    viewType: "category",
-                    title: name,
-                    languagegId: "",
-                  ),
+                  builder: (context) => CategoryContentPage(
+            categoryId: item.id?.toString() ?? "",
+            title: name),
                 ),
               );
             },
@@ -3356,7 +3383,8 @@ class _HomeState extends State<Home> {
                         fontstyle: FontStyle.normal,
                       ),
                       Text(
-                        "$songCount titre${songCount > 1 ? 's' : ''}",
+                        _categoryCountsLabel(
+                              sectionList?[sectionindex].data?[index]),
                         style: TextStyle(
                           color: isNight ? liveNeonTextSecondary : gray,
                           fontSize: 11,
@@ -3400,23 +3428,18 @@ class _HomeState extends State<Home> {
                         .name
                         .toString() ??
                     "";
-                final songCount =
-                    sectionList?[sectionindex].data?[index].songCount ?? 0;
                 void openCategory() {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) {
-                        return RadioById(
-                          itemId: sectionList?[sectionindex]
+                        return CategoryContentPage(
+            categoryId: sectionList?[sectionindex]
                                   .data?[index]
                                   .id
                                   .toString() ??
                               "",
-                          viewType: "category",
-                          title: categoryName,
-                          languagegId: "",
-                        );
+            title: categoryName);
                       },
                     ),
                   );
@@ -3480,7 +3503,8 @@ class _HomeState extends State<Home> {
                               fontstyle: FontStyle.normal,
                             ),
                             Text(
-                              "$songCount titre${songCount > 1 ? 's' : ''}",
+                              _categoryCountsLabel(
+                              sectionList?[sectionindex].data?[index]),
                               style: const TextStyle(
                                 color: liveNeonTextSecondary,
                                 fontSize: 10,
@@ -3549,7 +3573,8 @@ class _HomeState extends State<Home> {
                             fontstyle: FontStyle.normal,
                           ),
                           Text(
-                            "$songCount titre${songCount > 1 ? 's' : ''}",
+                            _categoryCountsLabel(
+                              sectionList?[sectionindex].data?[index]),
                             style: TextStyle(
                               color: gray,
                               fontSize: 10,
@@ -3780,20 +3805,17 @@ class _HomeState extends State<Home> {
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      return RadioById(
-                        itemId: sectionList?[sectionindex]
+                      return CategoryContentPage(
+            categoryId: sectionList?[sectionindex]
                                 .data?[index]
                                 .id
                                 .toString() ??
                             "",
-                        viewType: "category",
-                        title: sectionList?[sectionindex]
+            title: sectionList?[sectionindex]
                                 .data?[index]
                                 .name
                                 .toString() ??
-                            "",
-                        languagegId: "",
-                      );
+                            "");
                     },
                   ),
                 );

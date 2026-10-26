@@ -35,6 +35,7 @@ import 'package:responsive_grid_list/responsive_grid_list.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:text_scroll/text_scroll.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:myBonus/music/nowplaying.dart';
 import 'package:myBonus/webservice/apiservices.dart';
 
 AudioPlayer audioPlayer = AudioPlayer();
@@ -506,7 +507,11 @@ class _MusicDetailsState extends State<MusicDetails>
                         const SizedBox(height: 16),
                         _buildPubSlideshow(showIndicators: true),
                         const SizedBox(height: 20),
-                        _buildAbidjanNowPlayingCard(stations),
+                        ValueListenableBuilder<NowPlayingInfo?>(
+                          valueListenable: nowPlaying,
+                          builder: (context, np, child) =>
+                              _buildAbidjanNowPlayingCard(stations),
+                        ),
                         const SizedBox(height: 24),
                         _buildAbidjanStationsSection(stations),
                       ],
@@ -521,6 +526,17 @@ class _MusicDetailsState extends State<MusicDetails>
     );
   }
 
+  // 12480 -> "12 480"
+  String _formatListeners(int n) {
+    final digits = n.toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(' ');
+      buffer.write(digits[i]);
+    }
+    return buffer.toString();
+  }
+
   Widget _buildAbidjanNowPlayingCard(List<banner.Result> stations) {
     return StreamBuilder<SequenceState?>(
       stream: audioPlayer.sequenceStateStream,
@@ -530,9 +546,18 @@ class _MusicDetailsState extends State<MusicDetails>
         final banner.Result? current = _currentStation(stations, mediaItem);
         final String title =
             mediaItem?.title ?? current?.name?.toString() ?? "";
-        final String subtitle = mediaItem?.artist ?? "";
-        final String artUri =
-            mediaItem?.artUri?.toString() ?? current?.image?.toString() ?? "";
+        // Live song/cover/listeners from AzuraCast when available.
+        final NowPlayingInfo? np = nowPlaying.value;
+        final String subtitle = (np?.songLine ?? "").isNotEmpty
+            ? np!.songLine
+            : (mediaItem?.artist ?? "");
+        final String artUri = np?.art ??
+            mediaItem?.artUri?.toString() ??
+            current?.image?.toString() ??
+            "";
+        final String listenersText = np != null
+            ? "${_formatListeners(np.listeners)} à l'écoute"
+            : "-- à l'écoute";
 
         return StreamBuilder<bool>(
           stream: audioPlayer.playingStream,
@@ -567,9 +592,8 @@ class _MusicDetailsState extends State<MusicDetails>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Visual-only — no listener-count data exists in the app.
                       Text(
-                        "-- à l'écoute",
+                        listenersText,
                         style: TextStyle(
                           color: white.withValues(alpha: 0.85),
                           fontSize: 11,
@@ -867,7 +891,11 @@ class _MusicDetailsState extends State<MusicDetails>
                           const SizedBox(height: 16),
                           _buildPubSlideshow(showIndicators: true),
                           const SizedBox(height: 20),
-                          _buildLiveNeonNowPlayingCard(stations),
+                          ValueListenableBuilder<NowPlayingInfo?>(
+                            valueListenable: nowPlaying,
+                            builder: (context, np, child) =>
+                                _buildLiveNeonNowPlayingCard(stations),
+                          ),
                           const SizedBox(height: 24),
                           _buildLiveNeonStationsSection(stations),
                         ],
@@ -892,9 +920,18 @@ class _MusicDetailsState extends State<MusicDetails>
         final banner.Result? current = _currentStation(stations, mediaItem);
         final String title =
             mediaItem?.title ?? current?.name?.toString() ?? "";
-        final String subtitle = mediaItem?.artist ?? "";
-        final String artUri =
-            mediaItem?.artUri?.toString() ?? current?.image?.toString() ?? "";
+        // Live song/cover/listeners from AzuraCast when available.
+        final NowPlayingInfo? np = nowPlaying.value;
+        final String subtitle = (np?.songLine ?? "").isNotEmpty
+            ? np!.songLine
+            : (mediaItem?.artist ?? "");
+        final String artUri = np?.art ??
+            mediaItem?.artUri?.toString() ??
+            current?.image?.toString() ??
+            "";
+        final String listenersText = np != null
+            ? "${_formatListeners(np.listeners)} à l'écoute"
+            : "-- à l'écoute";
 
         return StreamBuilder<bool>(
           stream: audioPlayer.playingStream,
@@ -929,9 +966,8 @@ class _MusicDetailsState extends State<MusicDetails>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Visual-only — no listener-count data exists in the app.
                       Text(
-                        "-- à l'écoute",
+                        listenersText,
                         style: TextStyle(
                           color: white.withValues(alpha: 0.85),
                           fontSize: 11,

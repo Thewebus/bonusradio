@@ -20,6 +20,7 @@ import 'package:myBonus/widget/myappbar.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mytext.dart';
+import 'package:myBonus/pages/categorycontent.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
 
 class ViewAll extends StatefulWidget {
@@ -574,16 +575,13 @@ class _ViewAllState extends State<ViewAll> {
                     context,
                     MaterialPageRoute(
                       builder: (context) {
-                        return RadioById(
-                          itemId: viewAllProvider.sectionDetailList?[index].id
+                        return CategoryContentPage(
+                          categoryId: viewAllProvider.sectionDetailList?[index].id
                                   .toString() ??
                               "",
-                          viewType: "category",
                           title: viewAllProvider.sectionDetailList?[index].name
                                   .toString() ??
-                              "",
-                          languagegId: "",
-                        );
+                              "");
                       },
                     ),
                   );

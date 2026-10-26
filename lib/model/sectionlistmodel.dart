@@ -191,6 +191,9 @@ class Datum {
   // Only present on Category (type=5) rows — number of songs in that
   // category, for the "<N> titres" caption under a Rubrique.
   int? songCount;
+  // Category rows also count podcasts and videos (unified categories).
+  int? podcastCount;
+  int? videoCount;
   // Only present on Video (type=8) rows — set when the tile stands in for
   // a whole series (see LiveEventModel.Result.isSeries).
   int? videoSeriesId;
@@ -233,6 +236,8 @@ class Datum {
     this.totalComment,
     this.bio,
     this.songCount,
+    this.podcastCount,
+    this.videoCount,
     this.videoSeriesId,
     this.isSeries,
     this.episodeCount,
@@ -274,6 +279,8 @@ class Datum {
         totalComment: json["total_comment"],
         bio: json["bio"],
         songCount: json["song_count"],
+        podcastCount: json["podcast_count"],
+        videoCount: json["video_count"],
         videoSeriesId: json["video_series_id"],
         isSeries: json["is_series"],
         episodeCount: json["episode_count"],
@@ -315,6 +322,8 @@ class Datum {
         "total_comment": totalComment,
         "bio": bio,
         "song_count": songCount,
+        "podcast_count": podcastCount,
+        "video_count": videoCount,
         "video_series_id": videoSeriesId,
         "is_series": isSeries,
         "episode_count": episodeCount,

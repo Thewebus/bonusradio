@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:myBonus/model/adspremiummodel.dart';
 import 'package:myBonus/model/bannermodel.dart';
+import 'package:myBonus/model/categorycontentmodel.dart';
 import 'package:myBonus/model/commentlistmodel.dart';
 import 'package:myBonus/model/introscreenmodel.dart';
 import 'package:myBonus/model/podcastsectiondetailmodel.dart';
@@ -539,6 +540,20 @@ class ApiService {
     );
     liveEventModel = LiveEventModel.fromJson(response.data);
     return liveEventModel;
+  }
+
+  // A rubrique's songs, podcasts and videos/series (unified categories).
+  Future<CategoryContentModel> categoryContent(dynamic categoryId) async {
+    String apiname = "get_category_content";
+    Response response = await dio.post(
+      '$baseurl$apiname',
+      data: FormData.fromMap({
+        'category_id': categoryId,
+        'user_id': Constant.userID,
+      }),
+      options: optHeaders,
+    );
+    return CategoryContentModel.fromJson(response.data);
   }
 
   // Posters of the radio screen's "zone pub" slideshow (admin: Ads Premium).

@@ -6,6 +6,7 @@ import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/widget/mytext.dart';
+import 'package:myBonus/music/nowplaying.dart';
 import 'package:myBonus/widget/waveform_animation.dart';
 
 class FloatingPlayer extends StatefulWidget {
@@ -76,10 +77,14 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
         final bool isNight = Theme.of(context).brightness == Brightness.dark;
         final String? artUri = tag is MediaItem ? tag.artUri?.toString() : null;
 
-        return isNight
-            ? _buildNightContent(effectivePlayer, title, subtitle, isLive, artUri)
-            : _buildAbidjanContent(
-                effectivePlayer, title, subtitle, isLive, artUri);
+        return ValueListenableBuilder<NowPlayingInfo?>(
+          valueListenable: nowPlaying,
+          builder: (context, np, child) => isNight
+              ? _buildNightContent(
+                  effectivePlayer, title, subtitle, isLive, artUri)
+              : _buildAbidjanContent(
+                  effectivePlayer, title, subtitle, isLive, artUri),
+        );
       },
     );
   }
@@ -91,8 +96,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
   // palette instead of flat black/colorPrimary.
   Widget _buildNightContent(AudioPlayer effectivePlayer, String title,
       String subtitle, bool isLive, String? artUri) {
-    final String displaySubtitle =
-        isLive && subtitle.isNotEmpty ? "En direct · $subtitle" : subtitle;
+    final String displaySubtitle = _liveSubtitle(subtitle, isLive);
 
     return Material(
       type: MaterialType.transparency,
@@ -214,13 +218,21 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
     );
   }
 
+  // Live radio: the song playing now (AzuraCast) when known, else the
+  // station's own subtitle.
+  String _liveSubtitle(String subtitle, bool isLive) {
+    if (!isLive) return subtitle;
+    final String song = nowPlaying.value?.songLine ?? "";
+    final String text = song.isNotEmpty ? song : subtitle;
+    return text.isNotEmpty ? "En direct · $text" : "";
+  }
+
   // ABIDJAN (day theme) — solid black bar, thumbnail, filled red play/pause
   // button, matching the mockups. No waveform/chevron/close clutter — the
   // whole row expands the player on tap, same _expandPlayer as before.
   Widget _buildAbidjanContent(AudioPlayer effectivePlayer, String title,
       String subtitle, bool isLive, String? artUri) {
-    final String displaySubtitle =
-        isLive && subtitle.isNotEmpty ? "En direct · $subtitle" : subtitle;
+    final String displaySubtitle = _liveSubtitle(subtitle, isLive);
 
     return Material(
       type: MaterialType.transparency,
