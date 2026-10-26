@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import 'package:myBonus/model/liveeventmodel.dart' as liveevent;
+
 BannerModel bannerModelFromJson(String str) =>
     BannerModel.fromJson(json.decode(str));
 
@@ -81,6 +83,8 @@ class Result {
   String? image;
   String? songUploadType;
   String? songUrl;
+  // Video (type 3) / series (type 4) banners: the Films catalog row to open.
+  liveevent.Result? video;
 
   Result({
     this.id,
@@ -109,6 +113,7 @@ class Result {
     this.image,
     this.songUploadType,
     this.songUrl,
+    this.video,
   });
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
@@ -138,6 +143,9 @@ class Result {
         image: json["image"],
         songUploadType: json["song_upload_type"],
         songUrl: json["song_url"],
+        video: json["video"] == null
+            ? null
+            : liveevent.Result.fromJson(json["video"]),
       );
 
   Map<String, dynamic> toJson() => {
@@ -167,6 +175,7 @@ class Result {
         "image": image,
         "song_upload_type": songUploadType,
         "song_url": songUrl,
+        "video": video?.toJson(),
       };
 
   Map<String, dynamic> toMap() {

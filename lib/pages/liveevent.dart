@@ -24,7 +24,7 @@ import 'package:myBonus/widget/mytext.dart';
 // this screen is now a single catalog view, not a juxtaposition of two.
 // A series is listed like any video (its latest episode's cover) and opens
 // its episode list on tap; standalone videos play directly. The category
-// pills filter everything below them: banner, Tendances, and the catalog.
+// pills filter everything below them: banner and the catalog.
 class LiveEvent extends StatefulWidget {
   const LiveEvent({super.key});
 
@@ -48,7 +48,6 @@ class _LiveEventState extends State<LiveEvent> {
         .getCategoryList()
         .then((_) => videoProvider.getCategoryVideos());
     _fetchVideos(0);
-    videoProvider.getTrendingList();
     super.initState();
   }
 
@@ -96,13 +95,11 @@ class _LiveEventState extends State<LiveEvent> {
             .id;
     videoProvider.selectCategory(categoryId);
     _fetchVideos(0);
-    videoProvider.getTrendingList();
   }
 
   Future<void> _refresh() async {
     videoProvider.clearProvider();
     _fetchVideos(0);
-    videoProvider.getTrendingList();
     videoProvider.getCategoryVideos();
   }
 
@@ -405,52 +402,8 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // "Tendances" — most viewed catalog entries (series count the views of
-  // all their episodes), following the selected category pill like the
-  // rest of the screen. Hidden when nothing matches.
-  Widget _buildTrendingStrip({required bool isNight}) {
-    return Consumer<VideoProvider>(
-      builder: (context, provider, child) {
-        final list = provider.trendingList;
-        if (list.isEmpty) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-              child: MyText(
-                color: isNight ? white : black,
-                text: "Tendances",
-                multilanguage: false,
-                inter: isNight ? 1 : 4,
-                fontsize: Dimens.textBig,
-                fontwaight: FontWeight.w700,
-                maxline: 1,
-                textalign: TextAlign.left,
-                fontstyle: FontStyle.normal,
-              ),
-            ),
-            SizedBox(
-              height: 230,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                itemCount: list.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 12),
-                itemBuilder: (context, index) =>
-                    _buildPortraitTile(list[index], rank: index + 1),
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-        );
-      },
-    );
-  }
-
-  // Portrait cover tile shared by Tendances and the per-category rows.
-  // `rank` adds the Tendances position badge.
-  Widget _buildPortraitTile(Result item, {int? rank}) {
+  // Portrait cover tile of the per-category rows.
+  Widget _buildPortraitTile(Result item) {
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () => _handleContentTap(item),
@@ -470,27 +423,6 @@ class _LiveEventState extends State<LiveEvent> {
                     imageUrl: item.portraitImg?.toString() ?? "",
                   ),
                 ),
-                if (rank != null)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: colorPrimary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        "#$rank",
-                        style: const TextStyle(
-                          color: white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
                 if (item.isSeries == 1)
                   Positioned(
                     top: 8,
@@ -526,13 +458,12 @@ class _LiveEventState extends State<LiveEvent> {
     );
   }
 
-  // Below the featured card: Tendances, then the catalog — one row per
+  // Below the featured card: the catalog — one row per
   // category for "Tous", or the selected category as a grid.
   Widget _buildAbidjanVideosSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTrendingStrip(isNight: false),
         _selectedVideoCategoryLabel == _allVideoCategoriesOption
             ? _buildCategoryRows(isNight: false)
             : buildVideoList(),
@@ -667,7 +598,6 @@ class _LiveEventState extends State<LiveEvent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTrendingStrip(isNight: true),
         _selectedVideoCategoryLabel == _allVideoCategoriesOption
             ? _buildCategoryRows(isNight: true)
             : buildVideoList(),

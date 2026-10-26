@@ -48,6 +48,7 @@ import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mynetworkimg2.dart';
 import 'package:myBonus/widget/mytext.dart';
 import 'package:myBonus/widget/sectionrowtile.dart';
+import 'package:myBonus/model/bannermodel.dart' as bannermodel;
 import 'package:myBonus/model/liveeventmodel.dart';
 import 'package:myBonus/music/nowplaying.dart';
 import 'package:myBonus/pages/categorycontent.dart';
@@ -744,14 +745,12 @@ class _HomeState extends State<Home> {
                               context,
                               Constant.rewardAdType,
                               () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) {
-                                      return const LiveEvent();
-                                    },
-                                  ),
-                                );
+                                // Films is a dock tab: switch to it
+                                // (keeps the dock) rather than push it.
+                                _collapseFullPlayer();
+                                setState(() {
+                                  _currentBottomNavIndex = _filmsTabIndex;
+                                });
                               },
                             );
                           },
@@ -1669,20 +1668,17 @@ class _HomeState extends State<Home> {
                                         context, Constant.interstialAdType, () {
                                       // Video sections (type=8) are just a
                                       // teaser of the real Films catalog —
-                                      // "Tout afficher" goes straight to
-                                      // that full screen instead of the
-                                      // generic flat ViewAll list.
+                                      // "Tout afficher" switches to the
+                                      // Films dock tab (keeping the dock)
+                                      // instead of the generic flat ViewAll.
                                       if (homeProvider.sectionList?[index]
                                               .type ==
                                           8) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) {
-                                              return const LiveEvent();
-                                            },
-                                          ),
-                                        );
+                                        _collapseFullPlayer();
+                                        setState(() {
+                                          _currentBottomNavIndex =
+                                              _filmsTabIndex;
+                                        });
                                         return;
                                       }
                                       Navigator.push(
@@ -1944,7 +1940,13 @@ class _HomeState extends State<Home> {
                   }
 
                   Future<void> handleBannerTap() async {
-                    if (homeprovider.bannerModel.result?[index].type == 1) {
+                    final int? bannerType =
+                        homeprovider.bannerModel.result?[index].type;
+                    if (bannerType == 3 || bannerType == 4) {
+                      /* Video / Series Banner: opens like a Films tile */
+                      await Utils.openVideoCatalogItem(context,
+                          homeprovider.bannerModel.result?[index].video);
+                    } else if (bannerType == 1) {
                       /* Radio Banner */
                       playThisRadioBanner();
                     } else {
@@ -2032,6 +2034,18 @@ class _HomeState extends State<Home> {
     });
   }
 
+  // Caption under a non-radio banner's title: the series/film info for a
+  // video banner, the artist for a podcast.
+  String _bannerSubtitle(bannermodel.Result? item) {
+    final video = item?.video;
+    if (video == null) return item?.artistName?.toString() ?? "";
+    if (video.isSeries == 1) {
+      final int episodes = video.episodeCount ?? 0;
+      return "Série · $episodes épisode${episodes > 1 ? 's' : ''}";
+    }
+    return video.categoryName?.toString() ?? "";
+  }
+
   // ABIDJAN (day theme) banner card. Business logic (playThisRadioBanner,
   // handleBannerTap) is passed in / already wired on the outer InkWell —
   // this only builds the visual content.
@@ -2047,7 +2061,7 @@ class _HomeState extends State<Home> {
             .where((s) => s != null && s.toString().trim().isNotEmpty)
             .join(" · ")
             .toUpperCase()
-        : (item?.artistName?.toString() ?? "");
+        : _bannerSubtitle(item);
     final bool isPremiumLocked = item?.isPremium == 1 && item?.isBuy == 0;
     // Radio banners use `image` (tbl_song), others `landscape_img` (tbl_podcast);
     // falls back to the bokeh gradient only when the admin hasn't set one.
@@ -2270,7 +2284,7 @@ class _HomeState extends State<Home> {
             .where((s) => s != null && s.toString().trim().isNotEmpty)
             .join(" · ")
             .toUpperCase()
-        : (item?.artistName?.toString() ?? "");
+        : _bannerSubtitle(item);
     final bool isPremiumLocked = item?.isPremium == 1 && item?.isBuy == 0;
     final String bannerImageUrl =
         (isRadio ? item?.image : item?.landscapeImg ?? item?.image)
