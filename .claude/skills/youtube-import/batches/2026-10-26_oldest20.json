@@ -1,0 +1,34 @@
+{
+  "categories": { "Séries": "existing", "Films": "create" },
+  "series": [
+    { "title": "Vie de couple", "category": "Séries", "poster_from": "y6pXkNFLNgw",
+      "description": "Les petites et grandes crises d'un couple abidjanais." },
+    { "title": "Au marché", "category": "Séries", "poster_from": "laFLBjxqWpI",
+      "description": "Marchandages, crédits et embrouilles autour de l'étal." },
+    { "title": "Mamie Gbangban", "category": "Séries", "existing": true }
+  ],
+  "videos": [
+    { "yt": "E1NKNme9IEU", "title": "Belle-mère et belle-fille (partie 1)", "series": "Vie de couple", "episode": 1 },
+    { "yt": "DLR7zqvT6aw", "title": "Jalousie mal placée (partie 1)", "series": "Vie de couple", "episode": 2 },
+    { "yt": "4Qz78kFqVc0", "title": "Les jouets (partie 1)", "series": "Vie de couple", "episode": 3 },
+    { "yt": "0-VtYtIcHCw", "title": "Le statut de la femme (partie 1)", "series": "Vie de couple", "episode": 4 },
+    { "yt": "y6pXkNFLNgw", "title": "La grossesse (partie 1)", "series": "Vie de couple", "episode": 5 },
+    { "yt": "yTF9uMP92DE", "title": "Mariage à quatre (partie 1)", "series": "Vie de couple", "episode": 6 },
+    { "yt": "ikXpRvGhjAo", "title": "Permission de sortir (partie 1)", "series": "Vie de couple", "episode": 7 },
+    { "yt": "_asUxP7rg_o", "title": "L'illusionniste (partie 1)", "series": "Vie de couple", "episode": 8 },
+
+    { "yt": "laFLBjxqWpI", "title": "À prendre ou à laisser (partie 1)", "series": "Au marché", "episode": 1 },
+    { "yt": "QneiON2vQw0", "title": "À prendre ou à laisser (partie 2)", "series": "Au marché", "episode": 2 },
+    { "yt": "NrK1IGd5kLI", "title": "À prendre ou à laisser (partie 3)", "series": "Au marché", "episode": 3 },
+    { "yt": "Npm-_6Pmloc", "title": "Carême forcé (partie 1)", "series": "Au marché", "episode": 4 },
+    { "yt": "oV7SQN-NhD0", "title": "Crédit (partie 1)", "series": "Au marché", "episode": 5 },
+    { "yt": "WNZD_YUcLDU", "title": "Frédéric (partie 1)", "series": "Au marché", "episode": 6 },
+    { "yt": "XEBh5ztmAF4", "title": "La vendeuse de pagnes (partie 1)", "series": "Au marché", "episode": 7 },
+
+    { "yt": "b-cW8I7LefE", "title": "50 francs la minute (partie 1)", "series": "Mamie Gbangban", "episode": 3 },
+
+    { "yt": "XOzDo40fpxQ", "title": "Muay Thaï (partie 3)", "category": "Films" },
+    { "yt": "47avxvGos04", "title": "L'immigré (partie 1)", "category": "Films" },
+    { "yt": "A6_nYQyOZ90", "title": "Rafle générale (partie 1)", "category": "Films" }
+  ]
+}
