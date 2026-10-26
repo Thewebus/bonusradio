@@ -63,7 +63,9 @@ class NowPlayingService {
 
   static Future<void> refresh() async {
     final String? apiUrl = _apiUrlForCurrentSource();
-    if (apiUrl == null || !audioPlayer.playing) {
+    // Turned off in admin Settings > App: the screens keep their plain
+    // station info.
+    if (!Constant.showRadioMetadata || apiUrl == null || !audioPlayer.playing) {
       nowPlaying.value = null;
       return;
     }

@@ -41,8 +41,7 @@ class GeneralProvider extends ChangeNotifier {
   // the last saved headline weight, then fresh values from the backend.
   Future<void> loadAppSettings() async {
     await _loadDeviceId();
-    Constant.titleFontWeight =
-        int.tryParse(await sharedPre.read('title_font_weight') ?? '') ?? 700;
+    await _applyAppearanceSettings();
     try {
       final model = await ApiService().generalSetting();
       if (model.status == 200) {
@@ -50,14 +49,22 @@ class GeneralProvider extends ChangeNotifier {
           await sharedPre.save(
               setting.key.toString(), setting.value.toString());
         }
-        Constant.titleFontWeight = int.tryParse(
-                await sharedPre.read('title_font_weight') ?? '') ??
-            700;
+        await _applyAppearanceSettings();
       }
     } catch (e) {
       printLog('loadAppSettings error: $e');
     }
     notifyListeners();
+  }
+
+  // Appearance settings from admin Settings > App (saved values).
+  Future<void> _applyAppearanceSettings() async {
+    Constant.titleFontWeight =
+        int.tryParse(await sharedPre.read('title_font_weight') ?? '') ?? 700;
+    Constant.showRadioMetadata =
+        (await sharedPre.read('show_radio_metadata') ?? '1') != '0';
+    Constant.thumbnailShimmer =
+        (await sharedPre.read('thumbnail_loading') ?? 'shimmer') != 'image';
   }
 
   Future<void> getGeneralsetting(BuildContext context) async {

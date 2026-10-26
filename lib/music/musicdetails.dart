@@ -555,9 +555,9 @@ class _MusicDetailsState extends State<MusicDetails>
             mediaItem?.artUri?.toString() ??
             current?.image?.toString() ??
             "";
-        final String listenersText = np != null
-            ? "${_formatListeners(np.listeners)} à l'écoute"
-            : "-- à l'écoute";
+        // Only shown once AzuraCast data is in (and enabled in admin).
+        final String listenersText =
+            np != null ? "${_formatListeners(np.listeners)} à l'écoute" : "";
 
         return StreamBuilder<bool>(
           stream: audioPlayer.playingStream,
@@ -591,15 +591,16 @@ class _MusicDetailsState extends State<MusicDetails>
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        listenersText,
-                        style: TextStyle(
-                          color: white.withValues(alpha: 0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                      if (listenersText.isNotEmpty) const SizedBox(width: 8),
+                      if (listenersText.isNotEmpty)
+                        Text(
+                          listenersText,
+                          style: TextStyle(
+                            color: white.withValues(alpha: 0.85),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -929,9 +930,9 @@ class _MusicDetailsState extends State<MusicDetails>
             mediaItem?.artUri?.toString() ??
             current?.image?.toString() ??
             "";
-        final String listenersText = np != null
-            ? "${_formatListeners(np.listeners)} à l'écoute"
-            : "-- à l'écoute";
+        // Only shown once AzuraCast data is in (and enabled in admin).
+        final String listenersText =
+            np != null ? "${_formatListeners(np.listeners)} à l'écoute" : "";
 
         return StreamBuilder<bool>(
           stream: audioPlayer.playingStream,
@@ -965,15 +966,16 @@ class _MusicDetailsState extends State<MusicDetails>
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        listenersText,
-                        style: TextStyle(
-                          color: white.withValues(alpha: 0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                      if (listenersText.isNotEmpty) const SizedBox(width: 8),
+                      if (listenersText.isNotEmpty)
+                        Text(
+                          listenersText,
+                          style: TextStyle(
+                            color: white.withValues(alpha: 0.85),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),

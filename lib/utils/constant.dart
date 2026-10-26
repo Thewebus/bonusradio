@@ -16,6 +16,10 @@ class Constant {
   // Weight of the serif headline font (Playfair Display, MyText inter: 4),
   // set in admin Settings > App (general_setting "title_font_weight").
   static int titleFontWeight = 700;
+  // Admin Settings > App: show AzuraCast live song/cover/listeners.
+  static bool showRadioMetadata = true;
+  // Admin Settings > App: thumbnail while loading — shimmer or logo image.
+  static bool thumbnailShimmer = true;
   // Anonymous random id of this install — ads' unique-users stats.
   static String? deviceId;
   static String currency = "";

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/widget/myimage.dart';
 
 // ignore: must_be_immutable
@@ -38,6 +39,15 @@ class MyNetworkImage extends StatelessWidget {
         // placeholder picture; the logo image is kept for broken/missing
         // images only (errorWidget below).
         placeholder: (context, url) {
+          // Admin Settings > App can switch back to the logo picture.
+          if (!Constant.thumbnailShimmer) {
+            return MyImage(
+              width: imgWidth ?? 0.0,
+              height: imgHeight ?? 0.0,
+              imagePath: "no_image_land.png",
+              fit: BoxFit.cover,
+            );
+          }
           final bool isNight =
               Theme.of(context).brightness == Brightness.dark;
           return Shimmer.fromColors(
