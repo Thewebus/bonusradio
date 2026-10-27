@@ -10,8 +10,10 @@ import 'package:myBonus/pages/commonpage.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/provider/generalprovider.dart';
 import 'package:myBonus/provider/themeprovider.dart';
+import 'package:myBonus/utils/audioquality.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
+import 'package:myBonus/utils/datausage.dart';
 import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
@@ -81,10 +83,9 @@ class _SettingsState extends State<Settings> {
                       _buildLiveNeonCard(children: [
                         _buildLiveNeonToggleRow(
                           icon: Icons.signal_cellular_alt,
-                          label: "Données Mobiles",
-                          value: true,
-                          onChanged: null,
-                          comingSoon: true,
+                          label: "Alerte données mobiles",
+                          value: MobileDataWatcher.userEnabled.value,
+                          onChanged: _setMobileDataAlert,
                         ),
                         _liveNeonDivider(),
                         _buildLiveNeonToggleRow(
@@ -95,10 +96,16 @@ class _SettingsState extends State<Settings> {
                           comingSoon: true,
                         ),
                         _liveNeonDivider(),
-                        _buildLiveNeonStaticRow(
-                          icon: Icons.graphic_eq,
-                          label: "Qualité audio",
-                          trailing: "Automatique",
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _pickAudioQuality,
+                          child: _buildLiveNeonStaticRow(
+                            icon: Icons.graphic_eq,
+                            label: "Qualité audio",
+                            trailing:
+                                _audioQualityLabels[AudioQuality.mode.value] ??
+                                    "",
+                          ),
                         ),
                       ]),
                       const SizedBox(height: 22),
@@ -171,6 +178,78 @@ class _SettingsState extends State<Settings> {
         ),
       ),
     );
+  }
+
+  // Settings > LECTURE: mobile-data reminder (MobileDataWatcher) and live
+  // radio quality (AudioQuality).
+  static const Map<String, String> _audioQualityLabels = {
+    AudioQuality.auto: "Automatique",
+    AudioQuality.high: "Haute",
+    AudioQuality.standard: "Standard",
+    AudioQuality.low: "Économie",
+  };
+
+  Future<void> _setMobileDataAlert(bool value) async {
+    await MobileDataWatcher.setUserEnabled(value);
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pickAudioQuality() async {
+    final List<int> bitrates = AudioQuality.bitrates.value;
+    // Actual bitrates from the station's AzuraCast mounts, when known.
+    String kbps(String value, {bool cellular = false}) {
+      final int? b = AudioQuality.bitrateForMode(value, cellular: cellular);
+      return b == null ? "" : " · $b kbps";
+    }
+
+    final int? autoWifi =
+        AudioQuality.bitrateForMode(AudioQuality.auto, cellular: false);
+    final int? autoCellular =
+        AudioQuality.bitrateForMode(AudioQuality.auto, cellular: true);
+    final Map<String, String> hints = {
+      AudioQuality.auto: autoWifi == null
+          ? "Haute en Wi-Fi, standard en données mobiles"
+          : "$autoWifi kbps en Wi-Fi, $autoCellular kbps en données mobiles",
+      AudioQuality.high:
+          "Meilleur son, consomme plus de données${kbps(AudioQuality.high)}",
+      AudioQuality.standard:
+          "Bon compromis son / données${kbps(AudioQuality.standard)}",
+      AudioQuality.low: "Consomme moins de données${kbps(AudioQuality.low)}",
+    };
+    final String? picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: RadioGroup<String>(
+          groupValue: AudioQuality.mode.value,
+          onChanged: (v) => Navigator.pop(sheetContext, v),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final entry in _audioQualityLabels.entries)
+                RadioListTile<String>(
+                  value: entry.key,
+                  title: Text(entry.value),
+                  subtitle: Text(hints[entry.key] ?? ""),
+                ),
+              if (bitrates.length < 2)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                  child: Text(
+                    bitrates.isEmpty
+                        ? "La radio ne propose qu'un seul débit pour l'instant."
+                        : "La radio ne propose qu'un seul débit pour l'instant (${bitrates.first} kbps) : ce réglage s'appliquera dès qu'un autre sera disponible.",
+                    style: Theme.of(sheetContext).textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked == null) return;
+    await AudioQuality.setMode(picked);
+    if (mounted) setState(() {});
   }
 
   Widget _buildLiveNeonSectionLabel(String label) {
@@ -320,8 +399,9 @@ class _SettingsState extends State<Settings> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                gradient:
-                    isActive ? const LinearGradient(colors: liveNeonGradient) : null,
+                gradient: isActive
+                    ? const LinearGradient(colors: liveNeonGradient)
+                    : null,
                 color: isActive ? null : liveNeonCardBg,
                 borderRadius: BorderRadius.circular(14),
                 border: isActive ? null : Border.all(color: liveNeonBorder),
@@ -427,10 +507,9 @@ class _SettingsState extends State<Settings> {
                     _buildAbidjanCard(children: [
                       _buildAbidjanToggleRow(
                         icon: Icons.signal_cellular_alt,
-                        label: "Données Mobiles",
-                        value: true,
-                        onChanged: null,
-                        comingSoon: true,
+                        label: "Alerte données mobiles",
+                        value: MobileDataWatcher.userEnabled.value,
+                        onChanged: _setMobileDataAlert,
                       ),
                       _abidjanDivider(),
                       _buildAbidjanToggleRow(
@@ -441,10 +520,16 @@ class _SettingsState extends State<Settings> {
                         comingSoon: true,
                       ),
                       _abidjanDivider(),
-                      _buildAbidjanStaticRow(
-                        icon: Icons.graphic_eq,
-                        label: "Qualité audio",
-                        trailing: "Automatique",
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _pickAudioQuality,
+                        child: _buildAbidjanStaticRow(
+                          icon: Icons.graphic_eq,
+                          label: "Qualité audio",
+                          trailing:
+                              _audioQualityLabels[AudioQuality.mode.value] ??
+                                  "",
+                        ),
                       ),
                     ]),
                     const SizedBox(height: 22),

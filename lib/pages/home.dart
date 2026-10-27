@@ -114,6 +114,17 @@ class _HomeState extends State<Home> {
 
   Future<void> getApi() async {
     // initializeOneSignal();
+    // Splash already loaded everything below: only the leftovers.
+    if (homeProvider.preloaded) {
+      homeProvider.preloaded = false;
+      if (Constant.userID == null) {
+        profileprovider.clearProvider();
+        Utils.updatePremium("0");
+        Utils.loadAds(context);
+      }
+      _autoPlayFirstRadio();
+      return;
+    }
     homeProvider.setLoading(true);
     await generalProvider.loadAppSettings();
     if (!mounted) return;

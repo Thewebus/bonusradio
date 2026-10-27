@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:myBonus/utils/audioquality.dart';
+import 'package:myBonus/utils/constant.dart';
 
 class SeekBar extends StatefulWidget {
   final Duration duration;
@@ -212,6 +214,10 @@ AudioSource buildAudioSource({
   required String audioThumb,
   required Map<String, dynamic>? extraDetails,
 }) {
+  // Live radio: the AzuraCast mount matching Settings > Qualité audio.
+  if (playType == Constant.radioType) {
+    audioUrl = AudioQuality.streamUrlFor(audioUrl);
+  }
   return AudioSource.uri(
     Uri.parse(audioUrl),
     tag: MediaItem(

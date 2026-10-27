@@ -18,7 +18,7 @@ import 'package:myBonus/provider/searchprovider.dart';
 import 'package:myBonus/provider/themeprovider.dart';
 import 'package:myBonus/provider/viewallprovider.dart';
 import 'package:myBonus/provider/generalprovider.dart';
-import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/pages/splash.dart';
 import 'package:myBonus/provider/radiobyidprovider.dart';
 import 'package:myBonus/provider/homeprovider.dart';
 import 'package:myBonus/provider/languageprovider.dart';
@@ -30,7 +30,11 @@ import 'package:myBonus/provider/subscriptionprovider.dart';
 import 'package:myBonus/provider/updateprofileprovider.dart';
 import 'package:myBonus/provider/videoprovider.dart';
 import 'package:myBonus/provider/videoseriesprovider.dart';
+import 'package:myBonus/utils/audioquality.dart';
 import 'package:myBonus/utils/color.dart';
+import 'package:myBonus/utils/datausage.dart';
+import 'package:myBonus/utils/network.dart';
+import 'package:myBonus/widget/networkbanner.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/music/musicmanager.dart';
 import 'package:myBonus/utils/sharedpref.dart';
@@ -86,39 +90,41 @@ Future<void> main() async {
     ),
   );
 
+  // Not awaited: the reachability check must not delay the first frame.
+  NetworkService.start();
+  await AudioQuality.load();
+  MobileDataWatcher.start();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).whenComplete(
-    // Native splash logo stays on screen until Flutter draws its first
-    // frame — on fast phones that happens almost instantly, so the logo
-    // barely shows. This short extra wait keeps it visible a bit longer.
-    () => Future.delayed(const Duration(milliseconds: 800)).then(
-      (_) => runApp(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => GeneralProvider()),
-            ChangeNotifierProvider(create: (_) => LanguageProvider()),
-            ChangeNotifierProvider(create: (_) => HomeProvider()),
-            ChangeNotifierProvider(create: (_) => ProfileProvider()),
-            ChangeNotifierProvider(create: (_) => NotificationProvider()),
-            ChangeNotifierProvider(create: (_) => UpdateProfileProvider()),
-            ChangeNotifierProvider(create: (_) => SearchProvider()),
-            ChangeNotifierProvider(create: (_) => RadioByIdProvider()),
-            ChangeNotifierProvider(create: (_) => AddFavouriteProvider()),
-            ChangeNotifierProvider(create: (_) => ViewAllProvider()),
-            ChangeNotifierProvider(create: (_) => PaymentProvider()),
-            ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
-            ChangeNotifierProvider(create: (_) => SubHistoryProvider()),
-            ChangeNotifierProvider(create: (_) => PodcatsProvider()),
-            ChangeNotifierProvider(create: (_) => VideoProvider()),
-            ChangeNotifierProvider(create: (_) => VideoSeriesProvider()),
-            ChangeNotifierProvider(create: (_) => MusicDetailProvider()),
-            ChangeNotifierProvider(create: (_) => PodcatViewAllProvider()),
-            ChangeNotifierProvider(create: (_) => ThemeProvider()),
-          ],
-          child: const MyApp(),
-        ),
+    // The Flutter Splash (full image + preloading) follows the native
+    // launch screen right away — no artificial wait anymore.
+    () => runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => GeneralProvider()),
+          ChangeNotifierProvider(create: (_) => LanguageProvider()),
+          ChangeNotifierProvider(create: (_) => HomeProvider()),
+          ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
+          ChangeNotifierProvider(create: (_) => UpdateProfileProvider()),
+          ChangeNotifierProvider(create: (_) => SearchProvider()),
+          ChangeNotifierProvider(create: (_) => RadioByIdProvider()),
+          ChangeNotifierProvider(create: (_) => AddFavouriteProvider()),
+          ChangeNotifierProvider(create: (_) => ViewAllProvider()),
+          ChangeNotifierProvider(create: (_) => PaymentProvider()),
+          ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+          ChangeNotifierProvider(create: (_) => SubHistoryProvider()),
+          ChangeNotifierProvider(create: (_) => PodcatsProvider()),
+          ChangeNotifierProvider(create: (_) => VideoProvider()),
+          ChangeNotifierProvider(create: (_) => VideoSeriesProvider()),
+          ChangeNotifierProvider(create: (_) => MusicDetailProvider()),
+          ChangeNotifierProvider(create: (_) => PodcatViewAllProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ],
+        child: const MyApp(),
       ),
     ),
   );
@@ -179,7 +185,12 @@ class _MyAppState extends State<MyApp> {
         supportedLocales: Locales.supportedLocales,
         locale: locale,
         debugShowCheckedModeBanner: false,
-        home: const Home(),
+        navigatorKey: appNavigatorKey,
+        // Offline / mobile-data pills above every screen.
+        builder: (context, child) => Stack(
+          children: [child ?? const SizedBox.shrink(), const NetworkBanner()],
+        ),
+        home: const Splash(),
       ),
     );
   }

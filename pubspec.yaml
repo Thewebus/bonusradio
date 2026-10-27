@@ -111,6 +111,7 @@ dependencies:
   http: ^1.5.0
   rename: ^3.1.0
   visibility_detector: ^0.4.0+2
+  connectivity_plus: ^7.3.1
 
 dependency_overrides:
   intl: any

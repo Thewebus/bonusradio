@@ -22,6 +22,10 @@ class HomeProvider extends ChangeNotifier {
 
   /* Home Banner Start */
 
+  // Set by Splash when it fully loaded Home's first-frame data, so Home
+  // doesn't fetch it again. One-shot: Home resets it.
+  bool preloaded = false;
+
   void setLoading(bool isLoading) {
     bannerLoading = isLoading;
     sectionLoading = isLoading;

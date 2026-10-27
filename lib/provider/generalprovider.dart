@@ -65,6 +65,14 @@ class GeneralProvider extends ChangeNotifier {
         (await sharedPre.read('show_radio_metadata') ?? '1') != '0';
     Constant.thumbnailShimmer =
         (await sharedPre.read('thumbnail_loading') ?? 'shimmer') != 'image';
+    Constant.mobileDataWarning =
+        (await sharedPre.read('mobile_data_warning') ?? '1') != '0';
+    Constant.mobileDataWarningMb =
+        int.tryParse(await sharedPre.read('mobile_data_warning_mb') ?? '') ??
+            100;
+    Constant.mobileDataWarningInterval = int.tryParse(
+            await sharedPre.read('mobile_data_warning_interval') ?? '') ??
+        30;
   }
 
   Future<void> getGeneralsetting(BuildContext context) async {

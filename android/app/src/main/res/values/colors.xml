@@ -4,5 +4,7 @@
     <color name="colorAccent">#ff71828A</color>
     <color name="black">#000000</color>
     <color name="white">#ffffffff</color>
+    <!-- Top of splash.png: native launch screen blends into the Flutter splash -->
+    <color name="splash_background">#ff2a0618</color>
 	<color name="ic_launcher_background">#FFFFFF</color>
 </resources>

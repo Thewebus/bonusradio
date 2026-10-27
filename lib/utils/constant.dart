@@ -20,6 +20,11 @@ class Constant {
   static bool showRadioMetadata = true;
   // Admin Settings > App: thumbnail while loading — shimmer or logo image.
   static bool thumbnailShimmer = true;
+  // Admin Settings > App: warn when streaming on mobile data — on/off, the
+  // MB threshold, and minutes between two reminders.
+  static bool mobileDataWarning = true;
+  static int mobileDataWarningMb = 100;
+  static int mobileDataWarningInterval = 30;
   // Anonymous random id of this install — ads' unique-users stats.
   static String? deviceId;
   static String currency = "";

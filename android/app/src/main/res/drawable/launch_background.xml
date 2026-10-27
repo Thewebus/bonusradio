@@ -2,5 +2,5 @@
 <!-- Native launch background kept blank so Flutter splash handles the image -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- simple background color only -->
-    <item android:drawable="@android:color/white" />
+    <item android:drawable="@color/splash_background" />
 </layer-list>

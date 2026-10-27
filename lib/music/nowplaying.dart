@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
+import 'package:myBonus/utils/audioquality.dart';
 import 'package:myBonus/utils/constant.dart';
 
 // What the live radio is playing right now, from the AzuraCast public API.
@@ -73,6 +74,8 @@ class NowPlayingService {
       final response = await _dio.get(apiUrl);
       final data = response.data;
       if (data is! Map) return;
+      AudioQuality.cacheMounts(
+          apiUrl.replaceFirst('/api/nowplaying/', '/listen/'), data);
       final song = (data['now_playing'] ?? {})['song'] ?? {};
       final live = data['live'] ?? {};
       // The user may have switched to something else meanwhile.
