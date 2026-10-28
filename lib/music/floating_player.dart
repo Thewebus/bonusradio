@@ -5,8 +5,9 @@ import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/utils/color.dart';
 import 'package:myBonus/utils/constant.dart';
-import 'package:myBonus/widget/mytext.dart';
+import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/music/nowplaying.dart';
+import 'package:myBonus/widget/scrollingtext.dart';
 import 'package:myBonus/widget/waveform_animation.dart';
 
 class FloatingPlayer extends StatefulWidget {
@@ -118,8 +119,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           width: 40,
                           height: 40,
                           color: liveNeonIconChipBg,
@@ -140,24 +140,16 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MyText(
-                      color: white,
-                      text: title,
-                      multilanguage: false,
-                      fontsize: 14,
-                      fontwaight: FontWeight.w700,
-                      maxline: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ScrollingText(
+                      title,
+                      style: Utils.googleFontStyle(
+                          0, 14, FontStyle.normal, white, FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
-                    MyText(
-                      color: liveNeonTextSecondary,
-                      text: displaySubtitle,
-                      multilanguage: false,
-                      fontsize: 12,
-                      fontwaight: FontWeight.w500,
-                      maxline: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ScrollingText(
+                      displaySubtitle,
+                      style: Utils.googleFontStyle(0, 12, FontStyle.normal,
+                          liveNeonTextSecondary, FontWeight.w500),
                     ),
                   ],
                 ),
@@ -174,6 +166,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                       child: WaveAnimation(
                         isPlaying: isPlaying,
                         player: effectivePlayer,
+                        barCount: 7,
                       ),
                     ),
                   );
@@ -227,9 +220,9 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
     return text.isNotEmpty ? "En direct · $text" : "";
   }
 
-  // ABIDJAN (day theme) — solid black bar, thumbnail, filled red play/pause
-  // button, matching the mockups. No waveform/chevron/close clutter — the
-  // whole row expands the player on tap, same _expandPlayer as before.
+  // ABIDJAN (day theme) — dark brown bar (home.dart), thumbnail, small
+  // cream/yellow waveform, filled red play/pause button. No chevron/close
+  // clutter — the whole row expands the player on tap (_expandPlayer).
   Widget _buildAbidjanContent(AudioPlayer effectivePlayer, String title,
       String subtitle, bool isLive, String? artUri) {
     final String displaySubtitle = _liveSubtitle(subtitle, isLive);
@@ -275,28 +268,37 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MyText(
-                      color: white,
-                      text: title,
-                      multilanguage: false,
-                      fontsize: 14,
-                      fontwaight: FontWeight.w700,
-                      maxline: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ScrollingText(
+                      title,
+                      style: Utils.googleFontStyle(
+                          0, 14, FontStyle.normal, white, FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
-                    MyText(
-                      color: white.withValues(alpha: 0.6),
-                      text: displaySubtitle,
-                      multilanguage: false,
-                      fontsize: 12,
-                      fontwaight: FontWeight.w500,
-                      maxline: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ScrollingText(
+                      displaySubtitle,
+                      style: Utils.googleFontStyle(0, 12, FontStyle.normal,
+                          white.withValues(alpha: 0.6), FontWeight.w500),
                     ),
                   ],
                 ),
               ),
+              StreamBuilder<bool>(
+                stream: effectivePlayer.playingStream,
+                builder: (context, snapshot) {
+                  final isPlaying = snapshot.data ?? effectivePlayer.playing;
+                  return SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: WaveAnimation(
+                      isPlaying: isPlaying,
+                      player: effectivePlayer,
+                      barCount: 7,
+                      color: WaveformConfig.nightColor,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
               StreamBuilder<bool>(
                 stream: effectivePlayer.playingStream,
                 builder: (context, snapshot) {

@@ -21,13 +21,11 @@ const transparent = Colors.transparent;
 bool _isNight(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark;
 
-Color homeAccueilBg(BuildContext context) => _isNight(context)
-    ? const Color(0xFF121212)
-    : const Color(0xFFF7F1E6);
+Color homeAccueilBg(BuildContext context) =>
+    _isNight(context) ? const Color(0xFF121212) : const Color(0xFFF7F1E6);
 
-Color homeSearchBarBg(BuildContext context) => _isNight(context)
-    ? const Color(0xFF8A241A)
-    : const Color(0xFF5C1712);
+Color homeSearchBarBg(BuildContext context) =>
+    _isNight(context) ? const Color(0xFF8A241A) : const Color(0xFF5C1712);
 
 Color homeLiveBadge(BuildContext context) => const Color(0xFFE3352B);
 
@@ -173,3 +171,7 @@ final ThemeData darkTheme = ThemeData(
     backgroundColor: darkCardBg,
   ),
 );
+
+// ABIDJAN (day) mini-player bar: dark brown, with the logo's cream/yellow
+// waveform on it.
+const Color abidjanMiniPlayerBg = Color(0xFF3A2416);

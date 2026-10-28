@@ -417,7 +417,7 @@ class _HomeState extends State<Home> {
       );
     }
 
-    // ABIDJAN (day theme): the mini-player is its own separate black
+    // ABIDJAN (day theme): the mini-player is its own separate dark brown
     // rounded-rect bar, with a visible gap above the white nav card below
     // it — two distinct floating elements, not one card. Radius matches the
     // header's search field (16) for a consistent rounding across the
@@ -428,7 +428,7 @@ class _HomeState extends State<Home> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(abidjanDockRadius),
-          child: Container(color: black, child: floatingPlayer),
+          child: Container(color: abidjanMiniPlayerBg, child: floatingPlayer),
         ),
         const SizedBox(height: 10),
         Material(
@@ -1274,10 +1274,9 @@ class _HomeState extends State<Home> {
     final String greetingWord = Locales.string(context, greetingKey);
     final String? fullName =
         profileprovider.profileModel.result?[0].fullName?.toString();
-    final String? firstName =
-        (fullName != null && fullName.trim().isNotEmpty)
-            ? fullName.trim().split(RegExp(r'\s+')).first
-            : null;
+    final String? firstName = (fullName != null && fullName.trim().isNotEmpty)
+        ? fullName.trim().split(RegExp(r'\s+')).first
+        : null;
     final String greeting =
         firstName != null ? "$greetingWord $firstName" : "$greetingWord !";
     final String currentLangCode = Localizations.localeOf(context).languageCode;
@@ -1559,7 +1558,8 @@ class _HomeState extends State<Home> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, color: liveNeonTextSecondary, size: 20),
+                  const Icon(Icons.search,
+                      color: liveNeonTextSecondary, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -1682,8 +1682,8 @@ class _HomeState extends State<Home> {
                                       // "Tout afficher" switches to the
                                       // Films dock tab (keeping the dock)
                                       // instead of the generic flat ViewAll.
-                                      if (homeProvider.sectionList?[index]
-                                              .type ==
+                                      if (homeProvider
+                                              .sectionList?[index].type ==
                                           8) {
                                         _collapseFullPlayer();
                                         setState(() {
@@ -1923,8 +1923,7 @@ class _HomeState extends State<Home> {
                     Utils.playAudio(
                         context,
                         "radio",
-                        homeprovider.bannerModel.result?[index].isPremium ??
-                            0,
+                        homeprovider.bannerModel.result?[index].isPremium ?? 0,
                         homeprovider.bannerModel.result?[index].isBuy ?? 0,
                         homeprovider.bannerModel.result?[index].image
                                 .toString() ??
@@ -1933,17 +1932,19 @@ class _HomeState extends State<Home> {
                                 .toString() ??
                             "",
                         'homebanner',
-                        homeprovider.bannerModel.result?[index].songUrl
+                        homeprovider
+                                .bannerModel.result?[index].songUrl
                                 .toString() ??
                             "",
-                        homeprovider.bannerModel.result?[index].name
+                        homeprovider
+                                .bannerModel.result?[index].name
                                 .toString() ??
                             "",
-                        homeprovider.bannerModel.result?[index].name
+                        homeprovider
+                                .bannerModel.result?[index].name
                                 .toString() ??
                             "",
-                        homeprovider.bannerModel.result?[index].id
-                                .toString() ??
+                        homeprovider.bannerModel.result?[index].id.toString() ??
                             "",
                         "",
                         index,
@@ -1961,60 +1962,57 @@ class _HomeState extends State<Home> {
                       /* Radio Banner */
                       playThisRadioBanner();
                     } else {
-                          /* Podcast Banner */
-                          final musicdetailProvider =
-                              Provider.of<MusicDetailProvider>(context,
-                                  listen: false);
-                          await musicdetailProvider.getEpisodebyPodcastList(
+                      /* Podcast Banner */
+                      final musicdetailProvider =
+                          Provider.of<MusicDetailProvider>(context,
+                              listen: false);
+                      await musicdetailProvider.getEpisodebyPodcastList(
+                          homeprovider.bannerModel.result?[index].id
+                                  .toString() ??
+                              "",
+                          0);
+                      if (!musicdetailProvider.loading) {
+                        if (musicdetailProvider
+                                    .getEpisodeByPodcstModel.status ==
+                                200 &&
+                            ((musicdetailProvider.getEpisodeByPodcstModel.result
+                                        ?.length ??
+                                    0) >
+                                0)) {
+                          if (!context.mounted) return;
+                          Utils.playAudio(
+                              context,
+                              "podcast",
+                              homeprovider
+                                      .bannerModel.result?[index].isPremium ??
+                                  0,
+                              homeprovider.bannerModel.result?[index].isBuy ??
+                                  0,
+                              homeprovider.bannerModel.result?[index].image
+                                      .toString() ??
+                                  "",
+                              homeprovider
+                                      .bannerModel.result?[index].title
+                                      .toString() ??
+                                  "",
+                              '',
+                              musicdetailProvider.episodeList?[0].episodeAudio
+                                      .toString() ??
+                                  "",
+                              "",
+                              "",
+                              musicdetailProvider
+                                      .episodeList?[0].id
+                                      .toString() ??
+                                  "",
                               homeprovider.bannerModel.result?[index].id
                                       .toString() ??
                                   "",
-                              0);
-                          if (!musicdetailProvider.loading) {
-                            if (musicdetailProvider
-                                        .getEpisodeByPodcstModel.status ==
-                                    200 &&
-                                ((musicdetailProvider.getEpisodeByPodcstModel
-                                            .result?.length ??
-                                        0) >
-                                    0)) {
-                              if (!context.mounted) return;
-                              Utils.playAudio(
-                                  context,
-                                  "podcast",
-                                  homeprovider.bannerModel.result?[index]
-                                          .isPremium ??
-                                      0,
-                                  homeprovider
-                                          .bannerModel.result?[index].isBuy ??
-                                      0,
-                                  homeprovider
-                                          .bannerModel.result?[index].image
-                                          .toString() ??
-                                      "",
-                                  homeprovider
-                                          .bannerModel.result?[index].title
-                                          .toString() ??
-                                      "",
-                                  '',
-                                  musicdetailProvider
-                                          .episodeList?[0].episodeAudio
-                                          .toString() ??
-                                      "",
-                                  "",
-                                  "",
-                                  musicdetailProvider.episodeList?[0].id
-                                          .toString() ??
-                                      "",
-                                  homeprovider.bannerModel.result?[index].id
-                                          .toString() ??
-                                      "",
-                                  0,
-                                  musicdetailProvider.episodeList?.toList() ??
-                                      []);
-                            }
-                          }
+                              0,
+                              musicdetailProvider.episodeList?.toList() ?? []);
                         }
+                      }
+                    }
                   }
 
                   return Container(
@@ -2159,8 +2157,8 @@ class _HomeState extends State<Home> {
                       Container(
                         width: 6,
                         height: 6,
-                        decoration:
-                            const BoxDecoration(color: white, shape: BoxShape.circle),
+                        decoration: const BoxDecoration(
+                            color: white, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 5),
                       const Text(
@@ -2183,8 +2181,8 @@ class _HomeState extends State<Home> {
                   width: 32,
                   height: 32,
                   alignment: Alignment.center,
-                  decoration:
-                      const BoxDecoration(color: colorPrimary, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                      color: colorPrimary, shape: BoxShape.circle),
                   child: const Icon(Icons.podcasts, color: white, size: 16),
                 ),
               ),
@@ -2241,9 +2239,7 @@ class _HomeState extends State<Home> {
                             return pillButton(
                               background: white,
                               foreground: black,
-                              icon: isPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
+                              icon: isPlaying ? Icons.pause : Icons.play_arrow,
                               label: isPlaying ? "En écoute" : "Écouter",
                               onTap: () {
                                 if (isPlaying) {
@@ -3280,32 +3276,43 @@ class _HomeState extends State<Home> {
       return Icons.church;
     } else if (n.contains('coupé') ||
         n.contains('coupe') ||
-        n.contains('decal') || n.contains('décal')) {
+        n.contains('decal') ||
+        n.contains('décal')) {
       return Icons.content_cut;
     } else if (n.contains('sport')) {
       return Icons.sports_soccer;
     } else if (n.contains('info') || n.contains('actualit')) {
       return Icons.newspaper;
-    } else if (n.contains('humour') || n.contains('comedie') ||
+    } else if (n.contains('humour') ||
+        n.contains('comedie') ||
         n.contains('comédie')) {
       return Icons.theater_comedy;
     } else if (n.contains('enfant') || n.contains('kids')) {
       return Icons.child_care;
     } else if (n.contains('musi') || n.contains('music')) {
       return Icons.music_note;
-    } else if (n.contains('sitcom') || n.contains('sit-com') ||
-        n.contains('shortcom') || n.contains('shot com') ||
+    } else if (n.contains('sitcom') ||
+        n.contains('sit-com') ||
+        n.contains('shortcom') ||
+        n.contains('shot com') ||
         n.contains('short com')) {
       return Icons.theater_comedy;
-    } else if (n.contains('série') || n.contains('serie') ||
+    } else if (n.contains('série') ||
+        n.contains('serie') ||
         n.contains('saison')) {
       return Icons.video_library;
-    } else if (n.contains('film') || n.contains('cinéma') ||
-        n.contains('cinema') || n.contains('vidéo') || n.contains('video') ||
-        n.contains('webtv') || n.contains('web tv')) {
+    } else if (n.contains('film') ||
+        n.contains('cinéma') ||
+        n.contains('cinema') ||
+        n.contains('vidéo') ||
+        n.contains('video') ||
+        n.contains('webtv') ||
+        n.contains('web tv')) {
       return Icons.movie;
-    } else if (n.contains('podcast') || n.contains('débat') ||
-        n.contains('debat') || n.contains('émission') ||
+    } else if (n.contains('podcast') ||
+        n.contains('débat') ||
+        n.contains('debat') ||
+        n.contains('émission') ||
         n.contains('emission')) {
       return Icons.mic;
     } else {
@@ -3357,8 +3364,7 @@ class _HomeState extends State<Home> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => CategoryContentPage(
-            categoryId: item.id?.toString() ?? "",
-            title: name),
+                      categoryId: item.id?.toString() ?? "", title: name),
                 ),
               );
             },
@@ -3409,7 +3415,7 @@ class _HomeState extends State<Home> {
                       ),
                       Text(
                         _categoryCountsLabel(
-                              sectionList?[sectionindex].data?[index]),
+                            sectionList?[sectionindex].data?[index]),
                         style: TextStyle(
                           color: isNight ? liveNeonTextSecondary : gray,
                           fontSize: 11,
@@ -3448,23 +3454,21 @@ class _HomeState extends State<Home> {
               itemBuilder: (context, index) {
                 final bool isNight =
                     Theme.of(context).brightness == Brightness.dark;
-                final categoryName = sectionList?[sectionindex]
-                        .data?[index]
-                        .name
-                        .toString() ??
-                    "";
+                final categoryName =
+                    sectionList?[sectionindex].data?[index].name.toString() ??
+                        "";
                 void openCategory() {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) {
                         return CategoryContentPage(
-            categoryId: sectionList?[sectionindex]
-                                  .data?[index]
-                                  .id
-                                  .toString() ??
-                              "",
-            title: categoryName);
+                            categoryId: sectionList?[sectionindex]
+                                    .data?[index]
+                                    .id
+                                    .toString() ??
+                                "",
+                            title: categoryName);
                       },
                     ),
                   );
@@ -3491,8 +3495,7 @@ class _HomeState extends State<Home> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              height:
-                                  MediaQuery.of(context).size.height * 0.09,
+                              height: MediaQuery.of(context).size.height * 0.09,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: neonCardColor,
@@ -3529,7 +3532,7 @@ class _HomeState extends State<Home> {
                             ),
                             Text(
                               _categoryCountsLabel(
-                              sectionList?[sectionindex].data?[index]),
+                                  sectionList?[sectionindex].data?[index]),
                               style: const TextStyle(
                                 color: liveNeonTextSecondary,
                                 fontSize: 10,
@@ -3545,9 +3548,9 @@ class _HomeState extends State<Home> {
 
                 // ABIDJAN (day theme): solid-color block with a small
                 // representative icon badge, real song-count caption below.
-                final Color cardColor = abidjanBokehGradients[
-                        index % abidjanBokehGradients.length]
-                    .first;
+                final Color cardColor =
+                    abidjanBokehGradients[index % abidjanBokehGradients.length]
+                        .first;
                 return Padding(
                   padding: const EdgeInsets.all(6.0),
                   child: InkWell(
@@ -3599,7 +3602,7 @@ class _HomeState extends State<Home> {
                           ),
                           Text(
                             _categoryCountsLabel(
-                              sectionList?[sectionindex].data?[index]),
+                                sectionList?[sectionindex].data?[index]),
                             style: TextStyle(
                               color: gray,
                               fontSize: 10,
@@ -3831,16 +3834,16 @@ class _HomeState extends State<Home> {
                   MaterialPageRoute(
                     builder: (context) {
                       return CategoryContentPage(
-            categoryId: sectionList?[sectionindex]
-                                .data?[index]
-                                .id
-                                .toString() ??
-                            "",
-            title: sectionList?[sectionindex]
-                                .data?[index]
-                                .name
-                                .toString() ??
-                            "");
+                          categoryId: sectionList?[sectionindex]
+                                  .data?[index]
+                                  .id
+                                  .toString() ??
+                              "",
+                          title: sectionList?[sectionindex]
+                                  .data?[index]
+                                  .name
+                                  .toString() ??
+                              "");
                     },
                   ),
                 );
@@ -4108,7 +4111,9 @@ class _HomeState extends State<Home> {
                               overflow: TextOverflow.ellipsis,
                               fontstyle: FontStyle.normal),
                           const SizedBox(height: 5),
-                          if (sectionList?[sectionindex].data?[index].isSeries ==
+                          if (sectionList?[sectionindex]
+                                  .data?[index]
+                                  .isSeries ==
                               1)
                             MyText(
                               color: colorPrimary,

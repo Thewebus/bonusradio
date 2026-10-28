@@ -14,7 +14,6 @@ import 'package:myBonus/model/bannermodel.dart' as banner;
 import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/search.dart';
-import 'package:myBonus/provider/addfavouriteprovider.dart';
 import 'package:myBonus/provider/homeprovider.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
 import 'package:myBonus/subscription/subscription.dart';
@@ -27,6 +26,8 @@ import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
 import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/musicutils.dart';
+import 'package:myBonus/widget/audioqualitysheet.dart';
+import 'package:myBonus/widget/scrollingtext.dart';
 import 'package:myBonus/widget/waveform_animation.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -39,6 +40,9 @@ import 'package:myBonus/music/nowplaying.dart';
 import 'package:myBonus/webservice/apiservices.dart';
 
 AudioPlayer audioPlayer = AudioPlayer();
+// Zone pub ads fetched (and their posters pre-downloaded) by the Splash, so
+// the Radios screen shows them on its first frame. Null: fetch on demand.
+List<ads.Result>? preloadedPubAds;
 late MusicManager musicManager;
 
 // Decorative diagonal wave streaks + dot texture drawn over the expanded
@@ -175,7 +179,6 @@ class LectResponsiveConfig {
   static const double largeNotesOffsetRatio = 0.16;
   static const double largeNotesOffsetMin = 100.0;
   static const double largeNotesOffsetMax = 220.0;
-
 }
 
 Stream<PositionData> get positionDataStream {
@@ -431,38 +434,18 @@ class _MusicDetailsState extends State<MusicDetails>
     }
   }
 
-  // ABIDJAN (day theme) Radios tab. Only reachable when ishomepage: false
-  // (see build()'s lockExpanded branch) — the shared dark overlay used by
-  // every other screen (buildMusicPanel) is completely untouched.
-  void _playStation(List<banner.Result> stations, int index) {
-    final item = stations[index];
-    Utils.playAudio(
-        context,
-        "radio",
-        item.isPremium ?? 0,
-        item.isBuy ?? 0,
-        item.image?.toString() ?? "",
-        item.name?.toString() ?? "",
-        'radiotab',
-        item.songUrl?.toString() ?? "",
-        item.name?.toString() ?? "",
-        item.name?.toString() ?? "",
-        item.id.toString(),
-        "",
-        index,
-        stations);
-  }
-
-  void _onFavouriteStation(banner.Result? item) {
-    if (item == null) return;
-    if (Constant.userID == null) {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => const Login()));
-      return;
-    }
-    Provider.of<AddFavouriteProvider>(context, listen: false)
-        .getAddFavourite(Constant.userID ?? "", item.id.toString());
-    Utils.showToast("Ajouté aux favoris");
+  // Radios player, left button: share what's on air. The app link (admin
+  // Settings > App) is only added once a store page is filled in: this
+  // platform's store first, otherwise whichever one exists.
+  void _shareRadio(String songLine) {
+    final String play = Constant.playStoreUrl, apple = Constant.appStoreUrl;
+    final String link = Platform.isIOS
+        ? (apple.isNotEmpty ? apple : play)
+        : (play.isNotEmpty ? play : apple);
+    final String what = songLine.isNotEmpty ? "« $songLine »" : "la radio";
+    Utils.shareApp(link.isEmpty
+        ? "J'écoute $what en direct sur l'application myBonus."
+        : "J'écoute $what en direct sur l'application myBonus ! 🎧\nTélécharge l'app : $link");
   }
 
   banner.Result? _currentStation(
@@ -473,6 +456,22 @@ class _MusicDetailsState extends State<MusicDetails>
     return match.isNotEmpty ? match.first : stations.first;
   }
 
+  // Radios screen: the zone pub keeps its 4:3 size and the player below it
+  // shrinks its gaps, cover and buttons (not its text) so both fit above
+  // the bottom nav dock. 1 = natural size, never below 0.5.
+  static const double _radioDockReserve = 84;
+  double _playerScale(BoxConstraints viewport) {
+    final double pub = (viewport.maxWidth - 40) / _pubAspectRatio + 20;
+    final double room = viewport.maxHeight - _radioDockReserve - 16 - pub - 12;
+    // Fixed text block (title, artist) vs scalable parts (cover row, gaps,
+    // waveform, buttons).
+    const double text = 58, scalable = 264;
+    return ((room - text) / scalable).clamp(0.5, 1.0);
+  }
+
+  // ABIDJAN (day theme) Radios tab. Only reachable when ishomepage: false
+  // (see build()'s lockExpanded branch) — the shared dark overlay used by
+  // every other screen (buildMusicPanel) is completely untouched.
   Widget _buildAbidjanRadioScreen() {
     return Scaffold(
       backgroundColor: homeAccueilBg(context),
@@ -486,8 +485,10 @@ class _MusicDetailsState extends State<MusicDetails>
                 AbidjanCircleIconButton(
                   icon: Icons.search,
                   onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => const Search()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const Search()));
                   },
                 ),
               ],
@@ -495,28 +496,29 @@ class _MusicDetailsState extends State<MusicDetails>
             Expanded(
               child: Consumer<HomeProvider>(
                 builder: (context, homeprovider, child) {
-                  final stations = (homeprovider.bannerModel.result ??
-                          <banner.Result>[])
-                      .where((r) => r.type == 1)
-                      .toList();
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        _buildPubSlideshow(showIndicators: true),
-                        const SizedBox(height: 20),
-                        ValueListenableBuilder<NowPlayingInfo?>(
-                          valueListenable: nowPlaying,
-                          builder: (context, np, child) =>
-                              _buildAbidjanNowPlayingCard(stations),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildAbidjanStationsSection(stations),
-                      ],
-                    ),
-                  );
+                  final stations =
+                      (homeprovider.bannerModel.result ?? <banner.Result>[])
+                          .where((r) => r.type == 1)
+                          .toList();
+                  return LayoutBuilder(builder: (context, viewport) {
+                    final double s = _playerScale(viewport);
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          _buildPubSlideshow(showIndicators: true),
+                          const SizedBox(height: 12),
+                          ValueListenableBuilder<NowPlayingInfo?>(
+                            valueListenable: nowPlaying,
+                            builder: (context, np, child) =>
+                                _buildAbidjanNowPlayingCard(stations, s: s),
+                          ),
+                        ],
+                      ),
+                    );
+                  });
                 },
               ),
             ),
@@ -537,12 +539,74 @@ class _MusicDetailsState extends State<MusicDetails>
     return buffer.toString();
   }
 
-  Widget _buildAbidjanNowPlayingCard(List<banner.Result> stations) {
+  // "EN DIRECT" pill of the Radios player (both themes).
+  Widget _buildLivePill() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorPrimary,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration:
+                const BoxDecoration(color: white, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            "EN DIRECT",
+            style: TextStyle(
+              color: white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // "12 à l'écoute" pill, right of the cover.
+  Widget _buildListenersPill(String text, {required bool night}) {
+    final Color fg = night ? white : black;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: night ? white.withValues(alpha: 0.1) : abidjanIconChipBg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.headphones, size: 12, color: fg),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: fg,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAbidjanNowPlayingCard(List<banner.Result> stations,
+      {double s = 1}) {
     return StreamBuilder<SequenceState?>(
       stream: audioPlayer.sequenceStateStream,
       builder: (context, snapshot) {
-        final mediaItem =
-            snapshot.data?.currentSource?.tag as MediaItem?;
+        final mediaItem = snapshot.data?.currentSource?.tag as MediaItem?;
         final banner.Result? current = _currentStation(stations, mediaItem);
         final String title =
             mediaItem?.title ?? current?.name?.toString() ?? "";
@@ -566,131 +630,98 @@ class _MusicDetailsState extends State<MusicDetails>
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorPrimary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                            color: white, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        "EN DIRECT",
-                        style: TextStyle(
-                          color: white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (listenersText.isNotEmpty) const SizedBox(width: 8),
-                      if (listenersText.isNotEmpty)
-                        Text(
-                          listenersText,
-                          style: TextStyle(
-                            color: white.withValues(alpha: 0.85),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                // EN DIRECT | cover | listeners, on one row.
+                Row(
+                  children: [
+                    Expanded(child: Center(child: _buildLivePill())),
+                    Container(
+                      width: 96 * s,
+                      height: 96 * s,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorPrimary.withValues(alpha: 0.45),
+                            blurRadius: 33,
+                            spreadRadius: 3,
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  width: 118,
-                  height: 118,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorPrimary.withValues(alpha: 0.45),
-                        blurRadius: 33,
-                        spreadRadius: 3,
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: artUri.isNotEmpty
-                        ? Image.network(
-                            artUri,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              color: abidjanIconChipBg,
-                              child: const Icon(Icons.radio,
-                                  color: black, size: 38),
-                            ),
-                          )
-                        : Container(
-                            color: abidjanIconChipBg,
-                            child:
-                                const Icon(Icons.radio, color: black, size: 38),
-                          ),
-                  ),
+                      child: ClipOval(
+                        child: artUri.isNotEmpty
+                            ? Image.network(
+                                artUri,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: abidjanIconChipBg,
+                                  child: const Icon(Icons.radio,
+                                      color: black, size: 38),
+                                ),
+                              )
+                            : Container(
+                                color: abidjanIconChipBg,
+                                child: const Icon(Icons.radio,
+                                    color: black, size: 38),
+                              ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: listenersText.isEmpty
+                            ? const SizedBox.shrink()
+                            : _buildListenersPill(listenersText, night: false),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                MyText(
-                  color: black,
-                  text: title,
-                  multilanguage: false,
-                  inter: 4,
-                  fontsize: Dimens.textExtraBig,
-                  fontwaight: FontWeight.w700,
-                  maxline: 1,
-                  textalign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  fontstyle: FontStyle.normal,
+                SizedBox(height: 20 * s),
+                ScrollingText(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: Utils.googleFontStyle(4, Dimens.textExtraBig,
+                      FontStyle.normal, black, FontWeight.w700),
                 ),
                 if (subtitle.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
+                  ScrollingText(
                     subtitle,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: gray,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
                   ),
                 ],
-                const SizedBox(height: 20),
+                SizedBox(height: 20 * s),
                 SizedBox(
-                  height: 32,
+                  height: 32 * math.max(s, 0.75),
                   width: 220,
-                  child: WaveAnimation(isPlaying: isPlaying, player: audioPlayer),
+                  child:
+                      WaveAnimation(isPlaying: isPlaying, player: audioPlayer),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24 * s),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     InkWell(
                       borderRadius: BorderRadius.circular(24),
-                      onTap: () => _onFavouriteStation(current),
+                      onTap: () => _shareRadio(subtitle),
                       child: Container(
-                        width: 48,
-                        height: 48,
+                        width: 48 * s,
+                        height: 48 * s,
                         alignment: Alignment.center,
-                        child: const Icon(Icons.favorite_border,
-                            color: black, size: 24),
+                        child: Icon(Icons.share_outlined,
+                            color: black, size: 24 * s),
                       ),
                     ),
                     const SizedBox(width: 28),
                     InkWell(
                       onTap: _checkPremiumPlayPause,
                       child: Container(
-                        width: 72,
-                        height: 72,
+                        width: 72 * s,
+                        height: 72 * s,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
                           color: colorPrimary,
@@ -699,20 +730,20 @@ class _MusicDetailsState extends State<MusicDetails>
                         child: Icon(
                           isPlaying ? Icons.pause : Icons.play_arrow,
                           color: white,
-                          size: 32,
+                          size: 32 * s,
                         ),
                       ),
                     ),
                     const SizedBox(width: 28),
-                    // Visual-only — no casting feature exists in the app.
                     InkWell(
                       borderRadius: BorderRadius.circular(24),
-                      onTap: () {},
+                      onTap: () => showAudioQualitySheet(context),
                       child: Container(
-                        width: 48,
-                        height: 48,
+                        width: 48 * s,
+                        height: 48 * s,
                         alignment: Alignment.center,
-                        child: const Icon(Icons.cast, color: black, size: 24),
+                        child: Icon(Icons.high_quality_outlined,
+                            color: black, size: 24 * s),
                       ),
                     ),
                   ],
@@ -722,134 +753,6 @@ class _MusicDetailsState extends State<MusicDetails>
           },
         );
       },
-    );
-  }
-
-  Widget _buildAbidjanStationsSection(List<banner.Result> stations) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            MyText(
-              color: black,
-              text: "Nos stations",
-              multilanguage: false,
-              inter: 4,
-              fontsize: Dimens.textBig,
-              fontwaight: FontWeight.w700,
-              maxline: 1,
-              textalign: TextAlign.left,
-              fontstyle: FontStyle.normal,
-            ),
-            Text(
-              stations.length.toString(),
-              style: const TextStyle(
-                color: colorPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        if (stations.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              "Aucune station disponible pour le moment.",
-              style: TextStyle(color: gray, fontSize: 13),
-            ),
-          )
-        else
-          SizedBox(
-            height: 96,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: stations.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 14),
-              itemBuilder: (context, index) {
-                final item = stations[index];
-                return StreamBuilder<SequenceState?>(
-                  stream: audioPlayer.sequenceStateStream,
-                  builder: (context, snapshot) {
-                    final currentId =
-                        (snapshot.data?.currentSource?.tag as MediaItem?)?.id;
-                    final bool isCurrent = currentId != null &&
-                        currentId == item.id.toString();
-                    return StreamBuilder<bool>(
-                      stream: audioPlayer.playingStream,
-                      builder: (context, playingSnap) {
-                        final bool isPlayingThis = isCurrent &&
-                            (playingSnap.data ?? audioPlayer.playing);
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () {
-                            if (isCurrent) {
-                              _checkPremiumPlayPause();
-                            } else {
-                              _playStation(stations, index);
-                            }
-                          },
-                          child: SizedBox(
-                            width: 72,
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: MyNetworkImage(
-                                    imgWidth: 64,
-                                    imgHeight: 64,
-                                    fit: BoxFit.cover,
-                                    imageUrl: item.image?.toString() ?? "",
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (isCurrent) ...[
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: isPlayingThis
-                                              ? colorPrimary
-                                              : gray,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                    ],
-                                    Flexible(
-                                      child: Text(
-                                        item.name?.toString() ?? "",
-                                        style: TextStyle(
-                                          color: isCurrent
-                                              ? colorPrimary
-                                              : black,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-      ],
     );
   }
 
@@ -871,8 +774,10 @@ class _MusicDetailsState extends State<MusicDetails>
                   LiveNeonCircleIconButton(
                     icon: Icons.search,
                     onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => const Search()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const Search()));
                     },
                   ),
                 ],
@@ -880,28 +785,29 @@ class _MusicDetailsState extends State<MusicDetails>
               Expanded(
                 child: Consumer<HomeProvider>(
                   builder: (context, homeprovider, child) {
-                    final stations = (homeprovider.bannerModel.result ??
-                            <banner.Result>[])
-                        .where((r) => r.type == 1)
-                        .toList();
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 16),
-                          _buildPubSlideshow(showIndicators: true),
-                          const SizedBox(height: 20),
-                          ValueListenableBuilder<NowPlayingInfo?>(
-                            valueListenable: nowPlaying,
-                            builder: (context, np, child) =>
-                                _buildLiveNeonNowPlayingCard(stations),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildLiveNeonStationsSection(stations),
-                        ],
-                      ),
-                    );
+                    final stations =
+                        (homeprovider.bannerModel.result ?? <banner.Result>[])
+                            .where((r) => r.type == 1)
+                            .toList();
+                    return LayoutBuilder(builder: (context, viewport) {
+                      final double s = _playerScale(viewport);
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 160),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            _buildPubSlideshow(showIndicators: true),
+                            const SizedBox(height: 12),
+                            ValueListenableBuilder<NowPlayingInfo?>(
+                              valueListenable: nowPlaying,
+                              builder: (context, np, child) =>
+                                  _buildLiveNeonNowPlayingCard(stations, s: s),
+                            ),
+                          ],
+                        ),
+                      );
+                    });
                   },
                 ),
               ),
@@ -912,12 +818,12 @@ class _MusicDetailsState extends State<MusicDetails>
     );
   }
 
-  Widget _buildLiveNeonNowPlayingCard(List<banner.Result> stations) {
+  Widget _buildLiveNeonNowPlayingCard(List<banner.Result> stations,
+      {double s = 1}) {
     return StreamBuilder<SequenceState?>(
       stream: audioPlayer.sequenceStateStream,
       builder: (context, snapshot) {
-        final mediaItem =
-            snapshot.data?.currentSource?.tag as MediaItem?;
+        final mediaItem = snapshot.data?.currentSource?.tag as MediaItem?;
         final banner.Result? current = _currentStation(stations, mediaItem);
         final String title =
             mediaItem?.title ?? current?.name?.toString() ?? "";
@@ -941,131 +847,99 @@ class _MusicDetailsState extends State<MusicDetails>
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: colorPrimary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                            color: white, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        "EN DIRECT",
-                        style: TextStyle(
-                          color: white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (listenersText.isNotEmpty) const SizedBox(width: 8),
-                      if (listenersText.isNotEmpty)
-                        Text(
-                          listenersText,
-                          style: TextStyle(
-                            color: white.withValues(alpha: 0.85),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                // EN DIRECT | cover | listeners, on one row.
+                Row(
+                  children: [
+                    Expanded(child: Center(child: _buildLivePill())),
+                    Container(
+                      width: 96 * s,
+                      height: 96 * s,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                liveNeonGradient.first.withValues(alpha: 0.5),
+                            blurRadius: 40,
+                            spreadRadius: 4,
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  width: 118,
-                  height: 118,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: liveNeonGradient.first.withValues(alpha: 0.5),
-                        blurRadius: 40,
-                        spreadRadius: 4,
+                        ],
                       ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: artUri.isNotEmpty
-                        ? Image.network(
-                            artUri,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              color: liveNeonIconChipBg,
-                              child: const Icon(Icons.radio,
-                                  color: white, size: 38),
-                            ),
-                          )
-                        : Container(
-                            color: liveNeonIconChipBg,
-                            child:
-                                const Icon(Icons.radio, color: white, size: 38),
-                          ),
-                  ),
+                      child: ClipOval(
+                        child: artUri.isNotEmpty
+                            ? Image.network(
+                                artUri,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: liveNeonIconChipBg,
+                                  child: const Icon(Icons.radio,
+                                      color: white, size: 38),
+                                ),
+                              )
+                            : Container(
+                                color: liveNeonIconChipBg,
+                                child: const Icon(Icons.radio,
+                                    color: white, size: 38),
+                              ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: listenersText.isEmpty
+                            ? const SizedBox.shrink()
+                            : _buildListenersPill(listenersText, night: true),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                MyText(
-                  color: white,
-                  text: title,
-                  multilanguage: false,
-                  inter: 4,
-                  fontsize: Dimens.textExtraBig,
-                  fontwaight: FontWeight.w700,
-                  maxline: 1,
-                  textalign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  fontstyle: FontStyle.normal,
+                SizedBox(height: 20 * s),
+                ScrollingText(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: Utils.googleFontStyle(4, Dimens.textExtraBig,
+                      FontStyle.normal, white, FontWeight.w700),
                 ),
                 if (subtitle.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
+                  ScrollingText(
                     subtitle,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       color: liveNeonTextSecondary,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
                   ),
                 ],
-                const SizedBox(height: 20),
+                SizedBox(height: 20 * s),
                 SizedBox(
-                  height: 32,
+                  height: 32 * math.max(s, 0.75),
                   width: 220,
-                  child: WaveAnimation(isPlaying: isPlaying, player: audioPlayer),
+                  child:
+                      WaveAnimation(isPlaying: isPlaying, player: audioPlayer),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24 * s),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     InkWell(
                       borderRadius: BorderRadius.circular(24),
-                      onTap: () => _onFavouriteStation(current),
+                      onTap: () => _shareRadio(subtitle),
                       child: Container(
-                        width: 48,
-                        height: 48,
+                        width: 48 * s,
+                        height: 48 * s,
                         alignment: Alignment.center,
-                        child: const Icon(Icons.favorite_border,
-                            color: white, size: 24),
+                        child: Icon(Icons.share_outlined,
+                            color: white, size: 24 * s),
                       ),
                     ),
                     const SizedBox(width: 28),
                     InkWell(
                       onTap: _checkPremiumPlayPause,
                       child: Container(
-                        width: 72,
-                        height: 72,
+                        width: 72 * s,
+                        height: 72 * s,
                         alignment: Alignment.center,
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(colors: liveNeonGradient),
@@ -1074,20 +948,20 @@ class _MusicDetailsState extends State<MusicDetails>
                         child: Icon(
                           isPlaying ? Icons.pause : Icons.play_arrow,
                           color: white,
-                          size: 32,
+                          size: 32 * s,
                         ),
                       ),
                     ),
                     const SizedBox(width: 28),
-                    // Visual-only — no casting feature exists in the app.
                     InkWell(
                       borderRadius: BorderRadius.circular(24),
-                      onTap: () {},
+                      onTap: () => showAudioQualitySheet(context),
                       child: Container(
-                        width: 48,
-                        height: 48,
+                        width: 48 * s,
+                        height: 48 * s,
                         alignment: Alignment.center,
-                        child: const Icon(Icons.cast, color: white, size: 24),
+                        child: Icon(Icons.high_quality_outlined,
+                            color: white, size: 24 * s),
                       ),
                     ),
                   ],
@@ -1097,134 +971,6 @@ class _MusicDetailsState extends State<MusicDetails>
           },
         );
       },
-    );
-  }
-
-  Widget _buildLiveNeonStationsSection(List<banner.Result> stations) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            MyText(
-              color: white,
-              text: "Nos stations",
-              multilanguage: false,
-              inter: 4,
-              fontsize: Dimens.textBig,
-              fontwaight: FontWeight.w700,
-              maxline: 1,
-              textalign: TextAlign.left,
-              fontstyle: FontStyle.normal,
-            ),
-            Text(
-              stations.length.toString(),
-              style: const TextStyle(
-                color: colorPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        if (stations.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              "Aucune station disponible pour le moment.",
-              style: TextStyle(color: liveNeonTextSecondary, fontSize: 13),
-            ),
-          )
-        else
-          SizedBox(
-            height: 96,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: stations.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 14),
-              itemBuilder: (context, index) {
-                final item = stations[index];
-                return StreamBuilder<SequenceState?>(
-                  stream: audioPlayer.sequenceStateStream,
-                  builder: (context, snapshot) {
-                    final currentId =
-                        (snapshot.data?.currentSource?.tag as MediaItem?)?.id;
-                    final bool isCurrent = currentId != null &&
-                        currentId == item.id.toString();
-                    return StreamBuilder<bool>(
-                      stream: audioPlayer.playingStream,
-                      builder: (context, playingSnap) {
-                        final bool isPlayingThis = isCurrent &&
-                            (playingSnap.data ?? audioPlayer.playing);
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () {
-                            if (isCurrent) {
-                              _checkPremiumPlayPause();
-                            } else {
-                              _playStation(stations, index);
-                            }
-                          },
-                          child: SizedBox(
-                            width: 72,
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: MyNetworkImage(
-                                    imgWidth: 64,
-                                    imgHeight: 64,
-                                    fit: BoxFit.cover,
-                                    imageUrl: item.image?.toString() ?? "",
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (isCurrent) ...[
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: isPlayingThis
-                                              ? colorPrimary
-                                              : liveNeonTextSecondary,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                    ],
-                                    Flexible(
-                                      child: Text(
-                                        item.name?.toString() ?? "",
-                                        style: TextStyle(
-                                          color: isCurrent
-                                              ? colorPrimary
-                                              : white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-      ],
     );
   }
 
@@ -1244,7 +990,9 @@ class _MusicDetailsState extends State<MusicDetails>
       // so there's nothing left to flash.
       if (widget.currentTabIndex == radioTabIndex) {
         final bool isNight = Theme.of(context).brightness == Brightness.dark;
-        return isNight ? _buildLiveNeonRadioScreen() : _buildAbidjanRadioScreen();
+        return isNight
+            ? _buildLiveNeonRadioScreen()
+            : _buildAbidjanRadioScreen();
       }
       const elementOpacity = 1.0;
       const progressIndicatorHeight = 2.0;
@@ -2337,7 +2085,11 @@ class _MusicDetailsState extends State<MusicDetails>
     // first time it does — not by every mini-player on every page.
     if (!_pubAdsRequested) {
       _pubAdsRequested = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadPubAds());
+      if (preloadedPubAds != null) {
+        _pubAds = preloadedPubAds!;
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _loadPubAds());
+      }
     }
     final placeholder = Container(
       width: double.infinity,

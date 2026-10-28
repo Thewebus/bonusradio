@@ -18,6 +18,7 @@ import 'package:myBonus/utils/dimens.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 import 'package:myBonus/utils/utils.dart';
 import 'package:myBonus/widget/abidjan_header.dart';
+import 'package:myBonus/widget/audioqualitysheet.dart';
 import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/myimage.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
@@ -103,7 +104,7 @@ class _SettingsState extends State<Settings> {
                             icon: Icons.graphic_eq,
                             label: "Qualité audio",
                             trailing:
-                                _audioQualityLabels[AudioQuality.mode.value] ??
+                                audioQualityLabels[AudioQuality.mode.value] ??
                                     "",
                           ),
                         ),
@@ -181,74 +182,14 @@ class _SettingsState extends State<Settings> {
   }
 
   // Settings > LECTURE: mobile-data reminder (MobileDataWatcher) and live
-  // radio quality (AudioQuality).
-  static const Map<String, String> _audioQualityLabels = {
-    AudioQuality.auto: "Automatique",
-    AudioQuality.high: "Haute",
-    AudioQuality.standard: "Standard",
-    AudioQuality.low: "Économie",
-  };
-
+  // radio quality (AudioQuality, picker shared with the Radios player).
   Future<void> _setMobileDataAlert(bool value) async {
     await MobileDataWatcher.setUserEnabled(value);
     if (mounted) setState(() {});
   }
 
   Future<void> _pickAudioQuality() async {
-    final List<int> bitrates = AudioQuality.bitrates.value;
-    // Actual bitrates from the station's AzuraCast mounts, when known.
-    String kbps(String value, {bool cellular = false}) {
-      final int? b = AudioQuality.bitrateForMode(value, cellular: cellular);
-      return b == null ? "" : " · $b kbps";
-    }
-
-    final int? autoWifi =
-        AudioQuality.bitrateForMode(AudioQuality.auto, cellular: false);
-    final int? autoCellular =
-        AudioQuality.bitrateForMode(AudioQuality.auto, cellular: true);
-    final Map<String, String> hints = {
-      AudioQuality.auto: autoWifi == null
-          ? "Haute en Wi-Fi, standard en données mobiles"
-          : "$autoWifi kbps en Wi-Fi, $autoCellular kbps en données mobiles",
-      AudioQuality.high:
-          "Meilleur son, consomme plus de données${kbps(AudioQuality.high)}",
-      AudioQuality.standard:
-          "Bon compromis son / données${kbps(AudioQuality.standard)}",
-      AudioQuality.low: "Consomme moins de données${kbps(AudioQuality.low)}",
-    };
-    final String? picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: RadioGroup<String>(
-          groupValue: AudioQuality.mode.value,
-          onChanged: (v) => Navigator.pop(sheetContext, v),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final entry in _audioQualityLabels.entries)
-                RadioListTile<String>(
-                  value: entry.key,
-                  title: Text(entry.value),
-                  subtitle: Text(hints[entry.key] ?? ""),
-                ),
-              if (bitrates.length < 2)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                  child: Text(
-                    bitrates.isEmpty
-                        ? "La radio ne propose qu'un seul débit pour l'instant."
-                        : "La radio ne propose qu'un seul débit pour l'instant (${bitrates.first} kbps) : ce réglage s'appliquera dès qu'un autre sera disponible.",
-                    style: Theme.of(sheetContext).textTheme.bodySmall,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (picked == null) return;
-    await AudioQuality.setMode(picked);
+    await showAudioQualitySheet(context);
     if (mounted) setState(() {});
   }
 
@@ -527,8 +468,7 @@ class _SettingsState extends State<Settings> {
                           icon: Icons.graphic_eq,
                           label: "Qualité audio",
                           trailing:
-                              _audioQualityLabels[AudioQuality.mode.value] ??
-                                  "",
+                              audioQualityLabels[AudioQuality.mode.value] ?? "",
                         ),
                       ),
                     ]),

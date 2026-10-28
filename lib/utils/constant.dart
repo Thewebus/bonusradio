@@ -25,6 +25,9 @@ class Constant {
   static bool mobileDataWarning = true;
   static int mobileDataWarningMb = 100;
   static int mobileDataWarningInterval = 30;
+  // Admin Settings > App: the app's store pages (empty = not published).
+  static String playStoreUrl = "";
+  static String appStoreUrl = "";
   // Anonymous random id of this install — ads' unique-users stats.
   static String? deviceId;
   static String currency = "";

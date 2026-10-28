@@ -1,5 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/network.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 
@@ -24,10 +26,6 @@ class AudioQuality {
   static final ValueNotifier<List<int>> bitrates = ValueNotifier<List<int>>([]);
 
   static final Map<String, List<_Mount>> _mountsByStation = {};
-  static final Dio _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 6),
-    receiveTimeout: const Duration(seconds: 6),
-  ));
 
   static Future<void> load() async {
     mode.value = await SharedPref().read(_prefKey) ?? auto;
@@ -38,6 +36,26 @@ class AudioQuality {
     await SharedPref().save(_prefKey, value);
   }
 
+  // Switches the live radio being played to the mount matching the current
+  // mode right away (same station and metadata), resuming if it was playing.
+  static Future<void> applyToCurrent(AudioPlayer player) async {
+    final source = player.sequenceState.currentSource;
+    final tag = source?.tag;
+    if (source is! UriAudioSource ||
+        tag is! MediaItem ||
+        tag.displaySubtitle != Constant.radioType) {
+      return;
+    }
+    final String current = source.uri.toString();
+    final String wanted = streamUrlFor(current);
+    if (wanted == current) return;
+    final bool wasPlaying = player.playing;
+    try {
+      await player.setAudioSource(AudioSource.uri(Uri.parse(wanted), tag: tag));
+      if (wasPlaying) player.play();
+    } catch (_) {}
+  }
+
   // AzuraCast streams look like https://host/listen/<station>/<mount>.
   static String? _station(Uri uri) {
     final int i = uri.pathSegments.indexOf('listen');
@@ -45,21 +63,7 @@ class AudioQuality {
     return '${uri.host}/${uri.pathSegments[i + 1]}';
   }
 
-  // Fetches the station's mounts ahead of the first play (splash).
-  static Future<void> prefetch(String streamUrl) async {
-    final Uri? uri = Uri.tryParse(streamUrl);
-    if (uri == null || _station(uri) == null) return;
-    final int i = uri.pathSegments.indexOf('listen');
-    try {
-      final response = await _dio.get(uri
-          .replace(
-              path: '/api/nowplaying/${uri.pathSegments[i + 1]}', query: null)
-          .toString());
-      cacheMounts(streamUrl, response.data);
-    } catch (_) {}
-  }
-
-  // Called with any /api/nowplaying response (splash, NowPlayingService).
+  // Called with every /api/nowplaying response (NowPlayingService).
   static void cacheMounts(String streamUrl, dynamic data) {
     final Uri? uri = Uri.tryParse(streamUrl);
     final String? station = uri == null ? null : _station(uri);

@@ -70,6 +70,9 @@ class GeneralProvider extends ChangeNotifier {
     Constant.mobileDataWarningMb =
         int.tryParse(await sharedPre.read('mobile_data_warning_mb') ?? '') ??
             100;
+    Constant.playStoreUrl =
+        (await sharedPre.read('play_store_url') ?? '').trim();
+    Constant.appStoreUrl = (await sharedPre.read('app_store_url') ?? '').trim();
     Constant.mobileDataWarningInterval = int.tryParse(
             await sharedPre.read('mobile_data_warning_interval') ?? '') ??
         30;
