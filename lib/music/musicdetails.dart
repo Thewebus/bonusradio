@@ -570,8 +570,10 @@ class _MusicDetailsState extends State<MusicDetails>
     );
   }
 
-  // "12 à l'écoute" pill, right of the cover.
-  Widget _buildListenersPill(String text, {required bool night}) {
+  // "12 à l'écoute" pill, right of the cover. [pending]: count not yet
+  // confirmed by AzuraCast — a small spinner replaces the headphones.
+  Widget _buildListenersPill(String text,
+      {required bool night, bool pending = false}) {
     final Color fg = night ? white : black;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -582,7 +584,13 @@ class _MusicDetailsState extends State<MusicDetails>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.headphones, size: 12, color: fg),
+          pending
+              ? SizedBox(
+                  width: 10,
+                  height: 10,
+                  child: CircularProgressIndicator(strokeWidth: 1.5, color: fg),
+                )
+              : Icon(Icons.headphones, size: 12, color: fg),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
@@ -619,14 +627,19 @@ class _MusicDetailsState extends State<MusicDetails>
             mediaItem?.artUri?.toString() ??
             current?.image?.toString() ??
             "";
-        // Only shown once AzuraCast data is in (and enabled in admin).
-        final String listenersText =
-            np != null ? "${_formatListeners(np.listeners)} à l'écoute" : "";
-
         return StreamBuilder<bool>(
           stream: audioPlayer.playingStream,
           builder: (context, snap) {
             final isPlaying = snap.data ?? audioPlayer.playing;
+            // Only shown once AzuraCast data is in (and enabled in admin).
+            // AzuraCast counts a new listener late (and its API is cached
+            // 15 s): while we're playing there's at least one, us — shown
+            // with a spinner until AzuraCast confirms it.
+            final bool listenersPending =
+                np != null && isPlaying && np.listeners == 0;
+            final String listenersText = np != null
+                ? "${_formatListeners(math.max(np.listeners, isPlaying ? 1 : 0))} à l'écoute"
+                : "";
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -670,7 +683,8 @@ class _MusicDetailsState extends State<MusicDetails>
                       child: Center(
                         child: listenersText.isEmpty
                             ? const SizedBox.shrink()
-                            : _buildListenersPill(listenersText, night: false),
+                            : _buildListenersPill(listenersText,
+                                night: false, pending: listenersPending),
                       ),
                     ),
                   ],
@@ -836,14 +850,19 @@ class _MusicDetailsState extends State<MusicDetails>
             mediaItem?.artUri?.toString() ??
             current?.image?.toString() ??
             "";
-        // Only shown once AzuraCast data is in (and enabled in admin).
-        final String listenersText =
-            np != null ? "${_formatListeners(np.listeners)} à l'écoute" : "";
-
         return StreamBuilder<bool>(
           stream: audioPlayer.playingStream,
           builder: (context, snap) {
             final isPlaying = snap.data ?? audioPlayer.playing;
+            // Only shown once AzuraCast data is in (and enabled in admin).
+            // AzuraCast counts a new listener late (and its API is cached
+            // 15 s): while we're playing there's at least one, us — shown
+            // with a spinner until AzuraCast confirms it.
+            final bool listenersPending =
+                np != null && isPlaying && np.listeners == 0;
+            final String listenersText = np != null
+                ? "${_formatListeners(math.max(np.listeners, isPlaying ? 1 : 0))} à l'écoute"
+                : "";
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -888,7 +907,8 @@ class _MusicDetailsState extends State<MusicDetails>
                       child: Center(
                         child: listenersText.isEmpty
                             ? const SizedBox.shrink()
-                            : _buildListenersPill(listenersText, night: true),
+                            : _buildListenersPill(listenersText,
+                                night: true, pending: listenersPending),
                       ),
                     ),
                   ],
