@@ -459,7 +459,7 @@ class _MusicDetailsState extends State<MusicDetails>
   // Radios screen: the zone pub keeps its 4:3 size and the player below it
   // shrinks its gaps, cover and buttons (not its text) so both fit above
   // the bottom nav dock. 1 = natural size, never below 0.5.
-  static const double _radioDockReserve = 84;
+  static const double _radioDockReserve = 140;
   double _playerScale(BoxConstraints viewport) {
     final double pub = (viewport.maxWidth - 40) / _pubAspectRatio + 20;
     final double room = viewport.maxHeight - _radioDockReserve - 16 - pub - 12;

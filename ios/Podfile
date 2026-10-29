@@ -37,7 +37,23 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  # Some pods (razorpay-core-pod, Google-Mobile-Ads-SDK,
+  # GoogleUserMessagingPlatform) still exclude arm64 for the simulator, so
+  # the app can't run on Apple Silicon simulators (iOS 26+ are arm64-only).
+  # Their xcframeworks all ship an ios-arm64_x86_64-simulator slice: keep
+  # only Flutter's i386 exclusion.
+  sim_archs = 'EXCLUDED_ARCHS[sdk=iphonesimulator*]'
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings[sim_archs] = 'i386'
+    end
+  end
+  installer.aggregate_targets.each do |aggregate|
+    aggregate.xcconfigs.each do |config_name, xcconfig|
+      next unless xcconfig.attributes[sim_archs].to_s.include?('arm64')
+      xcconfig.attributes[sim_archs] = 'i386'
+      xcconfig.save_as(aggregate.xcconfig_path(config_name))
+    end
   end
 end
