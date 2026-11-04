@@ -300,61 +300,73 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: homeAccueilBg(context),
-      child: SafeArea(
-        child: PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, result) {
-            if (didPop) return;
-            exitDilog(context);
-          },
-          child: Stack(
-            children: [
-              Scaffold(
-                key: drawerkey,
-                backgroundColor: homeAccueilBg(context),
-                body: Container(
-                  decoration: Theme.of(context).brightness == Brightness.dark
-                      ? liveNeonBackgroundDecoration()
-                      : BoxDecoration(color: homeAccueilBg(context)),
-                  child: Column(
-                    children: [
-                      // Only show appBar for Home page
-                      if (_currentBottomNavIndex == _homeTabIndex) appBar(),
-                      Expanded(
-                        child: _buildPageContent(),
-                      ),
-                    ],
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    return CustomPaint(
+      // Fills the safe areas (status bar, iOS home indicator) so they don't
+      // read as separate bands: at night, the screens' gradient continued.
+      painter:
+          isNight ? LiveNeonWindowPainter(MediaQuery.paddingOf(context)) : null,
+      child: ColoredBox(
+        color: isNight ? transparent : homeAccueilBg(context),
+        child: SafeArea(
+          child: PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) return;
+              exitDilog(context);
+            },
+            child: Stack(
+              children: [
+                Scaffold(
+                  key: drawerkey,
+                  backgroundColor: homeAccueilBg(context),
+                  body: Container(
+                    decoration: Theme.of(context).brightness == Brightness.dark
+                        ? liveNeonBackgroundDecoration()
+                        : BoxDecoration(color: homeAccueilBg(context)),
+                    child: Column(
+                      children: [
+                        // Only show appBar for Home page
+                        if (_currentBottomNavIndex == _homeTabIndex) appBar(),
+                        Expanded(
+                          child: _buildPageContent(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              // Persistent sliding full-screen player, expanded via the
-              // dock's chevron (playerExpandProgress / miniPlayerController).
-              // minHeight: 0 keeps it invisible until expanded, since the
-              // dock already shows the compact "now playing" row. Placed
-              // BEFORE the dock so the dock always stays on top and reachable
-              // (the player has no back button of its own).
-              ValueListenableBuilder<AudioPlayer?>(
-                valueListenable: currentlyPlaying,
-                builder: (context, player, child) {
-                  if (player?.audioSource == null) {
-                    return const SizedBox.shrink();
-                  }
-                  return MusicDetails(
-                    ishomepage: true,
-                    minHeight: 0,
-                    currentTabIndex: _currentBottomNavIndex,
-                  );
-                },
-              ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 10,
-                child: _buildDockCard(),
-              ),
-            ],
+                // Persistent sliding full-screen player, expanded via the
+                // dock's chevron (playerExpandProgress / miniPlayerController).
+                // minHeight: 0 keeps it invisible until expanded, since the
+                // dock already shows the compact "now playing" row. Placed
+                // BEFORE the dock so the dock always stays on top and reachable
+                // (the player has no back button of its own).
+                ValueListenableBuilder<AudioPlayer?>(
+                  valueListenable: currentlyPlaying,
+                  builder: (context, player, child) {
+                    if (player?.audioSource == null) {
+                      return const SizedBox.shrink();
+                    }
+                    // Clipped: Miniplayer always paints a shadow past its bottom
+                    // edge, a line above the iOS home indicator otherwise.
+                    return ClipRect(
+                      child: MusicDetails(
+                        ishomepage: true,
+                        minHeight: 0,
+                        currentTabIndex: _currentBottomNavIndex,
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  // Inside the SafeArea: already above the system bars.
+                  bottom: 10,
+                  child: _buildDockCard(),
+                ),
+              ],
+            ),
           ),
         ),
       ),

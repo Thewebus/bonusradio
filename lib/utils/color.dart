@@ -82,6 +82,31 @@ BoxDecoration liveNeonBackgroundDecoration() => const BoxDecoration(
       ),
     );
 
+// Paints that gradient over the whole window, sized to the safe area screens
+// draw it in, so it continues seamlessly behind the status bar and home
+// indicator.
+class LiveNeonWindowPainter extends CustomPainter {
+  const LiveNeonWindowPainter(this.padding);
+
+  final EdgeInsets padding;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect window = Offset.zero & size;
+    canvas.drawRect(
+      window,
+      Paint()
+        ..shader = liveNeonBackgroundDecoration()
+            .gradient!
+            .createShader(padding.deflateRect(window)),
+    );
+  }
+
+  @override
+  bool shouldRepaint(LiveNeonWindowPainter oldDelegate) =>
+      oldDelegate.padding != padding;
+}
+
 const List<List<Color>> liveNeonBokehGradients = [
   [Color(0xFF3B82F6), Color(0xFF10254F)],
   [Color(0xFF10B981), Color(0xFF0B3B2C)],

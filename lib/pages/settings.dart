@@ -63,118 +63,121 @@ class _SettingsState extends State<Settings> {
   // as day mode (_selectThemeMode, _languageChangeDialog, _showRatingDialog,
   // Utils.shareApp, CommonPage navigation, _showLogoutDialog).
   Widget _buildLiveNeonScaffold() {
-    return Scaffold(
-      backgroundColor: liveNeonBg,
-      body: SafeArea(
-        child: Container(
-          decoration: liveNeonBackgroundDecoration(),
-          child: Column(
-            children: [
-              const LiveNeonHeader(title: "settings", showBack: true),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLiveNeonThemeSelector(),
-                      const SizedBox(height: 22),
-                      _buildLiveNeonSectionLabel("LECTURE"),
-                      const SizedBox(height: 8),
-                      _buildLiveNeonCard(children: [
-                        _buildLiveNeonToggleRow(
-                          icon: Icons.signal_cellular_alt,
-                          label: "Alerte données mobiles",
-                          value: MobileDataWatcher.userEnabled.value,
-                          onChanged: _setMobileDataAlert,
-                        ),
-                        _liveNeonDivider(),
-                        _buildLiveNeonToggleRow(
-                          icon: Icons.notifications_active_outlined,
-                          label: "Alertes en direct",
-                          value: true,
-                          onChanged: null,
-                          comingSoon: true,
-                        ),
-                        _liveNeonDivider(),
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _pickAudioQuality,
-                          child: _buildLiveNeonStaticRow(
-                            icon: Icons.graphic_eq,
-                            label: "Qualité audio",
-                            trailing:
-                                audioQualityLabels[AudioQuality.mode.value] ??
-                                    "",
+    return CustomPaint(
+      painter: LiveNeonWindowPainter(MediaQuery.paddingOf(context)),
+      child: Scaffold(
+        backgroundColor: transparent,
+        body: SafeArea(
+          child: Container(
+            decoration: liveNeonBackgroundDecoration(),
+            child: Column(
+              children: [
+                const LiveNeonHeader(title: "settings", showBack: true),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLiveNeonThemeSelector(),
+                        const SizedBox(height: 22),
+                        _buildLiveNeonSectionLabel("LECTURE"),
+                        const SizedBox(height: 8),
+                        _buildLiveNeonCard(children: [
+                          _buildLiveNeonToggleRow(
+                            icon: Icons.signal_cellular_alt,
+                            label: "Alerte données mobiles",
+                            value: MobileDataWatcher.userEnabled.value,
+                            onChanged: _setMobileDataAlert,
+                          ),
+                          _liveNeonDivider(),
+                          _buildLiveNeonToggleRow(
+                            icon: Icons.notifications_active_outlined,
+                            label: "Alertes en direct",
+                            value: true,
+                            onChanged: null,
+                            comingSoon: true,
+                          ),
+                          _liveNeonDivider(),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _pickAudioQuality,
+                            child: _buildLiveNeonStaticRow(
+                              icon: Icons.graphic_eq,
+                              label: "Qualité audio",
+                              trailing:
+                                  audioQualityLabels[AudioQuality.mode.value] ??
+                                      "",
+                            ),
+                          ),
+                        ]),
+                        const SizedBox(height: 22),
+                        _buildLiveNeonSectionLabel("APPLICATION"),
+                        const SizedBox(height: 8),
+                        _buildLiveNeonCard(children: [
+                          _buildSettingItem(
+                            "ic_language.png",
+                            "changelanguage",
+                            () => _languageChangeDialog(),
+                            materialIcon: Icons.translate,
+                            neon: true,
+                          ),
+                          _liveNeonDivider(),
+                          _buildSettingItem(
+                            "ic_rateapp.png",
+                            "rateapp",
+                            () => _showRatingDialog(),
+                            materialIcon: Icons.star_rate_rounded,
+                            neon: true,
+                          ),
+                          _liveNeonDivider(),
+                          _buildSettingItem(
+                            "ic_share.png",
+                            "shareapp",
+                            () async {
+                              await Utils.shareApp(Platform.isIOS
+                                  ? Constant.iosAppShareUrlDesc
+                                  : Constant.androidAppShareUrlDesc);
+                            },
+                            materialIcon: Icons.share_rounded,
+                            neon: true,
+                          ),
+                          _buildPages(neon: true),
+                          _buildSocialLink(neon: true),
+                        ]),
+                        const SizedBox(height: 28),
+                        Center(
+                          child: Column(
+                            children: [
+                              const Text(
+                                "BONUS MULTIMEDIA",
+                                style: TextStyle(
+                                  color: liveNeonTextSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Version ${Constant.appVersion}",
+                                style: const TextStyle(
+                                  color: liveNeonTextSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ]),
-                      const SizedBox(height: 22),
-                      _buildLiveNeonSectionLabel("APPLICATION"),
-                      const SizedBox(height: 8),
-                      _buildLiveNeonCard(children: [
-                        _buildSettingItem(
-                          "ic_language.png",
-                          "changelanguage",
-                          () => _languageChangeDialog(),
-                          materialIcon: Icons.translate,
-                          neon: true,
-                        ),
-                        _liveNeonDivider(),
-                        _buildSettingItem(
-                          "ic_rateapp.png",
-                          "rateapp",
-                          () => _showRatingDialog(),
-                          materialIcon: Icons.star_rate_rounded,
-                          neon: true,
-                        ),
-                        _liveNeonDivider(),
-                        _buildSettingItem(
-                          "ic_share.png",
-                          "shareapp",
-                          () async {
-                            await Utils.shareApp(Platform.isIOS
-                                ? Constant.iosAppShareUrlDesc
-                                : Constant.androidAppShareUrlDesc);
-                          },
-                          materialIcon: Icons.share_rounded,
-                          neon: true,
-                        ),
-                        _buildPages(neon: true),
-                        _buildSocialLink(neon: true),
-                      ]),
-                      const SizedBox(height: 28),
-                      Center(
-                        child: Column(
-                          children: [
-                            const Text(
-                              "BONUS MULTIMEDIA",
-                              style: TextStyle(
-                                color: liveNeonTextSecondary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Version ${Constant.appVersion}",
-                              style: const TextStyle(
-                                color: liveNeonTextSecondary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildLiveNeonLogoutButton(),
-                    ],
+                        const SizedBox(height: 20),
+                        _buildLiveNeonLogoutButton(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
