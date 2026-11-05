@@ -200,3 +200,4 @@ final ThemeData darkTheme = ThemeData(
 // ABIDJAN (day) mini-player bar: dark brown, with the logo's cream/yellow
 // waveform on it.
 const Color abidjanMiniPlayerBg = Color(0xFF3A2416);
+const Color abidjanDockText = Color(0xFFF7F1E6);

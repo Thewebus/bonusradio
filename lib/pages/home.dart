@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,6 +44,7 @@ import 'package:myBonus/widget/liveneon_buttons.dart';
 import 'package:myBonus/widget/liveneon_header.dart';
 import 'package:myBonus/widget/abidjan_bokeh_card.dart';
 import 'package:myBonus/widget/myimage.dart';
+import 'package:myBonus/widget/notched_dock.dart';
 import 'package:myBonus/music/floating_player.dart';
 import 'package:myBonus/widget/mynetworkimg.dart';
 import 'package:myBonus/widget/mynetworkimg2.dart';
@@ -375,203 +377,87 @@ class _HomeState extends State<Home> {
 
   Widget _buildDockCard() {
     final bool isNight = Theme.of(context).brightness == Brightness.dark;
-    final floatingPlayer = FloatingPlayer(
-      currentTabIndex: _currentBottomNavIndex,
-      onExpand: () {
-        if (_currentBottomNavIndex != radioTabIndex) {
-          setState(() {
-            _currentBottomNavIndex = radioTabIndex;
-          });
-        }
-      },
-    );
-    final navRow = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildBottomNavItem(Icons.home_outlined, 'Accueil', _homeTabIndex),
-        _buildBottomNavItem(Icons.live_tv_outlined, 'Films', _filmsTabIndex),
-        _buildBottomNavItem(Icons.radio, 'Radios', radioTabIndex),
-        _buildBottomNavItem(
-            Icons.podcasts_outlined, 'Podcasts', _podcastTabIndex),
-        _buildBottomNavItem(Icons.person_outline,
-            Locales.string(context, "profile"), _profileTabIndex),
+    // Same order as the items below.
+    const List<int> tabs = [
+      _homeTabIndex,
+      _filmsTabIndex,
+      radioTabIndex,
+      _podcastTabIndex,
+      _profileTabIndex,
+    ];
+    return NotchedDock(
+      items: [
+        const NotchedDockItem(Icons.home_outlined, 'Accueil'),
+        const NotchedDockItem(Icons.live_tv_outlined, 'Films'),
+        const NotchedDockItem(Icons.radio, 'Radios'),
+        const NotchedDockItem(Icons.podcasts_outlined, 'Podcasts'),
+        NotchedDockItem(
+            Icons.person_outline, Locales.string(context, "profile")),
       ],
-    );
-
-    if (isNight) {
-      // LIVE NEON (night theme): same two-element structure as ABIDJAN
-      // (separate mini-player bar + gap + nav card), dark/glow colors and a
-      // matching radius instead of black/cream.
-      const double liveNeonDockRadius = 16;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(liveNeonDockRadius),
-            child: Container(color: liveNeonCardBg, child: floatingPlayer),
-          ),
-          const SizedBox(height: 10),
-          Material(
-            elevation: 5,
-            shadowColor: black.withValues(alpha: 0.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(liveNeonDockRadius),
-              side: const BorderSide(color: liveNeonBorder),
-            ),
-            color: liveNeonCardBg,
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
-              child: navRow,
-            ),
-          ),
-        ],
-      );
-    }
-
-    // ABIDJAN (day theme): the mini-player is its own separate dark brown
-    // rounded-rect bar, with a visible gap above the white nav card below
-    // it — two distinct floating elements, not one card. Radius matches the
-    // header's search field (16) for a consistent rounding across the
-    // screen.
-    const double abidjanDockRadius = 16;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(abidjanDockRadius),
-          child: Container(color: abidjanMiniPlayerBg, child: floatingPlayer),
+      selectedIndex: math.max(tabs.indexOf(_currentBottomNavIndex), 0),
+      onSelected: (position) => _onDockTabSelected(tabs[position]),
+      barColor: isNight ? liveNeonCardBg : abidjanMiniPlayerBg,
+      borderColor: isNight ? liveNeonBorder : transparent,
+      borderWidth: isNight ? 1 : 0.3,
+      bubbleGradient: LinearGradient(
+        colors: isNight
+            ? liveNeonGradient
+            : [dockActivePillBg(context), dockActivePillBg(context)],
+      ),
+      bubbleIconColor: white,
+      iconColor: isNight
+          ? liveNeonTextSecondary
+          : abidjanDockText.withValues(alpha: 0.65),
+      labelColor: isNight
+          ? liveNeonTextSecondary
+          : abidjanDockText.withValues(alpha: 0.7),
+      selectedLabelColor: isNight ? white : abidjanDockText,
+      // The Radios tab shows what's playing full-screen.
+      aboveHidden: _currentBottomNavIndex == radioTabIndex,
+      // Its own bar above the nav, in the dark tone of each theme.
+      above: Container(
+        color: isNight ? liveNeonCardBg : abidjanMiniPlayerBg,
+        child: FloatingPlayer(
+          contentPadding:
+              const EdgeInsets.fromLTRB(12, 8, 8, NotchedDock.aboveNotchDepth),
+          onExpand: () {
+            if (_currentBottomNavIndex != radioTabIndex) {
+              setState(() {
+                _currentBottomNavIndex = radioTabIndex;
+              });
+            }
+          },
         ),
-        const SizedBox(height: 10),
-        Material(
-          elevation: 5,
-          shadowColor: black.withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(abidjanDockRadius),
-            side: const BorderSide(color: lightgray, width: 0.3),
-          ),
-          color: homeAccueilBg(context),
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
-            child: navRow,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _collapseFullPlayer() {
-    setPlayerExpansion(0);
-  }
-
-  Widget _buildBottomNavItem(IconData icon, String label, int index) {
-    final isSelected = _currentBottomNavIndex == index;
-    final isNight = Theme.of(context).brightness == Brightness.dark;
-
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          // Collapse the sliding full-screen player when leaving the Radio
-          // tab, so it doesn't keep covering whichever tab is now shown.
-          if (index != radioTabIndex) {
-            _collapseFullPlayer();
-          }
-          setState(() {
-            _currentBottomNavIndex = index;
-          });
-        },
-        child: isNight
-            ? _buildNightNavItemContent(icon, label, isSelected)
-            : _buildAbidjanNavItemContent(icon, label, isSelected),
       ),
     );
   }
 
-  // Night mode — unchanged from before the ABIDJAN redesign.
-  // LIVE NEON (night theme): same vertical icon-above-label layout as
-  // ABIDJAN — the active tab gets a pink-to-blue gradient pill wrapped
-  // around that stack instead of a solid color.
-  Widget _buildNightNavItemContent(
-      IconData icon, String label, bool isSelected) {
-    final content = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: isSelected ? white : liveNeonTextSecondary,
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? white : liveNeonTextSecondary,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+  // Search's mini-player asks (result true) to show the Radios tab on return.
+  Future<void> _openSearch() async {
+    final bool? openPlayer = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const Search()),
     );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-      child: isSelected
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: liveNeonGradient),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: content,
-            )
-          : content,
-    );
+    if (openPlayer == true && mounted) {
+      setState(() {
+        _currentBottomNavIndex = radioTabIndex;
+      });
+    }
   }
 
-  // ABIDJAN (day theme): icon stays above the label in both states, as in
-  // the reference design — the active tab just gets a solid pill wrapped
-  // around that same vertical stack, no side-by-side layout.
-  Widget _buildAbidjanNavItemContent(
-      IconData icon, String label, bool isSelected) {
-    final content = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: isSelected ? white : black.withValues(alpha: 0.45),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? white : black.withValues(alpha: 0.5),
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
+  void _onDockTabSelected(int index) {
+    // Collapse the sliding full-screen player when leaving the Radio tab,
+    // so it doesn't keep covering whichever tab is now shown.
+    if (index != radioTabIndex) {
+      _collapseFullPlayer();
+    }
+    setState(() {
+      _currentBottomNavIndex = index;
+    });
+  }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-      child: isSelected
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: dockActivePillBg(context),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: content,
-            )
-          : content,
-    );
+  void _collapseFullPlayer() {
+    setPlayerExpansion(0);
   }
 
   Widget _buildPageContent() {
@@ -1313,25 +1199,28 @@ class _HomeState extends State<Home> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Color(0x14000000),
-                        blurRadius: 8,
-                        offset: Offset(0, 2)),
-                  ],
-                ),
-                child: MyImage(
+              GestureDetector(
+                onTap: () => _onDockTabSelected(_profileTabIndex),
+                child: Container(
                   width: 40,
                   height: 40,
-                  imagePath: "logo_mybonus.png",
-                  fit: BoxFit.contain,
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: MyImage(
+                    width: 40,
+                    height: 40,
+                    imagePath: "logo_mybonus.png",
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1408,10 +1297,7 @@ class _HomeState extends State<Home> {
           InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Search()),
-              );
+              _openSearch();
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1467,19 +1353,22 @@ class _HomeState extends State<Home> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: white,
-                  shape: BoxShape.circle,
-                ),
-                child: MyImage(
+              GestureDetector(
+                onTap: () => _onDockTabSelected(_profileTabIndex),
+                child: Container(
                   width: 40,
                   height: 40,
-                  imagePath: "logo_mybonus.png",
-                  fit: BoxFit.contain,
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: MyImage(
+                    width: 40,
+                    height: 40,
+                    imagePath: "logo_mybonus.png",
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1556,10 +1445,7 @@ class _HomeState extends State<Home> {
           InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Search()),
-              );
+              _openSearch();
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

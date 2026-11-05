@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:myBonus/pages/home.dart';
-import 'package:myBonus/music/musicdetails.dart';
+import 'package:myBonus/music/floating_player.dart';
 import 'package:myBonus/pages/nodata.dart';
 import 'package:myBonus/provider/musicdetailprovider.dart';
 import 'package:myBonus/provider/searchprovider.dart';
@@ -67,7 +66,7 @@ class _SearchState extends State<Search> {
             );
           }),
         ),
-        buildMusicPanel(context),
+        _buildMiniPlayer(),
       ],
     );
   }
@@ -182,6 +181,7 @@ class _SearchState extends State<Search> {
   Widget _buildAbidjanHeader() {
     return Column(
       children: [
+        SizedBox(height: MediaQuery.paddingOf(context).top),
         AbidjanHeader(
           title: "search",
           showBack: true,
@@ -679,18 +679,24 @@ class _SearchState extends State<Search> {
     );
   }
 
-  Widget buildMusicPanel(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: currentlyPlaying,
-      builder: (BuildContext context, AudioPlayer? audioObject, Widget? child) {
-        if (audioObject?.audioSource != null) {
-          return const MusicDetails(
-            ishomepage: true,
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
-      },
+  // Over the page, not in the shared Miniplayer: that one follows the Home
+  // overlay's height, so it opened fully expanded from the Radios tab. Opening
+  // the player goes back to Home, told to show the Radios tab.
+  Widget _buildMiniPlayer() {
+    final bool isNight = Theme.of(context).brightness == Brightness.dark;
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: MediaQuery.paddingOf(context).bottom + 10,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          color: isNight ? liveNeonCardBg : abidjanMiniPlayerBg,
+          child: FloatingPlayer(
+            onExpand: () => Navigator.pop(context, true),
+          ),
+        ),
+      ),
     );
   }
 }

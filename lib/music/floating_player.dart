@@ -13,11 +13,13 @@ import 'package:myBonus/widget/waveform_animation.dart';
 class FloatingPlayer extends StatefulWidget {
   final int currentTabIndex;
   final VoidCallback? onExpand;
+  final EdgeInsets contentPadding;
 
   const FloatingPlayer({
     super.key,
     this.currentTabIndex = -1,
     this.onExpand,
+    this.contentPadding = const EdgeInsets.fromLTRB(12, 10, 8, 10),
   });
 
   @override
@@ -108,7 +110,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
         hoverColor: transparent,
         highlightColor: transparent,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          padding: widget.contentPadding,
           child: Row(
             children: [
               ClipRRect(
@@ -236,7 +238,7 @@ class _FloatingPlayerState extends State<FloatingPlayer> {
         hoverColor: transparent,
         highlightColor: transparent,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          padding: widget.contentPadding,
           child: Row(
             children: [
               ClipRRect(

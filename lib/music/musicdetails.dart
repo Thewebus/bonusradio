@@ -2155,11 +2155,9 @@ class _MusicDetailsState extends State<MusicDetails>
             onHorizontalDragEnd: (details) {
               final velocity = details.primaryVelocity ?? 0;
               if (velocity > 0) {
-                // Swipe vers la droite => slide suivante (comme demandé)
-                _goToNextPub();
-              } else if (velocity < 0) {
-                // Swipe vers la gauche => slide précédente (comme demandé)
                 _goToPreviousPub();
+              } else if (velocity < 0) {
+                _goToNextPub();
               }
             },
             child: Container(
