@@ -4,40 +4,36 @@ import 'package:myBonus/utils/audioquality.dart';
 import 'package:myBonus/utils/color.dart';
 
 const Map<String, String> audioQualityLabels = {
-  AudioQuality.auto: "Automatique",
   AudioQuality.high: "Haute",
   AudioQuality.standard: "Standard",
-  AudioQuality.low: "Économie",
+  AudioQuality.low: "Basse",
 };
 
-// Live radio quality picker (Auto / Haute / Standard / Économie, with the
+// Live radio quality picker (Haute / Standard / Basse, with the
 // station's real bitrates) — from Settings > Qualité audio and the Radios
 // player's quality button. Saves the choice and switches the live radio
 // being played to it at once.
 Future<void> showAudioQualitySheet(BuildContext context) async {
   final List<int> bitrates = AudioQuality.bitrates.value;
   // Actual bitrates from the station's AzuraCast mounts, when known.
-  // "192 kbps · environ 1,4 Mo par minute"
-  // (kbps × 60 s ÷ 8 bits ÷ 1000 = Mo per minute).
-  String rate(int b) =>
-      "$b kbps · environ ${(b * 0.0075).toStringAsFixed(1).replaceAll('.', ',')} Mo par minute";
+  // "192 kbps, environ 86 Mo par heure"
+  // (kbps × 3600 s ÷ 8 bits ÷ 1000 = Mo per hour).
+  String rate(int b) => "$b kbps, environ ${(b * 0.45).round()} Mo par heure";
   String kbps(String value, {bool cellular = false}) {
     final int? b = AudioQuality.bitrateForMode(value, cellular: cellular);
     return b == null ? "" : " · ${rate(b)}";
   }
 
-  final int? autoWifi =
-      AudioQuality.bitrateForMode(AudioQuality.auto, cellular: false);
-  final int? autoCellular =
-      AudioQuality.bitrateForMode(AudioQuality.auto, cellular: true);
+  final int? standardWifi =
+      AudioQuality.bitrateForMode(AudioQuality.standard, cellular: false);
+  final int? standardCellular =
+      AudioQuality.bitrateForMode(AudioQuality.standard, cellular: true);
   final Map<String, String> hints = {
-    AudioQuality.auto: autoWifi == null
-        ? "Haute en Wi-Fi, standard en données mobiles"
-        : "$autoWifi kbps en Wi-Fi, ${rate(autoCellular!)} en données mobiles",
     AudioQuality.high:
         "Meilleur son, consomme plus de données${kbps(AudioQuality.high)}",
-    AudioQuality.standard:
-        "Bon compromis son / données${kbps(AudioQuality.standard)}",
+    AudioQuality.standard: standardWifi == null
+        ? "Bon compromis son / données"
+        : "Wi-Fi : ${rate(standardWifi)}\nDonnées mobiles : ${rate(standardCellular!)}",
     AudioQuality.low: "Consomme moins de données${kbps(AudioQuality.low)}",
   };
   // Explicit ABIDJAN / LIVE NEON colors: the active choice gets the brand

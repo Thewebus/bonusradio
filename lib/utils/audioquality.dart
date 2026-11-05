@@ -1,34 +1,38 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:myBonus/music/musicdetails.dart';
 import 'package:myBonus/utils/constant.dart';
 import 'package:myBonus/utils/network.dart';
 import 'package:myBonus/utils/sharedpref.dart';
 
-// Live radio quality (Settings > Qualité audio): "auto" (highest bitrate on
-// Wi-Fi, the station's default mount on mobile data), "high", "standard"
-// (the default mount) or "low". The bitrates come from the
-// AzuraCast station's mounts (/api/nowplaying/<station> -> station.mounts),
-// so adding a mount in AzuraCast is all it takes to offer a new one. With a
-// single mount the choice has no effect. Uploaded songs/podcasts exist in one
-// quality only and are never rewritten.
+// Live radio quality (Settings > Qualité audio): "standard" by default (the
+// station's default mount on Wi-Fi, its lowest on mobile data), "high" (its
+// highest) or "low" (its lowest). The bitrates come from the AzuraCast
+// station's mounts (/api/nowplaying/<station> -> station.mounts), so adding a
+// mount in AzuraCast is all it takes to offer a new one. With a single mount
+// the choice has no effect. Uploaded songs/podcasts exist in one quality only
+// and are never rewritten.
 class AudioQuality {
   AudioQuality._();
 
-  static const String auto = 'auto';
   static const String high = 'high';
   static const String standard = 'standard';
   static const String low = 'low';
   static const String _prefKey = 'audio_quality';
 
-  static final ValueNotifier<String> mode = ValueNotifier<String>(auto);
+  static final ValueNotifier<String> mode = ValueNotifier<String>(standard);
   // Bitrates (kbps, ascending) of the last station seen — for Settings.
   static final ValueNotifier<List<int>> bitrates = ValueNotifier<List<int>>([]);
 
   static final Map<String, List<_Mount>> _mountsByStation = {};
 
   static Future<void> load() async {
-    mode.value = await SharedPref().read(_prefKey) ?? auto;
+    final String? saved = await SharedPref().read(_prefKey);
+    // Anything else: nothing saved, or the former "auto" choice.
+    mode.value = saved == high || saved == low ? saved! : standard;
+    // Standard's stream depends on the network, also while listening.
+    NetworkService.onCellular.addListener(() => applyToCurrent(audioPlayer));
   }
 
   static Future<void> setMode(String value) async {
@@ -56,7 +60,7 @@ class AudioQuality {
     } catch (_) {}
   }
 
-  // AzuraCast streams look like https://host/listen/<station>/<mount>.
+// AzuraCast streams look like https://host/listen/<station>/<mount>.
   static String? _station(Uri uri) {
     final int i = uri.pathSegments.indexOf('listen');
     if (i < 0 || i + 1 >= uri.pathSegments.length) return null;
@@ -76,9 +80,12 @@ class AudioQuality {
               m['is_default'] == true),
     ]..sort((a, b) => a.bitrate.compareTo(b.bitrate));
     if (list.isEmpty) return;
+    final bool firstSeen = !_mountsByStation.containsKey(station);
     _mountsByStation[station] = list;
     _lastStation = station;
     bitrates.value = list.map((m) => m.bitrate).toList();
+    // Started before its mounts were known: as-is, maybe not the right one.
+    if (firstSeen) applyToCurrent(audioPlayer);
   }
 
   // The stream URL to actually play for [streamUrl] given the current mode
@@ -114,18 +121,16 @@ class AudioQuality {
 
   static _Mount? _choose(List<_Mount>? mounts, String value, bool cellular) {
     if (mounts == null || mounts.length < 2) return null;
-    // Standard = the mount marked default in AzuraCast, else the middle one.
-    final _Mount standardMount = mounts.firstWhere((m) => m.isDefault,
-        orElse: () => mounts[mounts.length ~/ 2]);
     switch (value) {
       case high:
         return mounts.last;
       case low:
         return mounts.first;
-      case standard:
-        return standardMount;
       default:
-        return cellular ? standardMount : mounts.last;
+        if (cellular) return mounts.first;
+        // The mount marked default in AzuraCast, else the middle one.
+        return mounts.firstWhere((m) => m.isDefault,
+            orElse: () => mounts[mounts.length ~/ 2]);
     }
   }
 }

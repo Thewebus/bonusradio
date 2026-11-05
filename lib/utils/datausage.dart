@@ -63,9 +63,10 @@ class MobileDataWatcher {
       return;
     }
     _lastWarning = now;
-    warning.value = AudioQuality.mode.value == AudioQuality.low
-        ? "Données mobiles · environ $mb Mo utilisés. Passez en Wi-Fi pour économiser."
-        : "Données mobiles · environ $mb Mo utilisés. Passez en Wi-Fi ou baissez la qualité audio.";
+    // Only Haute can go lower: Standard already uses the lowest on mobile data.
+    warning.value = AudioQuality.mode.value == AudioQuality.high
+        ? "Données mobiles · environ $mb Mo utilisés. Passez en Wi-Fi ou baissez la qualité audio."
+        : "Données mobiles · environ $mb Mo utilisés. Passez en Wi-Fi pour économiser.";
     _hideTimer?.cancel();
     _hideTimer = Timer(const Duration(seconds: 10), dismiss);
   }
