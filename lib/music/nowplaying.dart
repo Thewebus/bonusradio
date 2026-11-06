@@ -147,6 +147,7 @@ class NowPlayingService {
   static void start() {
     if (_timer != null) return;
     _timer = Timer.periodic(_interval, (_) => refresh());
+    WidgetsBinding.instance.addObserver(_ResumeObserver());
     // A new stream started: don't wait for the next tick.
     currentlyPlaying.addListener(() {
       Future.delayed(const Duration(milliseconds: 500), refresh);
@@ -202,5 +203,43 @@ class NowPlayingService {
     return uri
         .replace(path: '/api/nowplaying/${segments[i + 1]}', query: null)
         .toString();
+  }
+}
+
+// Coming back to the app: the live info is brought up to date right away and
+// the live radio caught up. A healthy stream isn't interrupted, a broken one
+// reconnects and resumes, and one left paused stays paused but restarts from
+// the live edge, not from its old buffer.
+class _ResumeObserver extends WidgetsBindingObserver {
+  static const Duration _stalePause = Duration(seconds: 30);
+  static const Duration _bufferingGrace = Duration(seconds: 5);
+
+  DateTime? _leftAt;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _leftAt ??= DateTime.now();
+    } else if (state == AppLifecycleState.resumed && _leftAt != null) {
+      final Duration away = DateTime.now().difference(_leftAt!);
+      _leftAt = null;
+      _catchUp(away);
+    }
+  }
+
+  Future<void> _catchUp(Duration away) async {
+    if (audioPlayer.playing) {
+      if (audioPlayer.processingState == ProcessingState.buffering ||
+          audioPlayer.processingState == ProcessingState.loading) {
+        await Future.delayed(_bufferingGrace);
+      }
+      if (audioPlayer.playing &&
+          audioPlayer.processingState != ProcessingState.ready) {
+        await AudioQuality.reloadCurrent(audioPlayer, play: true);
+      }
+    } else if (away >= _stalePause) {
+      await AudioQuality.reloadCurrent(audioPlayer, play: false);
+    }
+    NowPlayingService.refresh();
   }
 }

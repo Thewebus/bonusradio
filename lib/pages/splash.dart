@@ -113,10 +113,20 @@ class SplashState extends State<Splash> with TickerProviderStateMixin {
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: const Duration(milliseconds: 500),
         pageBuilder: (_, __, ___) => const Home(),
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
+        // Fades in while settling from 96 % to full size.
+        transitionsBuilder: (_, animation, __, child) {
+          final Animation<double> curved =
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }

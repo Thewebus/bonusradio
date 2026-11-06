@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_locales/flutter_locales.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -50,6 +51,9 @@ Future<void> main() async {
     androidNotificationOngoing: true,
     androidShowNotificationBadge: true,
   );
+  // Playback category: keeps playing in the background and on silent (iOS).
+  await (await AudioSession.instance)
+      .configure(const AudioSessionConfiguration.music());
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   const supportedLanguageCodes = [
     'fr',

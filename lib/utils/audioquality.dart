@@ -60,7 +60,25 @@ class AudioQuality {
     } catch (_) {}
   }
 
-// AzuraCast streams look like https://host/listen/<station>/<mount>.
+  // Reconnects the live radio being played to the live edge of its stream.
+  static Future<void> reloadCurrent(AudioPlayer player,
+      {required bool play}) async {
+    final source = player.sequenceState.currentSource;
+    final tag = source?.tag;
+    if (source is! UriAudioSource ||
+        tag is! MediaItem ||
+        tag.displaySubtitle != Constant.radioType) {
+      return;
+    }
+    try {
+      await player.setAudioSource(AudioSource.uri(
+          Uri.parse(streamUrlFor(source.uri.toString())),
+          tag: tag));
+      if (play) player.play();
+    } catch (_) {}
+  }
+
+  // AzuraCast streams look like https://host/listen/<station>/<mount>.
   static String? _station(Uri uri) {
     final int i = uri.pathSegments.indexOf('listen');
     if (i < 0 || i + 1 >= uri.pathSegments.length) return null;
