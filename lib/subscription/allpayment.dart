@@ -225,16 +225,16 @@ class AllPaymentState extends State<AllPayment> {
       if (paymentProvider.successModel.status == 200) {
         isPaymentDone = true;
         if (!mounted) return;
-        Navigator.pop(context, isPaymentDone);
-
+        // Read providers before popping: this page's context is gone after.
         final videoProvider = Provider.of<VideoProvider>(context, listen: false);
-        videoProvider.clearProvider();
-        await videoProvider.getVideoList("1");
-
         // Refresh an open series detail too, so a just-unlocked episode's
         // lock state updates without leaving/re-entering the screen.
         final videoSeriesProvider =
             Provider.of<VideoSeriesProvider>(context, listen: false);
+        Navigator.pop(context, isPaymentDone);
+
+        videoProvider.clearProvider();
+        await videoProvider.getVideoList("1");
         if (videoSeriesProvider.seriesDetail != null) {
           await videoSeriesProvider
               .getSeriesDetail(videoSeriesProvider.seriesDetail!.id);

@@ -169,6 +169,7 @@ class _MyAppState extends State<MyApp> {
         await sharedpre.readBool('is_language_initialized') ?? false;
 
     if (!isLanguageInitialized) {
+      if (!mounted) return;
       LocaleNotifier.of(context)?.change('fr');
       await sharedpre.saveBool('is_language_initialized', true);
     }

@@ -1,9 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
-import 'package:myBonus/music/musicdetails.dart';
-import 'package:myBonus/pages/home.dart';
 import 'package:myBonus/pages/login.dart';
 import 'package:myBonus/pages/podcastviewall.dart';
 import 'package:myBonus/provider/addfavouriteprovider.dart';
@@ -290,7 +287,7 @@ class _PodcastState extends State<Podcast> {
       if (musicdetailProvider.getEpisodeByPodcstModel.status == 200 &&
           ((musicdetailProvider.getEpisodeByPodcstModel.result?.length ?? 0) >
               0)) {
-        if (!context.mounted) return;
+        if (!mounted) return;
         Utils.playAudio(
             context,
             "podcast",
@@ -638,7 +635,7 @@ class _PodcastState extends State<Podcast> {
     final sections = overrideSections ?? podcatsProvider.sectionList;
     if (podcatsProvider.podcastSectionModel.status == 200 &&
         sections != null) {
-      if ((sections.length) > 0) {
+      if (sections.isNotEmpty) {
         return MediaQuery.removePadding(
           context: context,
           removeTop: true,
@@ -1371,21 +1368,6 @@ class _PodcastState extends State<Podcast> {
               }),
         ),
       ],
-    );
-  }
-
-  Widget _buildMusicPanel(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: currentlyPlaying,
-      builder: (BuildContext context, AudioPlayer? audioObject, Widget? child) {
-        if (audioObject?.audioSource != null) {
-          return const MusicDetails(
-            ishomepage: true,
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
-      },
     );
   }
 }

@@ -1175,7 +1175,7 @@ class _SettingsState extends State<Settings> {
                           Utils.showToast("Please Enter Your Rating");
                         } else {
                           await Utils.redirectToStore();
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pop(context);
                         }
                       },

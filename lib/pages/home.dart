@@ -3557,7 +3557,7 @@ class _HomeState extends State<Home> {
                               .getEpisodeByPodcstModel.result?.length ??
                           0) >
                       0)) {
-                if (!context.mounted) return;
+                if (!mounted) return;
                 Utils.playAudio(
                     context,
                     "podcast",
